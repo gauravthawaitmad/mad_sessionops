@@ -1,0 +1,50 @@
+"""
+Models package for sessionops.
+
+=============================================================================
+MODEL ORGANIZATION BEST PRACTICES
+=============================================================================
+
+This package organizes models into separate files for:
+1. Readability: Each model file is focused and manageable
+2. Maintainability: Easy to find and modify specific models
+3. Git History: Changes to one model don't affect other files
+4. Team Collaboration: Reduces merge conflicts
+
+Structure:
+    models/
+    ├── __init__.py      <- You are here (exports all models)
+    ├── user.py          <- User identity model
+    └── user_auth.py     <- Authentication credentials model
+
+Usage:
+    # Import from package (recommended)
+    from sessionops.models import User, UserAuth
+
+    # Or import from specific module
+    from sessionops.models.user import User
+
+=============================================================================
+"""
+
+# =============================================================================
+# EXPORT ALL MODELS
+# =============================================================================
+# By importing models here, they become available when importing from
+# sessionops.models directly. This is the Pythonic way to create a public API
+# for your models package.
+#
+# Django also needs this for migrations to work correctly. When Django
+# looks for models in the 'sessionops' app, it checks sessionops.models.__init__.py.
+# =============================================================================
+
+from sessionops.models.base import SoftDeleteBaseModel, SoftDeleteManager
+from sessionops.models.user import User
+from sessionops.models.user_auth import UserAuth
+
+__all__ = [
+    "SoftDeleteBaseModel",
+    "SoftDeleteManager",
+    "User",
+    "UserAuth",
+]

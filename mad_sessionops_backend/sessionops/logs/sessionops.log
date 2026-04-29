@@ -1,0 +1,90 @@
+INFO 2026-04-24 17:14:59,834 autoreload 29148 7956 Watching for file changes with StatReloader
+INFO 2026-04-28 16:42:10,426 autoreload 24488 776 Watching for file changes with StatReloader
+WARNING 2026-04-28 17:23:32,095 __init__ 17416 19540 Google login attempted for unknown user_login=co@makeadiff.in
+WARNING 2026-04-28 17:23:33,119 __init__ 17416 19540 Google login attempted for inactive user_id=5
+WARNING 2026-04-28 17:23:33,649 __init__ 17416 19540 Google login rejected — no allowed roles for user_id=6 role='Wingman'
+ERROR 2026-04-28 17:23:34,320 __init__ 17416 19540 SECURITY: google_sub mismatch for user_id=7 — stored='different-sub' incoming='google-sub-123'
+WARNING 2026-04-28 17:24:42,886 __init__ 6820 26612 Google login attempted for unknown user_login=co@makeadiff.in
+WARNING 2026-04-28 17:24:43,891 __init__ 6820 26612 Google login attempted for inactive user_id=5
+WARNING 2026-04-28 17:24:44,373 __init__ 6820 26612 Google login rejected — no allowed roles for user_id=6 role='Wingman'
+ERROR 2026-04-28 17:24:45,207 __init__ 6820 26612 SECURITY: google_sub mismatch for user_id=7 — stored='different-sub' incoming='google-sub-123'
+WARNING 2026-04-28 17:35:01,280 __init__ 16624 19040 Google login rejected — no allowed roles for user_id=5 role='Academic Support,Fellow'
+WARNING 2026-04-28 17:35:01,484 log 16624 19040 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:35:01,935 __init__ 16624 19040 Google login rejected — no allowed roles for user_id=6 role='Wingman'
+WARNING 2026-04-28 17:35:01,944 log 16624 19040 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:35:02,398 __init__ 16624 19040 Google login rejected — no allowed roles for user_id=7 role=''
+WARNING 2026-04-28 17:35:02,405 log 16624 19040 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:35:02,846 __init__ 16624 19040 Google login attempted for inactive user_id=8
+WARNING 2026-04-28 17:35:02,857 log 16624 19040 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:35:03,295 __init__ 16624 19040 Google login attempted for unknown user_login=nobody@example.com
+WARNING 2026-04-28 17:35:03,304 log 16624 19040 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:35:03,737 log 16624 19040 Unprocessable Content: /api/auth/google/callback
+WARNING 2026-04-28 17:35:04,135 __init__ 16624 19040 Google login attempted for unknown user_login=nobody@example.com
+WARNING 2026-04-28 17:35:04,146 log 16624 19040 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:35:05,320 log 16624 19040 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:35:05,735 log 16624 19040 Unprocessable Content: /api/auth/refresh
+WARNING 2026-04-28 17:35:06,580 log 16624 19040 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:35:10,542 log 16624 19040 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:35:10,809 log 16624 19040 Unauthorized: /api/auth/logout
+WARNING 2026-04-28 17:35:12,158 log 16624 19040 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:35:13,199 log 16624 19040 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:35:14,025 log 16624 19040 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:36:39,058 __init__ 24344 20248 Google login rejected — no allowed roles for user_id=5 role='Academic Support,Fellow'
+WARNING 2026-04-28 17:36:39,504 log 24344 20248 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:36:40,180 __init__ 24344 20248 Google login rejected — no allowed roles for user_id=6 role='Wingman'
+WARNING 2026-04-28 17:36:40,189 log 24344 20248 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:36:40,775 __init__ 24344 20248 Google login rejected — no allowed roles for user_id=7 role=''
+WARNING 2026-04-28 17:36:40,786 log 24344 20248 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:36:41,365 __init__ 24344 20248 Google login attempted for inactive user_id=8
+WARNING 2026-04-28 17:36:41,378 log 24344 20248 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:36:41,844 __init__ 24344 20248 Google login attempted for unknown user_login=nobody@example.com
+WARNING 2026-04-28 17:36:41,853 log 24344 20248 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:36:42,438 log 24344 20248 Unprocessable Content: /api/auth/google/callback
+WARNING 2026-04-28 17:36:43,251 __init__ 24344 20248 Google login attempted for unknown user_login=nobody@example.com
+WARNING 2026-04-28 17:36:43,264 log 24344 20248 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:36:44,800 log 24344 20248 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:36:45,231 log 24344 20248 Unprocessable Content: /api/auth/refresh
+WARNING 2026-04-28 17:36:46,196 log 24344 20248 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:36:49,645 log 24344 20248 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:36:49,946 log 24344 20248 Unauthorized: /api/auth/logout
+WARNING 2026-04-28 17:36:51,518 log 24344 20248 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:36:51,942 log 24344 20248 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:36:52,580 log 24344 20248 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:37:54,864 __init__ 11576 3232 Google login attempted for unknown user_login=co@makeadiff.in
+WARNING 2026-04-28 17:37:55,833 __init__ 11576 3232 Google login attempted for inactive user_id=5
+WARNING 2026-04-28 17:37:56,343 __init__ 11576 3232 Google login rejected — no allowed roles for user_id=6 role='Wingman'
+ERROR 2026-04-28 17:37:56,981 __init__ 11576 3232 SECURITY: google_sub mismatch for user_id=7 — stored='different-sub' incoming='google-sub-123'
+WARNING 2026-04-28 17:38:29,977 __init__ 11576 3232 Google login rejected — no allowed roles for user_id=20 role='Academic Support,Fellow'
+WARNING 2026-04-28 17:38:29,997 log 11576 3232 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:38:30,737 __init__ 11576 3232 Google login rejected — no allowed roles for user_id=21 role='Wingman'
+WARNING 2026-04-28 17:38:30,757 log 11576 3232 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:38:32,170 __init__ 11576 3232 Google login rejected — no allowed roles for user_id=22 role=''
+WARNING 2026-04-28 17:38:32,187 log 11576 3232 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:38:32,718 __init__ 11576 3232 Google login attempted for inactive user_id=23
+WARNING 2026-04-28 17:38:32,737 log 11576 3232 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:38:33,491 __init__ 11576 3232 Google login attempted for unknown user_login=nobody@example.com
+WARNING 2026-04-28 17:38:33,510 log 11576 3232 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:38:34,230 log 11576 3232 Unprocessable Content: /api/auth/google/callback
+WARNING 2026-04-28 17:38:34,945 __init__ 11576 3232 Google login attempted for unknown user_login=nobody@example.com
+WARNING 2026-04-28 17:38:34,970 log 11576 3232 Unauthorized: /api/auth/google/callback
+WARNING 2026-04-28 17:38:37,021 log 11576 3232 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:38:37,343 log 11576 3232 Unprocessable Content: /api/auth/refresh
+WARNING 2026-04-28 17:38:38,632 log 11576 3232 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:38:43,953 log 11576 3232 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:38:44,508 log 11576 3232 Unauthorized: /api/auth/logout
+WARNING 2026-04-28 17:38:46,259 log 11576 3232 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:38:46,593 log 11576 3232 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:38:47,495 log 11576 3232 Unauthorized: /api/auth/me
+INFO 2026-04-28 17:39:50,472 autoreload 14256 23572 Watching for file changes with StatReloader
+WARNING 2026-04-28 17:39:52,164 log 14256 26256 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:39:52,171 basehttp 14256 26256 "GET /api/auth/me HTTP/1.1" 401 70
+WARNING 2026-04-28 17:39:52,460 log 14256 24500 Unauthorized: /api/auth/refresh
+WARNING 2026-04-28 17:39:52,462 basehttp 14256 24500 "POST /api/auth/refresh HTTP/1.1" 401 70
+INFO 2026-04-28 17:40:22,592 basehttp 14256 14708 "GET /openapi.json HTTP/1.1" 200 5744
+INFO 2026-04-28 17:40:22,889 basehttp 14256 17784 "GET /openapi.json HTTP/1.1" 200 5744
+WARNING 2026-04-28 17:42:04,799 log 14256 10840 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:42:04,805 basehttp 14256 10840 "GET /api/auth/me HTTP/1.1" 401 70
+WARNING 2026-04-28 17:42:05,229 log 14256 10840 Not Found: /favicon.ico
+WARNING 2026-04-28 17:42:05,233 basehttp 14256 10840 "GET /favicon.ico HTTP/1.1" 404 4767
+WARNING 2026-04-28 17:44:11,402 log 14256 20744 Unauthorized: /api/auth/me
+WARNING 2026-04-28 17:44:11,405 basehttp 14256 20744 "GET /api/auth/me HTTP/1.1" 401 70

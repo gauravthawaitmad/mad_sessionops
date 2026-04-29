@@ -1,0 +1,57 @@
+# Flake8 configuration for MAD Backend
+
+[flake8]
+# Maximum line length
+max-line-length = 200
+
+# Maximum cyclomatic complexity
+max-complexity = 15
+
+# Exclude directories
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    .tox,
+    migrations,
+    node_modules,
+    staticfiles,
+    media
+
+# Ignore specific errors
+ignore =
+    E203,  # whitespace before ':'
+    E266,  # too many leading '#' for block comment
+    E501,  # line too long (handled by black)
+    W503,  # line break before binary operator
+    W504,  # line break after binary operator
+    E402,  # module level import not at top of file
+    F401,  # imported but unused (sometimes needed)
+
+# Per-file ignores
+per-file-ignores =
+    __init__.py:F401,F403
+    settings.py:E501
+    */migrations/*.py:E501
+
+# Show source code for each error
+show-source = True
+
+# Show pep8 violation statistics
+statistics = True
+
+# Count errors
+count = True
+
+# Enable/disable specific checks
+select = E,W,F,C
+
+# Format of the error message
+format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
+

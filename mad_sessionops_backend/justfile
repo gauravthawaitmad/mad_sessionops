@@ -1,0 +1,62 @@
+# Session-Ops backend — common dev commands
+
+# Show available commands
+default:
+    @just --list
+
+# Install/sync dependencies
+install:
+    uv sync --frozen
+
+# Run Django dev server
+serve:
+    uv run python manage.py runserver 0.0.0.0:8000
+
+# Run Celery worker (Windows-compatible solo pool)
+worker:
+    uv run celery -A sessionops worker -l info --pool=solo
+
+# Run Celery beat scheduler
+beat:
+    uv run celery -A sessionops beat -l info
+
+# Start Redis (one-time, persists across reboots)
+redis-start:
+    docker start sessionops-redis || docker run -d --name sessionops-redis --restart unless-stopped -p 6379:6379 redis:7-alpine
+
+# Stop Redis
+redis-stop:
+    docker stop sessionops-redis
+
+# Redis CLI
+redis-cli:
+    docker exec -it sessionops-redis redis-cli
+
+# Django shell
+shell:
+    uv run python manage.py shell
+
+# Make migrations
+makemigrations app="sessionops":
+    uv run python manage.py makemigrations {{app}}
+
+# Apply migrations (uses DBADMINUSER/DBADMINPASSWORD for DDL rights)
+migrate:
+    uv run python manage.py migrate --database migrate
+
+# Show migration status
+migrations:
+    uv run python manage.py showmigrations
+
+# Run tests
+test:
+    uv run pytest
+
+# Lint
+lint:
+    uv run ruff check .
+    uv run ruff format --check .
+
+# Format
+fmt:
+    uv run ruff format .

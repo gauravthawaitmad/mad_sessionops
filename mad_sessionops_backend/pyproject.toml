@@ -1,0 +1,119 @@
+[project]
+name = "mad-backend"
+version = "0.1.0"
+description = "Django backend application following Dalgo best practices"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "django==4.2",
+    "django-cors-headers==3.14.0",
+    "django-extensions==3.2.3",
+    "django-ninja>=1.0.0",
+    "pydantic[email]>=2.0",
+    "django-prometheus==2.3.1",
+    "djangorestframework==3.14.0",
+    "djangorestframework-simplejwt>=5.5.0",
+    "python-dotenv==1.0.0",
+    "psycopg2-binary==2.9.11",
+    "gunicorn==20.1.0",
+    "uvicorn==0.21.1",
+    "sentry-sdk==2.39.0",
+    # Google OAuth verification
+    "google-auth>=2.23.0",
+    # Task queue
+    "celery>=5.3",
+    "redis>=5.0",
+    "django-celery-beat>=2.5",
+    "pre-commit==3.8.0",
+    "black==23.3.0",
+    "isort==5.12.0",
+    "flake8==6.0.0",
+    "pylint==3.3.1",
+    "pylint-django==2.6.1",
+    "mypy==1.8.0",
+    "django-stubs==4.2.7",
+    "djangorestframework-stubs==3.14.5",
+    "bandit==1.7.5",
+    "safety>=3.3.0",
+    "radon==6.0.1",
+    "interrogate==1.5.0",
+    "pytest==7.2.2",
+    "pytest-cov==4.1.0",
+    "pytest-django==4.5.2",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+  | migrations
+  | __pycache__
+  | \.eggs
+  | \.tox
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+skip_glob = ["*/migrations/*", "*/venv/*", "*/.venv/*"]
+known_django = ["django"]
+known_third_party = ["ninja", "rest_framework", "sentry_sdk"]
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+DJANGO_SETTINGS_MODULE="sessionops.settings"
+testpaths = [
+  "sessionops/tests"
+]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = [
+ "sessionops"
+]
+omit = [
+  "sessionops/tests/*",
+  "sessionops/migrations/*",
+  "sessionops/management/*",
+  "sessionops/settings.py",
+  "sessionops/asgi.py",
+  "sessionops/wsgi.py",
+  "sessionops/urls.py",
+  "sessionops/routes.py",
+  "*/schema.py",
+  "sessionops/__init__.py",
+  "sessionops/schemas/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]

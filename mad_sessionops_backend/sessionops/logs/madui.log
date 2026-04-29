@@ -1,0 +1,451 @@
+INFO 2026-01-15 14:15:08,896 autoreload 18656 7264 Watching for file changes with StatReloader
+INFO 2026-01-16 11:30:27,766 autoreload 36992 33776 Watching for file changes with StatReloader
+INFO 2026-01-16 11:32:33,743 autoreload 37616 23352 Watching for file changes with StatReloader
+INFO 2026-01-16 11:34:47,499 autoreload 38412 38408 Watching for file changes with StatReloader
+WARNING 2026-01-16 11:35:04,674 log 38412 36900 Not Found: /
+WARNING 2026-01-16 11:35:04,682 basehttp 38412 36900 "GET / HTTP/1.1" 404 5097
+WARNING 2026-01-16 11:35:04,875 log 38412 36900 Not Found: /favicon.ico
+WARNING 2026-01-16 11:35:04,882 basehttp 38412 36900 "GET /favicon.ico HTTP/1.1" 404 5711
+INFO 2026-01-16 11:37:46,425 autoreload 38412 38408 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\settings.py changed, reloading.
+INFO 2026-01-16 11:37:48,019 autoreload 27276 29192 Watching for file changes with StatReloader
+WARNING 2026-01-16 11:39:29,610 log 27276 34768 Not Found: /docs
+WARNING 2026-01-16 11:39:29,617 basehttp 27276 34768 "GET /docs HTTP/1.1" 404 5690
+INFO 2026-01-16 12:45:01,963 autoreload 17404 38256 Watching for file changes with StatReloader
+WARNING 2026-01-16 12:45:55,276 log 17404 22180 Not Found: /google
+WARNING 2026-01-16 12:45:55,279 basehttp 17404 22180 "GET /google HTTP/1.1" 404 5696
+INFO 2026-01-16 12:46:37,333 basehttp 17404 37016 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+WARNING 2026-01-16 12:47:05,539 log 17404 22180 Not Found: /docs
+WARNING 2026-01-16 12:47:05,542 basehttp 17404 22180 "GET /docs HTTP/1.1" 404 5690
+INFO 2026-01-16 12:48:25,233 basehttp 17404 37016 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 12:48:45,736 autoreload 17404 38256 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\routes.py changed, reloading.
+INFO 2026-01-16 12:48:46,570 autoreload 37164 35356 Watching for file changes with StatReloader
+INFO 2026-01-16 12:49:15,980 autoreload 37164 35356 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 12:49:16,778 autoreload 17212 35588 Watching for file changes with StatReloader
+INFO 2026-01-16 12:49:22,490 autoreload 17212 35588 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 12:49:23,202 autoreload 15908 36080 Watching for file changes with StatReloader
+INFO 2026-01-16 12:49:25,837 autoreload 15908 36080 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 12:49:26,602 autoreload 38344 3168 Watching for file changes with StatReloader
+INFO 2026-01-16 12:49:38,449 autoreload 38344 3168 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 12:49:39,271 autoreload 33852 36792 Watching for file changes with StatReloader
+INFO 2026-01-16 12:49:40,897 autoreload 33852 36792 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 12:49:41,706 autoreload 3488 12396 Watching for file changes with StatReloader
+INFO 2026-01-16 12:49:52,385 basehttp 3488 37996 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+WARNING 2026-01-16 12:52:14,601 log 3488 21832 Method Not Allowed: /api/auth/google/oauth/callback
+WARNING 2026-01-16 12:52:14,605 basehttp 3488 21832 "GET /api/auth/google/oauth/callback HTTP/1.1" 405 18
+WARNING 2026-01-16 12:52:14,708 log 3488 21832 Not Found: /favicon.ico
+WARNING 2026-01-16 12:52:14,711 basehttp 3488 21832 "GET /favicon.ico HTTP/1.1" 404 5699
+INFO 2026-01-16 12:52:38,084 basehttp 3488 37996 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 12:52:56,407 autoreload 3488 12396 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 12:52:57,387 autoreload 38812 25948 Watching for file changes with StatReloader
+INFO 2026-01-16 12:53:11,311 basehttp 38812 34884 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 12:55:56,162 autoreload 38812 25948 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\settings.py changed, reloading.
+INFO 2026-01-16 12:55:57,127 autoreload 27860 22644 Watching for file changes with StatReloader
+INFO 2026-01-16 12:56:24,790 autoreload 31980 31804 Watching for file changes with StatReloader
+INFO 2026-01-16 12:56:37,939 basehttp 31980 35892 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 12:57:33,736 autoreload 31980 31804 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 12:57:34,713 autoreload 12376 35844 Watching for file changes with StatReloader
+INFO 2026-01-16 12:58:32,267 basehttp 12376 5412 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 13:01:30,365 autoreload 12376 35844 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 13:01:31,331 autoreload 18508 8216 Watching for file changes with StatReloader
+INFO 2026-01-16 14:40:07,547 basehttp 18508 34344 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 14:42:15,764 autoreload 18508 8216 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 14:42:17,936 autoreload 36512 19088 Watching for file changes with StatReloader
+INFO 2026-01-16 14:42:26,415 autoreload 36512 19088 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 14:42:27,219 autoreload 37496 1464 Watching for file changes with StatReloader
+INFO 2026-01-16 14:42:36,981 autoreload 37496 1464 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 14:42:37,809 autoreload 27164 30752 Watching for file changes with StatReloader
+INFO 2026-01-16 14:42:45,538 autoreload 27164 30752 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 14:42:46,465 autoreload 12884 9236 Watching for file changes with StatReloader
+INFO 2026-01-16 14:43:18,046 autoreload 35476 36312 Watching for file changes with StatReloader
+INFO 2026-01-16 14:43:33,437 basehttp 35476 11692 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 14:46:42,691 basehttp 35476 11692 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 14:47:09,639 basehttp 35476 11692 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 14:49:19,050 autoreload 35476 36312 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\settings.py changed, reloading.
+INFO 2026-01-16 14:49:20,027 autoreload 33236 24012 Watching for file changes with StatReloader
+INFO 2026-01-16 14:49:45,308 autoreload 39924 11148 Watching for file changes with StatReloader
+INFO 2026-01-16 14:49:57,038 basehttp 39924 35332 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+WARNING 2026-01-16 14:49:57,382 log 39924 37044 Unprocessable Content: /api/auth/google/oauth/callback
+WARNING 2026-01-16 14:49:57,386 basehttp 39924 37044 "POST /api/auth/google/oauth/callback HTTP/1.1" 422 95
+INFO 2026-01-16 14:53:12,238 autoreload 39924 11148 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\schemas\auth.py changed, reloading.
+INFO 2026-01-16 14:53:13,182 autoreload 28528 35068 Watching for file changes with StatReloader
+INFO 2026-01-16 14:53:44,665 autoreload 28528 35068 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\google_oauth_service.py changed, reloading.
+INFO 2026-01-16 14:53:45,522 autoreload 38616 27068 Watching for file changes with StatReloader
+INFO 2026-01-16 14:54:04,709 autoreload 38616 27068 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\google_oauth_service.py changed, reloading.
+INFO 2026-01-16 14:54:05,540 autoreload 37688 33332 Watching for file changes with StatReloader
+INFO 2026-01-16 14:54:28,849 autoreload 37688 33332 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\google_oauth_service.py changed, reloading.
+INFO 2026-01-16 14:54:29,599 autoreload 39044 39924 Watching for file changes with StatReloader
+INFO 2026-01-16 14:55:01,935 basehttp 39044 484 "GET /admin HTTP/1.1" 301 0
+INFO 2026-01-16 14:55:01,997 basehttp 39044 484 "GET /admin/ HTTP/1.1" 302 0
+INFO 2026-01-16 14:55:02,288 basehttp 39044 484 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4178
+INFO 2026-01-16 14:55:02,515 basehttp 39044 37320 "GET /static/admin/css/dark_mode.css HTTP/1.1" 200 2929
+INFO 2026-01-16 14:55:02,516 basehttp 39044 37364 "GET /static/admin/css/nav_sidebar.css HTTP/1.1" 200 2694
+INFO 2026-01-16 14:55:02,534 basehttp 39044 37320 "GET /static/admin/css/login.css HTTP/1.1" 200 958
+INFO 2026-01-16 14:55:02,534 basehttp 39044 484 "GET /static/admin/css/base.css HTTP/1.1" 200 21207
+INFO 2026-01-16 14:55:02,535 basehttp 39044 37364 "GET /static/admin/css/responsive.css HTTP/1.1" 200 18557
+INFO 2026-01-16 14:55:02,564 basehttp 39044 37320 "GET /static/admin/js/theme.js HTTP/1.1" 200 1943
+INFO 2026-01-16 14:55:02,565 basehttp 39044 484 "GET /static/admin/js/nav_sidebar.js HTTP/1.1" 200 3063
+INFO 2026-01-16 14:55:13,591 basehttp 39044 484 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4339
+INFO 2026-01-16 14:57:12,222 basehttp 39044 484 "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+INFO 2026-01-16 14:57:12,487 basehttp 39044 484 "GET /admin/ HTTP/1.1" 200 8505
+INFO 2026-01-16 14:57:12,538 basehttp 39044 484 "GET /static/admin/css/dashboard.css HTTP/1.1" 200 441
+INFO 2026-01-16 14:57:12,580 basehttp 39044 37320 "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 380
+INFO 2026-01-16 14:57:12,581 basehttp 39044 484 "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 331
+INFO 2026-01-16 14:57:20,530 basehttp 39044 484 "GET /admin/authtoken/tokenproxy/ HTTP/1.1" 200 9135
+INFO 2026-01-16 14:57:20,565 basehttp 39044 484 "GET /static/admin/css/changelists.css HTTP/1.1" 200 6584
+INFO 2026-01-16 14:57:20,568 basehttp 39044 37364 "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2026-01-16 14:57:20,589 basehttp 39044 484 "GET /static/admin/js/core.js HTTP/1.1" 200 5682
+INFO 2026-01-16 14:57:20,614 basehttp 39044 484 "GET /static/admin/js/actions.js HTTP/1.1" 200 7872
+INFO 2026-01-16 14:57:20,627 basehttp 39044 37320 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 292458
+INFO 2026-01-16 14:57:20,633 basehttp 39044 37364 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 8943
+INFO 2026-01-16 14:57:20,650 basehttp 39044 37320 "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2026-01-16 14:57:20,665 basehttp 39044 484 "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2026-01-16 14:57:20,720 basehttp 39044 484 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+INFO 2026-01-16 14:57:20,724 basehttp 39044 37364 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 232381
+INFO 2026-01-16 14:57:20,749 basehttp 39044 37364 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 331
+INFO 2026-01-16 14:57:25,154 basehttp 39044 37364 "GET /admin/auth/user/ HTTP/1.1" 200 12703
+INFO 2026-01-16 14:57:25,184 basehttp 39044 37320 "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 436
+INFO 2026-01-16 14:57:25,193 basehttp 39044 484 "GET /static/admin/img/search.svg HTTP/1.1" 200 458
+INFO 2026-01-16 14:57:25,350 basehttp 39044 37364 "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-16 14:57:25,377 basehttp 39044 37364 "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1097
+INFO 2026-01-16 14:57:31,008 basehttp 39044 37364 "GET /admin/madui/user/ HTTP/1.1" 200 33226
+INFO 2026-01-16 14:57:31,181 basehttp 39044 37364 "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-16 14:57:40,618 basehttp 39044 37364 "GET /admin/madui/user/add/ HTTP/1.1" 200 26380
+INFO 2026-01-16 14:57:40,662 basehttp 39044 37364 "GET /static/admin/css/forms.css HTTP/1.1" 200 8953
+INFO 2026-01-16 14:57:40,673 basehttp 39044 37320 "GET /static/admin/js/collapse.js HTTP/1.1" 200 1803
+INFO 2026-01-16 14:57:40,679 basehttp 39044 37736 "GET /static/admin/js/inlines.js HTTP/1.1" 200 15526
+INFO 2026-01-16 14:57:40,688 basehttp 39044 37364 "GET /static/admin/css/widgets.css HTTP/1.1" 200 11952
+INFO 2026-01-16 14:57:40,689 basehttp 39044 33380 "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
+INFO 2026-01-16 14:57:40,706 basehttp 39044 33380 "GET /static/admin/img/icon-unknown.svg HTTP/1.1" 200 655
+INFO 2026-01-16 14:57:40,750 basehttp 39044 33380 "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+INFO 2026-01-16 14:57:40,789 basehttp 39044 484 "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-16 14:57:50,254 basehttp 39044 484 "GET /admin/madui/userauth/ HTTP/1.1" 200 11446
+INFO 2026-01-16 14:57:50,436 basehttp 39044 484 "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-16 14:57:54,317 basehttp 39044 484 "GET /admin/auth/user/ HTTP/1.1" 200 12703
+INFO 2026-01-16 14:57:54,513 basehttp 39044 484 "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-16 14:57:58,340 basehttp 39044 484 "GET /admin/madui/user/ HTTP/1.1" 200 33226
+INFO 2026-01-16 14:57:58,519 basehttp 39044 484 "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-16 14:58:09,370 basehttp 39044 484 "GET /admin/madui/user/?p=185 HTTP/1.1" 200 20405
+INFO 2026-01-16 14:58:09,543 basehttp 39044 484 "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-16 14:58:16,018 basehttp 39044 484 "GET /admin/madui/user/?q=gaurav HTTP/1.1" 200 23708
+INFO 2026-01-16 14:58:16,201 basehttp 39044 484 "GET /admin/jsi18n/ HTTP/1.1" 200 3343
+INFO 2026-01-16 14:58:50,993 autoreload 10344 19640 Watching for file changes with StatReloader
+WARNING 2026-01-16 14:59:02,746 log 10344 1368 Not Found: /
+WARNING 2026-01-16 14:59:02,938 basehttp 10344 1368 "GET / HTTP/1.1" 404 5085
+INFO 2026-01-16 14:59:09,310 basehttp 10344 1368 "GET /api/docs HTTP/1.1" 200 1086
+INFO 2026-01-16 14:59:09,775 basehttp 10344 1368 "GET /openapi.json HTTP/1.1" 200 18799
+WARNING 2026-01-16 14:59:42,843 log 10344 38040 Unprocessable Content: /api/auth/google/oauth/callback
+WARNING 2026-01-16 14:59:43,033 basehttp 10344 38040 "POST /api/auth/google/oauth/callback HTTP/1.1" 422 187
+INFO 2026-01-16 15:06:27,010 autoreload 10344 19640 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\settings.py changed, reloading.
+INFO 2026-01-16 15:06:28,002 autoreload 34844 39668 Watching for file changes with StatReloader
+INFO 2026-01-16 15:17:09,848 autoreload 34844 39668 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:17:10,869 autoreload 11096 40288 Watching for file changes with StatReloader
+INFO 2026-01-16 15:17:12,548 autoreload 11096 40288 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:17:13,342 autoreload 32000 3848 Watching for file changes with StatReloader
+INFO 2026-01-16 15:17:16,990 autoreload 32000 3848 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:17:17,765 autoreload 36664 26388 Watching for file changes with StatReloader
+INFO 2026-01-16 15:17:19,386 autoreload 36664 26388 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:17:20,150 autoreload 35712 40856 Watching for file changes with StatReloader
+INFO 2026-01-16 15:17:23,808 autoreload 35712 40856 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:17:24,848 autoreload 16420 32904 Watching for file changes with StatReloader
+INFO 2026-01-16 15:17:26,504 autoreload 16420 32904 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:17:27,343 autoreload 32328 36932 Watching for file changes with StatReloader
+INFO 2026-01-16 15:17:32,020 autoreload 32328 36932 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:17:33,059 autoreload 38752 3808 Watching for file changes with StatReloader
+INFO 2026-01-16 15:17:35,818 autoreload 38752 3808 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:17:36,859 autoreload 40944 40908 Watching for file changes with StatReloader
+INFO 2026-01-16 15:18:37,857 autoreload 40944 40908 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:18:38,839 autoreload 16500 40528 Watching for file changes with StatReloader
+INFO 2026-01-16 15:18:42,489 autoreload 16500 40528 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:18:43,507 autoreload 40248 40012 Watching for file changes with StatReloader
+INFO 2026-01-16 15:18:47,155 autoreload 40248 40012 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:18:47,921 autoreload 8884 39212 Watching for file changes with StatReloader
+INFO 2026-01-16 15:18:51,540 autoreload 8884 39212 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:18:52,260 autoreload 40668 40660 Watching for file changes with StatReloader
+INFO 2026-01-16 15:19:40,287 autoreload 40668 40660 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:19:41,051 autoreload 40604 37380 Watching for file changes with StatReloader
+INFO 2026-01-16 15:19:43,610 autoreload 40604 37380 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:19:44,368 autoreload 37304 35212 Watching for file changes with StatReloader
+INFO 2026-01-16 15:19:46,930 autoreload 37304 35212 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:19:47,719 autoreload 33332 40396 Watching for file changes with StatReloader
+INFO 2026-01-16 15:19:49,313 autoreload 33332 40396 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:19:50,081 autoreload 7184 31956 Watching for file changes with StatReloader
+INFO 2026-01-16 15:19:53,702 autoreload 7184 31956 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:19:54,489 autoreload 36904 38844 Watching for file changes with StatReloader
+INFO 2026-01-16 15:19:56,032 autoreload 36904 38844 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:19:56,722 autoreload 11356 37304 Watching for file changes with StatReloader
+INFO 2026-01-16 15:19:58,287 autoreload 11356 37304 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:19:59,061 autoreload 9576 40196 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:00,616 autoreload 9576 40196 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:01,356 autoreload 39148 37436 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:06,013 autoreload 39148 37436 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:06,785 autoreload 2564 38408 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:25,480 autoreload 2564 38408 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:26,338 autoreload 40160 34288 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:27,972 autoreload 40160 34288 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:28,808 autoreload 35336 14932 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:33,462 autoreload 35336 14932 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:34,206 autoreload 8212 40600 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:37,834 autoreload 8212 40600 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:38,584 autoreload 37320 40812 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:40,113 autoreload 37320 40812 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:40,827 autoreload 40568 39760 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:44,407 autoreload 40568 39760 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:45,189 autoreload 36688 36820 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:49,771 autoreload 36688 36820 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:50,523 autoreload 37320 40032 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:53,158 autoreload 37320 40032 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:20:54,138 autoreload 25936 9176 Watching for file changes with StatReloader
+INFO 2026-01-16 15:20:59,917 autoreload 25936 9176 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:21:00,684 autoreload 40596 32976 Watching for file changes with StatReloader
+INFO 2026-01-16 15:21:08,416 autoreload 40596 32976 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:21:09,149 autoreload 4744 36572 Watching for file changes with StatReloader
+INFO 2026-01-16 15:21:25,463 autoreload 4744 36572 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:21:26,189 autoreload 19640 40088 Watching for file changes with StatReloader
+INFO 2026-01-16 15:21:29,721 autoreload 19640 40088 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:21:30,640 autoreload 40920 39216 Watching for file changes with StatReloader
+INFO 2026-01-16 15:21:48,269 autoreload 40920 39216 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:21:49,091 autoreload 40460 40068 Watching for file changes with StatReloader
+INFO 2026-01-16 15:21:52,760 autoreload 40460 40068 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:21:53,510 autoreload 39340 39124 Watching for file changes with StatReloader
+INFO 2026-01-16 15:24:00,160 autoreload 40428 22616 Watching for file changes with StatReloader
+WARNING 2026-01-16 15:24:17,848 log 40428 4796 Unprocessable Content: /api/auth/google/oauth/callback
+WARNING 2026-01-16 15:24:18,096 basehttp 40428 4796 "POST /api/auth/google/oauth/callback HTTP/1.1" 422 187
+INFO 2026-01-16 15:26:31,703 autoreload 40428 22616 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:26:32,651 autoreload 40352 25260 Watching for file changes with StatReloader
+WARNING 2026-01-16 15:26:40,311 log 40352 39504 Unprocessable Content: /api/auth/google/oauth/callback
+WARNING 2026-01-16 15:26:40,520 basehttp 40352 39504 "POST /api/auth/google/oauth/callback HTTP/1.1" 422 187
+WARNING 2026-01-16 15:29:54,653 log 40352 15788 Not Found: /api/google/oauth/callback
+WARNING 2026-01-16 15:29:54,654 basehttp 40352 15788 "POST /api/google/oauth/callback HTTP/1.1" 404 5742
+WARNING 2026-01-16 15:30:28,375 log 40352 15788 Unprocessable Content: /api/auth/google/oauth/callback
+WARNING 2026-01-16 15:30:28,377 basehttp 40352 15788 "POST /api/auth/google/oauth/callback HTTP/1.1" 422 187
+INFO 2026-01-16 15:30:58,072 autoreload 40352 25260 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:30:59,114 autoreload 37536 18316 Watching for file changes with StatReloader
+INFO 2026-01-16 15:31:01,802 autoreload 37536 18316 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:31:02,551 autoreload 41740 37768 Watching for file changes with StatReloader
+WARNING 2026-01-16 15:31:09,940 log 41740 36500 Unprocessable Content: /api/auth/google/oauth/callback
+WARNING 2026-01-16 15:31:09,942 basehttp 41740 36500 "POST /api/auth/google/oauth/callback HTTP/1.1" 422 187
+INFO 2026-01-16 15:31:51,902 autoreload 41740 37768 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:31:52,679 autoreload 41860 15608 Watching for file changes with StatReloader
+INFO 2026-01-16 15:31:56,413 autoreload 41860 15608 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 15:31:57,199 autoreload 41696 41832 Watching for file changes with StatReloader
+WARNING 2026-01-16 15:32:04,263 log 41696 34576 Unprocessable Content: /api/auth/google/oauth/callback
+WARNING 2026-01-16 15:32:04,265 basehttp 41696 34576 "POST /api/auth/google/oauth/callback HTTP/1.1" 422 187
+WARNING 2026-01-16 15:56:38,038 log 41696 23312 Unprocessable Content: /api/auth/google/oauth/callback
+WARNING 2026-01-16 15:56:38,044 basehttp 41696 23312 "POST /api/auth/google/oauth/callback HTTP/1.1" 422 187
+INFO 2026-01-16 15:56:59,709 autoreload 41696 41832 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\schemas\auth.py changed, reloading.
+INFO 2026-01-16 15:57:01,533 autoreload 4196 37496 Watching for file changes with StatReloader
+INFO 2026-01-16 15:58:26,902 autoreload 44284 40436 Watching for file changes with StatReloader
+INFO 2026-01-16 15:58:32,559 custom_logger 44284 37192 Google Auth Endpoint Hit
+ERROR 2026-01-16 15:58:32,727 log 44284 37192 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 15:58:32,734 basehttp 44284 37192 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 92
+INFO 2026-01-16 15:59:30,910 autoreload 44284 40436 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:59:32,216 autoreload 44984 42316 Watching for file changes with StatReloader
+INFO 2026-01-16 15:59:35,643 custom_logger 44984 37528 Google Auth Endpoint Hit
+ERROR 2026-01-16 15:59:35,778 log 44984 37528 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 15:59:35,782 basehttp 44984 37528 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 89
+INFO 2026-01-16 15:59:49,443 autoreload 44984 42316 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 15:59:51,043 autoreload 38972 42588 Watching for file changes with StatReloader
+INFO 2026-01-16 15:59:54,263 custom_logger 38972 24428 Google Auth Endpoint Hit
+INFO 2026-01-16 15:59:54,380 custom_logger 38972 24428 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+ERROR 2026-01-16 15:59:55,128 custom_logger 38972 24428 Google token exchange failed: Bad Request
+ERROR 2026-01-16 15:59:55,351 custom_logger 38972 24428 Full error response: {'error': 'invalid_grant', 'error_description': 'Bad Request'}
+ERROR 2026-01-16 15:59:55,356 log 38972 24428 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 15:59:55,360 basehttp 38972 24428 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 48
+INFO 2026-01-16 16:06:58,865 custom_logger 38972 44008 Google Auth Endpoint Hit
+INFO 2026-01-16 16:06:59,050 custom_logger 38972 44008 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:07:00,254 custom_logger 38972 44008 Successfully exchanged code for tokens
+INFO 2026-01-16 16:07:01,082 custom_logger 38972 44008 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:07:01,084 custom_logger 38972 44008 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:07:01,159 custom_logger 38972 44008 Google linked to existing user: 1924616
+ERROR 2026-01-16 16:07:01,174 log 38972 44008 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 16:07:01,215 basehttp 38972 44008 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 49
+INFO 2026-01-16 16:21:40,641 autoreload 38972 42588 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\models\user_auth.py changed, reloading.
+INFO 2026-01-16 16:21:42,091 autoreload 45660 46028 Watching for file changes with StatReloader
+INFO 2026-01-16 16:21:47,104 autoreload 45660 46028 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\models\user_auth.py changed, reloading.
+INFO 2026-01-16 16:21:49,219 autoreload 45032 39952 Watching for file changes with StatReloader
+INFO 2026-01-16 16:22:15,637 custom_logger 45032 42764 Google Auth Endpoint Hit
+INFO 2026-01-16 16:22:15,804 custom_logger 45032 42764 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:22:17,582 custom_logger 45032 42764 Successfully exchanged code for tokens
+INFO 2026-01-16 16:22:18,573 custom_logger 45032 42764 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:22:18,583 custom_logger 45032 42764 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:22:18,688 custom_logger 45032 42764 Google linked to existing user: 1924616
+ERROR 2026-01-16 16:22:18,711 log 45032 42764 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 16:22:18,766 basehttp 45032 42764 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 49
+INFO 2026-01-16 16:22:36,100 autoreload 45032 39952 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\models\user_auth.py changed, reloading.
+INFO 2026-01-16 16:22:37,640 autoreload 34600 43780 Watching for file changes with StatReloader
+INFO 2026-01-16 16:22:39,510 autoreload 34600 43780 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\models\user_auth.py changed, reloading.
+INFO 2026-01-16 16:22:41,522 autoreload 31428 32220 Watching for file changes with StatReloader
+INFO 2026-01-16 16:25:56,187 autoreload 31428 32220 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 16:25:57,641 autoreload 44732 44820 Watching for file changes with StatReloader
+INFO 2026-01-16 16:25:59,578 autoreload 44732 44820 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 16:26:01,166 autoreload 43696 45380 Watching for file changes with StatReloader
+INFO 2026-01-16 16:26:06,525 autoreload 43696 45380 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 16:26:08,165 autoreload 36384 3516 Watching for file changes with StatReloader
+INFO 2026-01-16 16:26:10,213 autoreload 36384 3516 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 16:26:11,655 autoreload 44864 37192 Watching for file changes with StatReloader
+INFO 2026-01-16 16:26:22,885 custom_logger 44864 43292 Google Auth Endpoint Hit
+INFO 2026-01-16 16:26:23,024 custom_logger 44864 43292 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:26:23,605 custom_logger 44864 43292 Successfully exchanged code for tokens
+INFO 2026-01-16 16:26:24,046 custom_logger 44864 43292 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:26:24,046 custom_logger 44864 43292 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:26:24,111 custom_logger 44864 43292 Google linked to existing user: 1924616
+ERROR 2026-01-16 16:26:24,127 log 44864 43292 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 16:26:24,166 basehttp 44864 43292 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 49
+INFO 2026-01-16 16:27:09,135 autoreload 44864 37192 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\models\user_auth.py changed, reloading.
+INFO 2026-01-16 16:27:10,451 autoreload 41868 30848 Watching for file changes with StatReloader
+INFO 2026-01-16 16:27:17,980 autoreload 41868 30848 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\models\user_auth.py changed, reloading.
+INFO 2026-01-16 16:27:19,381 autoreload 34040 38516 Watching for file changes with StatReloader
+INFO 2026-01-16 16:32:48,645 autoreload 14028 14468 Watching for file changes with StatReloader
+INFO 2026-01-16 16:32:59,304 custom_logger 14028 42472 Google Auth Endpoint Hit
+INFO 2026-01-16 16:32:59,565 custom_logger 14028 42472 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:33:00,766 custom_logger 14028 42472 Successfully exchanged code for tokens
+INFO 2026-01-16 16:33:01,532 custom_logger 14028 42472 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:33:01,534 custom_logger 14028 42472 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:33:01,610 custom_logger 14028 42472 Google linked to existing user: 1924616
+ERROR 2026-01-16 16:33:01,626 log 14028 42472 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 16:33:01,674 basehttp 14028 42472 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 49
+INFO 2026-01-16 16:34:35,302 autoreload 14028 14468 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\models\user.py changed, reloading.
+INFO 2026-01-16 16:34:36,814 autoreload 29900 45540 Watching for file changes with StatReloader
+INFO 2026-01-16 16:41:42,581 custom_logger 29900 44980 Google Auth Endpoint Hit
+INFO 2026-01-16 16:41:42,770 custom_logger 29900 44980 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:41:44,544 custom_logger 29900 44980 Successfully exchanged code for tokens
+INFO 2026-01-16 16:41:45,382 custom_logger 29900 44980 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:41:45,383 custom_logger 29900 44980 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:41:45,453 custom_logger 29900 44980 Google linked to existing user: 1924616
+ERROR 2026-01-16 16:41:45,526 log 29900 44980 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 16:41:45,570 basehttp 29900 44980 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 138
+INFO 2026-01-16 16:42:44,334 autoreload 46332 35200 Watching for file changes with StatReloader
+INFO 2026-01-16 16:42:55,130 custom_logger 46332 46708 Google Auth Endpoint Hit
+INFO 2026-01-16 16:42:55,295 custom_logger 46332 46708 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:42:56,626 custom_logger 46332 46708 Successfully exchanged code for tokens
+WARNING 2026-01-16 16:42:56,979 custom_logger 46332 46708 Google token verification failed: Token used too early, 1768561976 < 1768561977. Check that your computer's clock is set correctly.
+WARNING 2026-01-16 16:42:57,244 log 46332 46708 Unauthorized: /api/auth/google/oauth/callback
+WARNING 2026-01-16 16:42:57,252 basehttp 46332 46708 "POST /api/auth/google/oauth/callback HTTP/1.1" 401 34
+INFO 2026-01-16 16:42:57,576 basehttp 46332 41528 "OPTIONS /api/auth/refresh-token HTTP/1.1" 200 0
+WARNING 2026-01-16 16:42:57,616 log 46332 41528 Not Found: /api/auth/refresh-token
+WARNING 2026-01-16 16:42:57,620 basehttp 46332 41528 "POST /api/auth/refresh-token HTTP/1.1" 404 5733
+INFO 2026-01-16 16:43:25,811 custom_logger 46332 46708 Google Auth Endpoint Hit
+INFO 2026-01-16 16:43:25,956 custom_logger 46332 46708 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:43:26,835 custom_logger 46332 46708 Successfully exchanged code for tokens
+INFO 2026-01-16 16:43:27,231 custom_logger 46332 46708 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:43:27,232 custom_logger 46332 46708 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:43:27,294 custom_logger 46332 46708 Google linked to existing user: 1924616
+ERROR 2026-01-16 16:43:27,340 log 46332 46708 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 16:43:27,381 basehttp 46332 46708 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 138
+INFO 2026-01-16 16:44:24,205 autoreload 46332 35200 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 16:44:25,991 autoreload 44372 46452 Watching for file changes with StatReloader
+INFO 2026-01-16 16:45:44,275 autoreload 46884 33040 Watching for file changes with StatReloader
+INFO 2026-01-16 16:45:52,955 custom_logger 46884 46860 Google Auth Endpoint Hit
+INFO 2026-01-16 16:45:53,127 custom_logger 46884 46860 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:45:54,989 custom_logger 46884 46860 Successfully exchanged code for tokens
+INFO 2026-01-16 16:45:56,482 custom_logger 46884 46860 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:45:56,486 custom_logger 46884 46860 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:45:56,573 custom_logger 46884 46860 Google linked to existing user: 1924616
+INFO 2026-01-16 16:45:56,819 basehttp 46884 46860 "POST /api/auth/google/oauth/callback HTTP/1.1" 200 1080
+INFO 2026-01-16 16:46:48,009 custom_logger 46884 46860 Google Auth Endpoint Hit
+INFO 2026-01-16 16:46:48,184 custom_logger 46884 46860 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:46:49,492 custom_logger 46884 46860 Successfully exchanged code for tokens
+INFO 2026-01-16 16:46:50,283 custom_logger 46884 46860 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:46:50,285 custom_logger 46884 46860 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:46:50,337 custom_logger 46884 46860 Existing Google user logged in: 1924616
+INFO 2026-01-16 16:46:50,426 basehttp 46884 46860 "POST /api/auth/google/oauth/callback HTTP/1.1" 200 1080
+INFO 2026-01-16 16:49:13,014 custom_logger 46884 46860 Google Auth Endpoint Hit
+INFO 2026-01-16 16:49:13,157 custom_logger 46884 46860 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:49:13,720 custom_logger 46884 46860 Successfully exchanged code for tokens
+INFO 2026-01-16 16:49:14,032 custom_logger 46884 46860 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:49:14,033 custom_logger 46884 46860 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:49:14,075 custom_logger 46884 46860 Existing Google user logged in: 1924616
+INFO 2026-01-16 16:49:14,150 basehttp 46884 46860 "POST /api/auth/google/oauth/callback HTTP/1.1" 200 1080
+INFO 2026-01-16 16:49:48,348 custom_logger 46884 46860 Google Auth Endpoint Hit
+INFO 2026-01-16 16:49:48,489 custom_logger 46884 46860 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:49:49,067 custom_logger 46884 46860 Successfully exchanged code for tokens
+INFO 2026-01-16 16:49:49,415 custom_logger 46884 46860 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:49:49,416 custom_logger 46884 46860 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:49:49,464 custom_logger 46884 46860 Existing Google user logged in: 1924616
+INFO 2026-01-16 16:49:49,535 basehttp 46884 46860 "POST /api/auth/google/oauth/callback HTTP/1.1" 200 1080
+INFO 2026-01-16 16:53:30,659 custom_logger 46884 41964 Google Auth Endpoint Hit
+INFO 2026-01-16 16:53:30,793 custom_logger 46884 41964 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+ERROR 2026-01-16 16:53:31,393 custom_logger 46884 41964 Google token exchange failed: Bad Request
+ERROR 2026-01-16 16:53:31,541 custom_logger 46884 41964 Full error response: {'error': 'invalid_grant', 'error_description': 'Bad Request'}
+ERROR 2026-01-16 16:53:31,544 log 46884 41964 Internal Server Error: /api/auth/google/oauth/callback
+ERROR 2026-01-16 16:53:31,546 basehttp 46884 41964 "POST /api/auth/google/oauth/callback HTTP/1.1" 500 48
+INFO 2026-01-16 16:54:22,515 autoreload 46884 33040 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 16:54:24,026 autoreload 44588 15808 Watching for file changes with StatReloader
+INFO 2026-01-16 16:54:47,384 autoreload 44588 15808 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\services\auth_service.py changed, reloading.
+INFO 2026-01-16 16:54:48,773 autoreload 46300 41852 Watching for file changes with StatReloader
+INFO 2026-01-16 16:55:11,224 autoreload 46300 41852 C:\MAD_WORKSPACE\mad_sourcing_project\mad_backend\madui\api\auth_api.py changed, reloading.
+INFO 2026-01-16 16:55:12,478 autoreload 39940 44316 Watching for file changes with StatReloader
+INFO 2026-01-16 16:56:06,665 basehttp 39940 43472 "OPTIONS /api/auth/google/oauth/callback HTTP/1.1" 200 0
+INFO 2026-01-16 16:56:07,005 custom_logger 39940 42124 === Google Auth Endpoint Hit ===
+INFO 2026-01-16 16:56:07,008 custom_logger 39940 42124 Received code: 4/0ASc3gC1x14xa6XztY...
+INFO 2026-01-16 16:56:07,010 custom_logger 39940 42124 Received codeVerifier: T.TJEQZWVFwqM7Uwp4Au...
+INFO 2026-01-16 16:56:07,012 custom_logger 39940 42124 Received redirectUri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:56:07,014 custom_logger 39940 42124 Calling AuthService.login_with_google
+INFO 2026-01-16 16:56:07,200 custom_logger 39940 42124 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:56:08,771 custom_logger 39940 42124 Successfully exchanged code for tokens
+INFO 2026-01-16 16:56:09,534 custom_logger 39940 42124 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:56:09,535 custom_logger 39940 42124 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:56:09,588 custom_logger 39940 42124 Existing Google user logged in: 1924616
+INFO 2026-01-16 16:56:09,590 custom_logger 39940 42124 === _generate_tokens START for user_id: 1924616 ===
+INFO 2026-01-16 16:56:09,591 custom_logger 39940 42124 RefreshToken created successfully
+INFO 2026-01-16 16:56:09,592 custom_logger 39940 42124 Added claims to refresh token: user_id=1924616, email=gaurav.thwait@makeadiff.in, role=Project Associate
+INFO 2026-01-16 16:56:09,593 custom_logger 39940 42124 Added claims to access token
+INFO 2026-01-16 16:56:09,637 custom_logger 39940 42124 Access token generated: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90e...
+INFO 2026-01-16 16:56:09,638 custom_logger 39940 42124 Refresh token generated: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90e...
+INFO 2026-01-16 16:56:09,639 custom_logger 39940 42124 Token expires_in: 43200 seconds
+INFO 2026-01-16 16:56:09,641 custom_logger 39940 42124 TokenResponseSchema created successfully
+INFO 2026-01-16 16:56:09,643 custom_logger 39940 42124 === _generate_tokens END ===
+INFO 2026-01-16 16:56:09,645 custom_logger 39940 42124 Scenario 1 - Tokens generated, creating AuthResponseSchema
+INFO 2026-01-16 16:56:09,662 custom_logger 39940 42124 User response created: user_id=1924616 email='gaurav.thwait@makeadiff.in' user_display_name='GauravThawait' user_login='gaurav.thwait@makeadiff.in' user_role='Project Associate' contact='9131838493' city=None state=None center=None auth_methods=['google_oauth'] user_created_datetime=datetime.datetime(2025, 4, 22, 9, 5, tzinfo=datetime.timezone.utc)
+INFO 2026-01-16 16:56:09,664 custom_logger 39940 42124 AuthResponseSchema created - user: gaurav.thwait@makeadiff.in, tokens.access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90e...
+INFO 2026-01-16 16:56:09,682 custom_logger 39940 42124 === AuthService.login_with_google returned successfully ===
+INFO 2026-01-16 16:56:09,683 custom_logger 39940 42124 Result type: <class 'madui.schemas.auth.AuthResponseSchema'>
+INFO 2026-01-16 16:56:09,684 custom_logger 39940 42124 Result user email: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 16:56:09,686 custom_logger 39940 42124 Result tokens.access_token exists: True
+INFO 2026-01-16 16:56:09,687 custom_logger 39940 42124 Result tokens.refresh_token exists: True
+INFO 2026-01-16 16:56:09,688 custom_logger 39940 42124 Access token (first 50 chars): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90e...
+INFO 2026-01-16 16:56:09,689 custom_logger 39940 42124 === Returning result to frontend ===
+INFO 2026-01-16 16:56:09,738 basehttp 39940 42124 "POST /api/auth/google/oauth/callback HTTP/1.1" 200 1080
+INFO 2026-01-16 16:59:09,880 custom_logger 39940 42124 === Google Auth Endpoint Hit ===
+INFO 2026-01-16 16:59:09,880 custom_logger 39940 42124 Received code: 4/0ASc3gC0ZO_dXPeZF8...
+INFO 2026-01-16 16:59:09,880 custom_logger 39940 42124 Received codeVerifier: NctVif5TDku6wdVD.dzH...
+INFO 2026-01-16 16:59:09,881 custom_logger 39940 42124 Received redirectUri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:59:09,881 custom_logger 39940 42124 Calling AuthService.login_with_google
+INFO 2026-01-16 16:59:10,054 custom_logger 39940 42124 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 16:59:10,667 custom_logger 39940 42124 Successfully exchanged code for tokens
+WARNING 2026-01-16 16:59:10,988 custom_logger 39940 42124 Google token verification failed: Token used too early, 1768562950 < 1768562951. Check that your computer's clock is set correctly.
+ERROR 2026-01-16 16:59:11,654 custom_logger 39940 42124 AuthenticationError: Invalid Google token (code: INVALID_GOOGLE_TOKEN)
+WARNING 2026-01-16 16:59:11,659 log 39940 42124 Unauthorized: /api/auth/google/oauth/callback
+WARNING 2026-01-16 16:59:11,666 basehttp 39940 42124 "POST /api/auth/google/oauth/callback HTTP/1.1" 401 34
+WARNING 2026-01-16 16:59:11,705 log 39940 43472 Not Found: /api/auth/refresh-token
+WARNING 2026-01-16 16:59:11,710 basehttp 39940 43472 "POST /api/auth/refresh-token HTTP/1.1" 404 5733
+INFO 2026-01-16 17:02:06,085 custom_logger 39940 21108 === Google Auth Endpoint Hit ===
+INFO 2026-01-16 17:02:06,086 custom_logger 39940 21108 Received code: 4/0ASc3gC0s4EK174cZb...
+INFO 2026-01-16 17:02:06,086 custom_logger 39940 21108 Received codeVerifier: QTQU7qA6GsQgc2NKVLwl...
+INFO 2026-01-16 17:02:06,087 custom_logger 39940 21108 Received redirectUri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 17:02:06,088 custom_logger 39940 21108 Calling AuthService.login_with_google
+INFO 2026-01-16 17:02:06,244 custom_logger 39940 21108 Exchanging code for tokens with redirect_uri: http://localhost:3000/auth/callback/google
+INFO 2026-01-16 17:02:06,873 custom_logger 39940 21108 Successfully exchanged code for tokens
+INFO 2026-01-16 17:02:07,215 custom_logger 39940 21108 Google token verified for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 17:02:07,216 custom_logger 39940 21108 Google auth for: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 17:02:07,266 custom_logger 39940 21108 Existing Google user logged in: 1924616
+INFO 2026-01-16 17:02:07,267 custom_logger 39940 21108 === _generate_tokens START for user_id: 1924616 ===
+INFO 2026-01-16 17:02:07,268 custom_logger 39940 21108 RefreshToken created successfully
+INFO 2026-01-16 17:02:07,269 custom_logger 39940 21108 Added claims to refresh token: user_id=1924616, email=gaurav.thwait@makeadiff.in, role=Project Associate
+INFO 2026-01-16 17:02:07,270 custom_logger 39940 21108 Added claims to access token
+INFO 2026-01-16 17:02:07,271 custom_logger 39940 21108 Access token generated: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90e...
+INFO 2026-01-16 17:02:07,272 custom_logger 39940 21108 Refresh token generated: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90e...
+INFO 2026-01-16 17:02:07,273 custom_logger 39940 21108 Token expires_in: 43200 seconds
+INFO 2026-01-16 17:02:07,274 custom_logger 39940 21108 TokenResponseSchema created successfully
+INFO 2026-01-16 17:02:07,276 custom_logger 39940 21108 === _generate_tokens END ===
+INFO 2026-01-16 17:02:07,277 custom_logger 39940 21108 Scenario 1 - Tokens generated, creating AuthResponseSchema
+INFO 2026-01-16 17:02:07,294 custom_logger 39940 21108 User response created: user_id=1924616 email='gaurav.thwait@makeadiff.in' user_display_name='GauravThawait' user_login='gaurav.thwait@makeadiff.in' user_role='Project Associate' contact='9131838493' city=None state=None center=None auth_methods=['google_oauth'] user_created_datetime=datetime.datetime(2025, 4, 22, 9, 5, tzinfo=datetime.timezone.utc)
+INFO 2026-01-16 17:02:07,296 custom_logger 39940 21108 AuthResponseSchema created - user: gaurav.thwait@makeadiff.in, tokens.access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90e...
+INFO 2026-01-16 17:02:07,311 custom_logger 39940 21108 === AuthService.login_with_google returned successfully ===
+INFO 2026-01-16 17:02:07,313 custom_logger 39940 21108 Result type: <class 'madui.schemas.auth.AuthResponseSchema'>
+INFO 2026-01-16 17:02:07,314 custom_logger 39940 21108 Result user email: gaurav.thwait@makeadiff.in
+INFO 2026-01-16 17:02:07,314 custom_logger 39940 21108 Result tokens.access_token exists: True
+INFO 2026-01-16 17:02:07,315 custom_logger 39940 21108 Result tokens.refresh_token exists: True
+INFO 2026-01-16 17:02:07,316 custom_logger 39940 21108 Access token (first 50 chars): eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90e...
+INFO 2026-01-16 17:02:07,316 custom_logger 39940 21108 === Returning result to frontend ===
+INFO 2026-01-16 17:02:07,356 basehttp 39940 21108 "POST /api/auth/google/oauth/callback HTTP/1.1" 200 1080
