@@ -1,224 +1,206 @@
 'use client';
 
-import { Box, Container, Typography, Paper, useTheme, alpha } from '@mui/material';
-import { ReactNode } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import Image from 'next/image';
-
-/**
- * ============================================
- * SPLIT AUTH LAYOUT
- * ============================================
- *
- * Modern split-screen layout for auth pages.
- * Left: Image/Illustration
- * Right: Form
- */
+import NextLink from 'next/link';
+import { BookOpen, Users, Calendar, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { colors } from '@/config/design-tokens';
+import { ReactNode } from 'react';
 
 interface SplitAuthLayoutProps {
   children: ReactNode;
   title: string;
   subtitle?: string;
-  imageSrc?: string;
-  imageAlt?: string;
+  backHref?: string;
+  backLabel?: string;
 }
 
-export function SplitAuthLayout({
-  children,
-  title,
-  subtitle,
-  imageSrc = '/images/mad_logo.png', // ✅ Correct path
-  imageAlt = 'MAD Platform',
-}: SplitAuthLayoutProps) {
-  const theme = useTheme();
+const features = [
+  { icon: BookOpen, label: 'Manage class sessions and school partnerships' },
+  { icon: Users, label: 'Track COs, volunteers, and children' },
+  { icon: Calendar, label: 'Schedule and coordinate teaching slots' },
+];
 
+export function SplitAuthLayout({ children, title, subtitle, backHref, backLabel }: SplitAuthLayoutProps) {
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        bgcolor: 'background.default',
-      }}
-    >
-      {/* ============================================ */}
-      {/* LEFT SIDE - IMAGE */}
-      {/* ============================================ */}
+    <Box sx={{ minHeight: '100vh', display: 'flex' }}>
+
+      {/* ── LEFT — brand panel ────────────────────────────────────────────── */}
       <Box
         sx={{
           display: { xs: 'none', md: 'flex' },
-          width: '50%',
-          position: 'relative',
-          bgcolor: 'primary.main',
+          width: '44%',
           flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          p: 4,
-          background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+          justifyContent: 'space-between',
+          p: 5,
+          background: `linear-gradient(160deg, ${colors.brand.red[600]} 0%, ${colors.brand.red[500]} 100%)`,
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* Overlay Pattern */}
+        {/* dot-grid overlay */}
         <Box
           sx={{
             position: 'absolute',
             inset: 0,
-            opacity: 0.1,
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+            opacity: 0.06,
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='%23ffffff'/%3E%3C/svg%3E\")",
+            backgroundSize: '20px 20px',
           }}
         />
 
-        {/* Logo at Top Left */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 40,
-            left: 40,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            zIndex: 1,
-          }}
-        >
-          {/* ✅ Using Next.js Image component */}
+        {/* wordmark */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, position: 'relative', zIndex: 1 }}>
           <Image
             src="/images/mad_logo.png"
-            alt="MAD Platform Logo"
-            width={48}
-            height={48}
-            style={{ borderRadius: 8 }}
+            alt="MAD logo"
+            width={34}
+            height={34}
+            style={{ borderRadius: 6 }}
           />
-          <Typography variant="h6" fontWeight="bold" color="white">
-            MAD Platform
-          </Typography>
-        </Box>
-
-        {/* Center Content */}
-        <Box
-          sx={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: 500,
-            height: 400,
-            zIndex: 1,
-          }}
-        >
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              textAlign: 'center',
-            }}
-          >
-            {/* Large Logo in Center (Optional) */}
-            <Box sx={{ mb: 4 }}>
-              <Image
-                src="/images/mad_logo.png"
-                alt="MAD Platform"
-                width={120}
-                height={120}
-                style={{ borderRadius: 16 }}
-              />
-            </Box>
-
-            <Typography variant="h3" fontWeight="bold" gutterBottom>
-              Welcome to MAD
+          <Box>
+            <Typography
+              component="span"
+              sx={{ fontWeight: 700, fontSize: '0.9375rem', color: '#fff', letterSpacing: '-0.01em', display: 'block' }}
+            >
+              Session-Ops
             </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9, maxWidth: 400 }}>
-              Management & Development Platform for modern teams
+            <Typography
+              component="span"
+              sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.6)', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+            >
+              Make a Difference
             </Typography>
-
-            {/* Features List */}
-            <Box sx={{ mt: 4, textAlign: 'left' }}>
-              {[
-                '✨ Easy to use interface',
-                '🚀 Fast and reliable',
-                '🔒 Secure by default',
-              ].map((feature, index) => (
-                <Typography
-                  key={index}
-                  variant="body1"
-                  sx={{ mb: 1.5, opacity: 0.9 }}
-                >
-                  {feature}
-                </Typography>
-              ))}
-            </Box>
           </Box>
         </Box>
 
-        {/* Footer Text */}
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 40,
-            left: 0,
-            right: 0,
-            textAlign: 'center',
-            color: 'white',
-            opacity: 0.7,
-          }}
-        >
-          <Typography variant="caption">
-            © 2024 MAD Platform. All rights reserved.
+        {/* center content */}
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Box
+            sx={{
+              width: 52,
+              height: 52,
+              borderRadius: 2.5,
+              bgcolor: 'rgba(255,255,255,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 3,
+            }}
+          >
+            <BookOpen size={26} strokeWidth={1.5} color="#fff" />
+          </Box>
+
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700, color: '#fff', mb: 1.5, lineHeight: 1.2, fontSize: '1.625rem' }}
+          >
+            School Operations,
+            <br />
+            Simplified
           </Typography>
+
+          <Typography
+            sx={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)', mb: 4, maxWidth: 320, lineHeight: 1.6 }}
+          >
+            The internal platform MAD uses to coordinate city officers,
+            volunteers, and children across every partner school.
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}>
+            {features.map(({ icon: Icon, label }) => (
+              <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                <CheckCircle2 size={16} strokeWidth={1.75} color="rgba(255,255,255,0.85)" />
+                <Typography sx={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.4 }}>
+                  {label}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
         </Box>
+
+        <Typography sx={{ fontSize: '0.6875rem', color: 'rgba(255,255,255,0.45)', position: 'relative', zIndex: 1 }}>
+          © {new Date().getFullYear()} Make A Difference (MAD)
+        </Typography>
       </Box>
 
-      {/* ============================================ */}
-      {/* RIGHT SIDE - FORM */}
-      {/* ============================================ */}
+      {/* ── RIGHT — form panel ────────────────────────────────────────────── */}
       <Box
         sx={{
-          width: { xs: '100%', md: '50%' },
+          flex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          p: 4,
+          p: { xs: 3, sm: 5 },
+          bgcolor: colors.gray[50],
         }}
       >
-        <Container maxWidth="xs">
-          <Box sx={{ width: '100%' }}>
-            {/* Mobile Logo (visible on small screens) */}
+        <Box sx={{ width: '100%', maxWidth: 380 }}>
+
+          {/* Logo — visible on all screen sizes */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 4 }}>
+            <Image src="/images/mad_logo.png" alt="MAD logo" width={32} height={32} style={{ borderRadius: 6 }} />
+            <Box>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem', color: colors.gray[900], lineHeight: 1.2 }}>
+                Session-Ops
+              </Typography>
+              <Typography sx={{ fontSize: '0.6875rem', color: colors.gray[400], letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                Make a Difference
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Back link */}
+          {backHref && (
             <Box
+              component={NextLink}
+              href={backHref}
               sx={{
-                display: { xs: 'flex', md: 'none' },
-                justifyContent: 'center',
-                mb: 4,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                mb: 2,
+                fontSize: '0.8125rem',
+                fontWeight: 500,
+                color: colors.gray[500],
+                textDecoration: 'none',
+                '&:hover': { color: colors.gray[800] },
               }}
             >
-              <Image
-                src="/images/mad_logo.png"
-                alt="MAD Platform"
-                width={56}
-                height={56}
-                style={{ borderRadius: 8 }}
-              />
+              <ArrowLeft size={14} strokeWidth={2} />
+              {backLabel ?? 'Back'}
             </Box>
+          )}
 
-            {/* Title */}
-            <Box mb={4}>
+          {/* Card */}
+          <Box
+            sx={{
+              bgcolor: '#fff',
+              border: `1px solid ${colors.gray[200]}`,
+              borderRadius: 2.5,
+              p: { xs: 3, sm: 3.5 },
+              boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.04)',
+            }}
+          >
+            {/* Heading */}
+            <Box mb={2.5}>
               <Typography
-                variant="h4"
-                fontWeight="bold"
-                gutterBottom
-                sx={{ color: 'text.primary' }}
+                sx={{ fontWeight: 700, fontSize: '1.125rem', color: colors.gray[900], mb: 0.5, lineHeight: 1.3 }}
               >
                 {title}
               </Typography>
               {subtitle && (
-                <Typography variant="body1" color="text.secondary">
+                <Typography sx={{ fontSize: '0.8125rem', color: colors.gray[500], lineHeight: 1.5 }}>
                   {subtitle}
                 </Typography>
               )}
             </Box>
 
-            {/* Form Content */}
             {children}
           </Box>
-        </Container>
+        </Box>
       </Box>
     </Box>
   );

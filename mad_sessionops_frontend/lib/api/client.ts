@@ -13,7 +13,7 @@ import { setAuthCookie, clearAuthCookie } from "@/lib/auth/cookieUtils";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-const REQUEST_TIMEOUT = 30000;
+const REQUEST_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000", 10);
 
 // Prevent multiple simultaneous refresh calls — queue waiting requests.
 let isRefreshing = false;
@@ -131,9 +131,21 @@ apiClient.interceptors.response.use(
       });
     }
 
-    // 2. 401 — attempt token refresh
+    // 2. 401 — either a business-level auth failure or an expired session
     if (response.status === 401) {
-      const isRefreshEndpoint = config?.url?.includes("/refresh-token");
+      const url = config?.url || "";
+      const isRefreshEndpoint = url.includes("/auth/refresh");
+
+      // These public endpoints legitimately return 401 as a business error
+      // (wrong password, invalid token, etc.). Do NOT attempt a token refresh —
+      // just surface the error message so the form can display it.
+      const isPublicAuthEndpoint =
+        url.includes("/auth/login") ||
+        url.includes("/auth/register") ||
+        url.includes("/auth/google") ||
+        url.includes("/auth/password/reset") ||
+        url.includes("/auth/password/forgot") ||
+        url.includes("/auth/password/validate");
 
       if (isRefreshEndpoint) {
         // Refresh token itself is expired — log out.
@@ -141,12 +153,24 @@ apiClient.interceptors.response.use(
         storeDispatch({ type: "auth/resetAuth" });
         if (typeof window !== "undefined") window.location.href = "/login";
         return Promise.reject({
-          message: "Session expired. Please login again.",
+          message: "Session expired. Please sign in again.",
           code: "SESSION_EXPIRED",
           status: 401,
         });
       }
 
+      if (isPublicAuthEndpoint) {
+        // Pass the backend message straight through — no redirect, no refresh.
+        const errorData = response.data as any;
+        return Promise.reject({
+          message: extractMessage(errorData) || "Authentication failed.",
+          code: "AUTH_ERROR",
+          status: 401,
+          data: errorData,
+        });
+      }
+
+      // Protected endpoint returned 401 — access token expired, try refresh.
       if (!isRefreshing) {
         isRefreshing = true;
 
@@ -155,15 +179,13 @@ apiClient.interceptors.response.use(
           if (!refreshToken) throw new Error("No refresh token available");
 
           const refreshResponse = await axios.post(
-            `${API_BASE_URL}/auth/refresh-token`,
-            { refreshToken }
+            `${API_BASE_URL}/auth/refresh`,
+            { refresh_token: refreshToken }
           );
 
           const { accessToken, refreshToken: newRefreshToken } =
             refreshResponse.data;
 
-          // Update Redux state (single source of truth) and the cookie.
-          // Raw action type avoids importing authSlice here (circular dep).
           storeDispatch({
             type: "auth/updateTokens",
             payload: { accessToken, refreshToken: newRefreshToken },
@@ -184,7 +206,7 @@ apiClient.interceptors.response.use(
           storeDispatch({ type: "auth/resetAuth" });
           if (typeof window !== "undefined") window.location.href = "/login";
           return Promise.reject({
-            message: "Session expired. Please login again.",
+            message: "Session expired. Please sign in again.",
             code: "SESSION_EXPIRED",
             status: 401,
           });
@@ -212,18 +234,19 @@ apiClient.interceptors.response.use(
     }
 
     if (response.status === 404) {
+      const errorData = response.data as any;
       return Promise.reject({
-        message: "The requested resource was not found.",
+        message: extractMessage(errorData) || "The requested resource was not found.",
         code: "NOT_FOUND",
         status: 404,
-        data: response.data,
+        data: errorData,
       });
     }
 
     if (response.status === 422) {
       const errorData = response.data as any;
       return Promise.reject({
-        message: errorData?.message || "Validation error",
+        message: extractMessage(errorData) || "Validation error",
         code: "VALIDATION_ERROR",
         status: 422,
         errors: errorData?.errors,
@@ -252,7 +275,7 @@ apiClient.interceptors.response.use(
 
     const errorData = response.data as any;
     return Promise.reject({
-      message: errorData?.message || "An unexpected error occurred",
+      message: extractMessage(errorData) || "An unexpected error occurred",
       code: errorData?.code || "UNKNOWN_ERROR",
       status: response.status,
       errors: errorData?.errors,
@@ -267,6 +290,16 @@ apiClient.interceptors.response.use(
 
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Extract a human-readable message from a backend error body.
+ * Django Ninja's HttpError returns { detail: "..." }.
+ * Custom error envelopes may use { message: "..." } or { error: { message: "..." } }.
+ */
+function extractMessage(data: any): string | undefined {
+  if (!data) return undefined;
+  return data.detail ?? data.message ?? data.error?.message ?? undefined;
 }
 
 // ============================================================================

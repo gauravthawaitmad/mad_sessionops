@@ -159,6 +159,15 @@ const lightThemeOptions: ThemeOptions = {
         root: {
           "& .MuiOutlinedInput-root": {
             borderRadius: "8px",
+            fontSize: "0.875rem",
+          },
+          "& .MuiInputBase-input": {
+            fontSize: "0.875rem",
+            lineHeight: 1.5,
+          },
+          "& .MuiInputBase-input::placeholder": {
+            fontSize: "0.875rem",
+            opacity: 0.5,
           },
         },
       },

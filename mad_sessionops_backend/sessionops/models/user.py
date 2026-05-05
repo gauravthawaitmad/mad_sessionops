@@ -43,10 +43,9 @@ class User(models.Model):
 
     email = models.EmailField(
         max_length=255,
-        unique=True,
         db_index=True,
         verbose_name="Email Address",
-        help_text="User's email address (must be unique).",
+        help_text="User's email address. Not enforced unique — Hasura source data contains duplicates.",
     )
 
     contact = models.CharField(
@@ -156,6 +155,13 @@ class User(models.Model):
         blank=True,
         verbose_name="Last Login At",
         help_text="Updated on each successful authentication.",
+    )
+
+    synced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Synced At",
+        help_text="When this row was last refreshed from Hasura.",
     )
 
     # =========================================================================

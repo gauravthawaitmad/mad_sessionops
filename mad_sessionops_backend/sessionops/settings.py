@@ -57,18 +57,20 @@ sentry_sdk.init(
 
 # CORS Configuration
 ALLOWED_HOSTS = [
-    "localhost",
-    "127.0.0.1",
+    h.strip()
+    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if h.strip()
 ]
 
-# TODO: Set back to False in production
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all in development only
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all in development only (DEBUG=False in production)
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
+    o.strip()
+    for o in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001",
+    ).split(",")
+    if o.strip()
 ]
 CORS_ALLOW_METHODS = [
     "GET",

@@ -41,10 +41,16 @@ Usage:
 from sessionops.models.base import SoftDeleteBaseModel, SoftDeleteManager
 from sessionops.models.user import User
 from sessionops.models.user_auth import UserAuth
+from sessionops.models.password_reset_token import PasswordResetToken
+from sessionops.models.partner import Partner
+from sessionops.models.sync_run import SyncRun
 
 __all__ = [
     "SoftDeleteBaseModel",
     "SoftDeleteManager",
     "User",
     "UserAuth",
+    "PasswordResetToken",
+    "Partner",
+    "SyncRun",
 ]

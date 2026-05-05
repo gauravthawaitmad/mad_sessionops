@@ -87,13 +87,22 @@ export function showPromise<T>(
  * Show API Error
  *
  * Formats API errors from interceptor.
+ * AUTH_ERROR (wrong credentials, bad token) is intentionally silent here
+ * because those errors are already displayed inline inside the relevant form.
  */
 export function showApiError(error: any) {
-  // Handle different error types
+  // Plain string — surface it directly (e.g. from rejectWithValue in a thunk)
+  if (typeof error === "string") {
+    showError(error);
+    return;
+  }
+
   if (error.code === "NETWORK_ERROR") {
     showError("No internet connection. Please check your network.");
-  } else if (error.code === "UNAUTHORIZED") {
-    // Don't show toast - user is being redirected
+  } else if (error.code === "AUTH_ERROR") {
+    // Inline form already shows the message — no toast needed.
+  } else if (error.code === "SESSION_EXPIRED" || error.code === "UNAUTHORIZED") {
+    // User is being redirected — no toast needed.
   } else if (error.code === "FORBIDDEN") {
     showError("You don't have permission to perform this action.");
   } else if (error.code === "NOT_FOUND") {

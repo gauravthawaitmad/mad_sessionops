@@ -40,6 +40,7 @@ LOGOUT:
 =============================================================================
 """
 
+import os
 from datetime import timedelta
 from typing import Optional
 
@@ -49,7 +50,7 @@ from django.utils import timezone
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from sessionops.models import User, UserAuth
+from sessionops.models import PasswordResetToken, User, UserAuth
 from sessionops.schemas import (
     AuthResponseSchema,
     ChangePasswordSchema,
@@ -58,6 +59,8 @@ from sessionops.schemas import (
     TokenResponseSchema,
     user_to_response,
 )
+from sessionops.services.auth.role_helpers import get_allowed_roles
+from sessionops.services.email_service import send_password_reset_email
 from sessionops.services.google_oauth_service import GoogleOAuthService
 from sessionops.utils.custom_logger import get_logger
 
@@ -153,7 +156,6 @@ class AuthService:
         if UserAuth.objects.filter(
             auth_type=UserAuth.AUTH_TYPE_PASSWORD,
             auth_identifier=email,
-            deleted=False,
         ).exists():
             raise AuthenticationError(
                 "An account with this email already exists",
@@ -229,12 +231,12 @@ class AuthService:
         auth = UserAuth.find_by_password_login(email)
 
         if not auth:
-            # Don't reveal that email doesn't exist
             logger.warning(f"Login attempt for non-existent email: {email}")
-            raise AuthenticationError(
-                "Invalid credentials",
-                error_code="INVALID_CREDENTIALS",
-            )
+            raise AuthenticationError("Invalid credentials", error_code="INVALID_CREDENTIALS")
+
+        if not auth.user.is_active:
+            logger.warning(f"Login attempt for inactive user: {email}")
+            raise AuthenticationError("Invalid credentials", error_code="INVALID_CREDENTIALS")
 
         # Check password
         if not auth.check_password(data.password):
@@ -244,10 +246,17 @@ class AuthService:
                 error_code="INVALID_CREDENTIALS",
             )
 
+        user = auth.user
+
+        # Role gate — same check as JWT middleware. Users whose role was removed
+        # since the UserAuth was created must not be able to log in.
+        if not get_allowed_roles(user.user_role):
+            logger.warning(f"Login denied — no allowed role for user_id={user.user_id}")
+            raise AuthenticationError("Invalid credentials", error_code="INVALID_CREDENTIALS")
+
         # Update last used timestamp
         auth.update_last_used()
 
-        user = auth.user
         logger.info(f"User logged in: {user.user_id}")
 
         # Generate JWT tokens
@@ -611,12 +620,11 @@ class AuthService:
             ... )
             >>> AuthService.change_password(request.user, data)
         """
-        # Find password auth for user
+        # Find password auth for user (default manager filters is_active=True)
         try:
             auth = UserAuth.objects.get(
                 user=user,
                 auth_type=UserAuth.AUTH_TYPE_PASSWORD,
-                deleted=False,
             )
         except UserAuth.DoesNotExist:
             raise AuthenticationError(
@@ -638,6 +646,176 @@ class AuthService:
         logger.info(f"Password changed for user: {user.user_id}")
 
         return True
+
+    # =========================================================================
+    # FORGOT PASSWORD
+    # =========================================================================
+
+    @staticmethod
+    def request_password_reset(email: str) -> None:
+        """
+        Initiate the forgot-password flow.
+
+        Looks up the user by email. If found, creates a PasswordResetToken and
+        sends a Brevo email with the reset link. If the email does not exist,
+        returns silently (prevents email enumeration).
+
+        Args:
+            email: The user's email address (case-insensitive).
+        """
+        email = email.lower()
+        try:
+            user = User.objects.get(email=email, is_active=True)
+        except User.DoesNotExist:
+            logger.info(f"Password reset requested for unknown email: {email}")
+            raise AuthenticationError(
+                "No account found with this email address.",
+                error_code="EMAIL_NOT_FOUND",
+            )
+
+        # Role gate — users without login access cannot reset their password.
+        if not get_allowed_roles(user.user_role):
+            logger.warning(f"Password reset denied — no allowed role for user_id={user.user_id}")
+            raise AuthenticationError(
+                "No account found with this email address.",
+                error_code="EMAIL_NOT_FOUND",
+            )
+
+        # Supersede all previous unused tokens so only the newest link works.
+        # Each voided token is stamped with invalidation_reason='superseded'
+        # so we can distinguish "system voided" from "user consumed" in audits.
+        for token_obj in PasswordResetToken.objects.filter(user=user, used_at__isnull=True):
+            token_obj.supersede()
+
+        token_obj = PasswordResetToken.objects.create(user=user)
+
+        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+        reset_url = f"{frontend_url}/reset-password?token={token_obj.token}"
+
+        send_password_reset_email(
+            to_email=user.email,
+            to_name=user.user_display_name,
+            reset_url=reset_url,
+        )
+        logger.info(f"Password reset email dispatched for user_id={user.user_id}")
+
+    # =========================================================================
+    # VALIDATE RESET TOKEN (lightweight check — no state change)
+    # =========================================================================
+
+    @staticmethod
+    def validate_reset_token(token: str) -> dict:
+        """
+        Return {'valid': bool, 'reason': str} — no side effects, safe to call on page load.
+
+        reason values:
+          'valid'        — token is usable right now
+          'consumed'     — user already used this link
+          'superseded'   — system voided it; a newer link was requested
+          'time_expired' — 30-minute window passed without use
+          'not_found'    — token UUID does not exist
+        """
+        import uuid as _uuid
+        try:
+            token_obj = PasswordResetToken.objects.get(token=_uuid.UUID(str(token)))
+            s = token_obj.status
+            return {"valid": s == "valid", "reason": s}
+        except (PasswordResetToken.DoesNotExist, ValueError):
+            return {"valid": False, "reason": "not_found"}
+
+    # =========================================================================
+    # RESET PASSWORD (with token from email)
+    # =========================================================================
+
+    @staticmethod
+    @transaction.atomic
+    def reset_password(token: str, new_password: str) -> None:
+        """
+        Consume a PasswordResetToken and set a new password.
+
+        Args:
+            token: UUID string from the reset link.
+            new_password: Plain-text new password (already validated by schema).
+
+        Raises:
+            AuthenticationError: If token is invalid, expired, or already used.
+        """
+        try:
+            import uuid as _uuid
+            token_obj = PasswordResetToken.objects.select_related("user").get(
+                token=_uuid.UUID(str(token))
+            )
+        except (PasswordResetToken.DoesNotExist, ValueError):
+            raise AuthenticationError(
+                "Invalid or expired reset link",
+                error_code="INVALID_RESET_TOKEN",
+            )
+
+        if not token_obj.is_valid:
+            raise AuthenticationError(
+                "This reset link has expired or already been used",
+                error_code="INVALID_RESET_TOKEN",
+            )
+
+        user = token_obj.user
+
+        # Role gate — defence in depth: reject even if a token exists for a
+        # user whose role was removed after the reset was requested.
+        if not get_allowed_roles(user.user_role):
+            logger.warning(f"Password reset rejected — no allowed role for user_id={user.user_id}")
+            raise AuthenticationError(
+                "This reset link has expired or already been used",
+                error_code="INVALID_RESET_TOKEN",
+            )
+
+        # Upsert password auth record
+        try:
+            auth = UserAuth.objects.get(
+                user=user,
+                auth_type=UserAuth.AUTH_TYPE_PASSWORD,
+                is_active=True,
+            )
+            auth.set_password(new_password)
+            auth.save()
+        except UserAuth.DoesNotExist:
+            UserAuth.create_password_auth(
+                user=user,
+                email=user.email,
+                password=new_password,
+            )
+
+        token_obj.consume()
+        logger.info(f"Password reset completed for user_id={user.user_id}")
+
+    # =========================================================================
+    # SET PASSWORD (first-time, for Hasura-synced users)
+    # =========================================================================
+
+    @staticmethod
+    @transaction.atomic
+    def set_password_first_time(user: User, new_password: str) -> None:
+        """
+        Set a password for a user who was synced from Hasura and has never had one.
+
+        Raises:
+            AuthenticationError: If the user already has a password auth set up.
+        """
+        if UserAuth.objects.filter(
+            user=user,
+            auth_type=UserAuth.AUTH_TYPE_PASSWORD,
+            is_active=True,
+        ).exists():
+            raise AuthenticationError(
+                "Password is already set for this account. Use change-password instead.",
+                error_code="PASSWORD_ALREADY_SET",
+            )
+
+        UserAuth.create_password_auth(
+            user=user,
+            email=user.email,
+            password=new_password,
+        )
+        logger.info(f"First-time password set for user_id={user.user_id}")
 
     # =========================================================================
     # GET CURRENT USER

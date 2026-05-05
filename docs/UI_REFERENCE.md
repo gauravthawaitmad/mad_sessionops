@@ -31,7 +31,7 @@ Both are reference, neither is "the design." This document records what we're ta
 
 | Screen | Adopted from | What we change |
 |--------|--------------|----------------|
-| Login | Emergent visual framing | Replace email/password with single "Sign in with Google" button (real OAuth PKCE flow) |
+| Login | Emergent visual framing | 
 | School list | Emergent table + Bolt's detail richness | Compact rows by default, expandable on hover/click for address + contact |
 | School detail shell | Emergent (vertical sidebar workspace) | Adopt as-is; scales to 6+ tabs |
 | Overview tab | Emergent (setup checklist + stat cards) | Show setup checklist when not fully configured; switch to Quick Actions panel when fully configured |
@@ -162,7 +162,7 @@ Header pattern: title (H3) + optional metadata + optional right-aligned actions.
 
 Two variants — pick based on screen:
 
-- **Horizontal tabs:** for ≤4 tabs. Used in dialog panels, secondary navigation.
+- **Horizontal tabs:** for ≤4 tabs. Used in dialog panels, secondary  igation.
 - **Vertical sidebar tabs:** for ≥5 tabs. Used in the school detail workspace (Overview / Classes & Sections / Children / Volunteers / Slots / Calendar).
 
 Active state: blue text, `primary.500` left border (vertical) or bottom border (horizontal), 2px thick.

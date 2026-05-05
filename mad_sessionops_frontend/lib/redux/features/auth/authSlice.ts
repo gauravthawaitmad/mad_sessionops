@@ -146,16 +146,21 @@ export const refreshAccessToken = createAsyncThunk(
   }
 );
 
-export const logoutUser = createAsyncThunk("auth/logout", async () => {
-  try {
-    await services.auth.logout();
-  } catch (error) {
-    console.error("Logout error:", error);
-  } finally {
-    clearAuthCookie();
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (_, { getState }) => {
+    const state = getState() as RootState;
+    const refreshToken = state.auth.refreshToken;
+    try {
+      if (refreshToken) await services.auth.logout(refreshToken);
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      clearAuthCookie();
+    }
+    return null;
   }
-  return null;
-});
+);
 
 // ============================================================================
 // SLICE

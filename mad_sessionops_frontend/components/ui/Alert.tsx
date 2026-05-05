@@ -6,7 +6,7 @@ import {
   AlertProps as MuiAlertProps,
   IconButton,
 } from "@mui/material";
-import { Close } from "@mui/icons-material";
+import { X } from "lucide-react";
 import { ReactNode } from "react";
 
 /**
@@ -42,7 +42,7 @@ export function Alert({
       action={
         closable && onClose ? (
           <IconButton size="small" onClick={onClose} color="inherit">
-            <Close fontSize="small" />
+            <X size={16} strokeWidth={1.5} />
           </IconButton>
         ) : undefined
       }

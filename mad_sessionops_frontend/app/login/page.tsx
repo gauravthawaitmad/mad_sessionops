@@ -3,15 +3,14 @@ import { SplitAuthLayout } from '@/components/auth/common/SplitAuthLayout';
 import { LoginForm } from '@/components/auth/LoginForm';
 
 export const metadata: Metadata = {
-  title: 'Login | MAD Platform',
-  description: 'Login to your MAD Platform account',
+  title: 'Sign in | Session-Ops',
+  description: 'Sign in to Session-Ops',
 };
 
 export default function LoginPage() {
   return (
     <SplitAuthLayout
-      title="Welcome back"
-      subtitle="Enter your credentials to access your account"
+      title="Sign in to continue"
     >
       <LoginForm />
     </SplitAuthLayout>

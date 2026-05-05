@@ -176,6 +176,11 @@ class UserAuth(SoftDeleteBaseModel):
         except cls.DoesNotExist:
             return None
 
+    # Alias used by auth_service.py
+    @classmethod
+    def find_by_google_sub(cls, google_sub: str) -> "UserAuth | None":
+        return cls.find_google_auth(google_sub)
+
     @classmethod
     def find_password_auth(cls, user_login: str) -> "UserAuth | None":
         """Find the active password auth record by user_login (lowercased)."""
@@ -186,3 +191,32 @@ class UserAuth(SoftDeleteBaseModel):
             )
         except cls.DoesNotExist:
             return None
+
+    # Alias used by auth_service.py
+    @classmethod
+    def find_by_password_login(cls, email: str) -> "UserAuth | None":
+        return cls.find_password_auth(email)
+
+    @classmethod
+    def create_password_auth(cls, user, email: str, password: str) -> "UserAuth":
+        """Create and save a password auth record with hashed password."""
+        auth = cls(
+            user=user,
+            auth_type=cls.AUTH_TYPE_PASSWORD,
+            auth_identifier=email.lower(),
+        )
+        auth.set_password(password)
+        auth.save()
+        return auth
+
+    @classmethod
+    def create_google_auth(
+        cls, user, email: str, google_sub: str, email_verified: bool = False
+    ) -> "UserAuth":
+        """Create and save a Google auth record."""
+        return cls.objects.create(
+            user=user,
+            auth_type=cls.AUTH_TYPE_GOOGLE,
+            auth_identifier=google_sub,
+            google_email_verified=email_verified,
+        )

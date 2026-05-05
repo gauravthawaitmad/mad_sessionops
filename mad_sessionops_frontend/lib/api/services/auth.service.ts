@@ -139,10 +139,10 @@ export const authService = {
   },
 
   /**
-   * Logout
+   * Logout — backend requires the refresh_token to blacklist it
    */
-  logout: (): Promise<void> => {
-    return api.post(`${BASE_URL}/logout`);
+  logout: (refreshToken: string): Promise<void> => {
+    return api.post(`${BASE_URL}/logout`, { refresh_token: refreshToken });
   },
 
   /**
@@ -153,31 +153,57 @@ export const authService = {
   },
 
   /**
-   * Refresh Token
+   * Refresh Token — backend endpoint is /refresh, body key is refresh_token
    */
   refreshToken: (refreshToken: string): Promise<RefreshTokenResponse> => {
-    return api.post(`${BASE_URL}/refresh-token`, { refreshToken });
+    return api.post(`${BASE_URL}/refresh`, { refresh_token: refreshToken });
   },
 
   /**
    * Forgot Password
    */
   forgotPassword: (data: PasswordResetRequest): Promise<void> => {
-    return api.post(`${BASE_URL}/forgot-password`, data);
+    return api.post(`${BASE_URL}/password/forgot`, { email: data.email });
+  },
+
+  /**
+   * Validate a password-reset token (no side effects — safe to call on page load).
+   * Returns { valid, reason } where reason is one of:
+   *   'valid' | 'consumed' | 'superseded' | 'time_expired' | 'not_found'
+   */
+  validateResetToken: async (token: string): Promise<{ valid: boolean; reason: string }> => {
+    const response = await api.get<{ message: string; success: boolean }>(
+      `${BASE_URL}/password/reset/validate`,
+      { params: { token } }
+    );
+    return { valid: response.success, reason: response.message };
   },
 
   /**
    * Reset Password
    */
   resetPassword: (data: PasswordResetConfirm): Promise<void> => {
-    return api.post(`${BASE_URL}/reset-password`, data);
+    return api.post(`${BASE_URL}/password/reset`, {
+      token: data.token,
+      new_password: data.newPassword,
+    });
   },
 
   /**
-   * Change Password
+   * Set Password (first-time, Hasura-synced users)
+   */
+  setPassword: (newPassword: string): Promise<void> => {
+    return api.post(`${BASE_URL}/password/set`, { new_password: newPassword });
+  },
+
+  /**
+   * Change Password (logged-in user)
    */
   changePassword: (data: ChangePasswordData): Promise<void> => {
-    return api.put(`${BASE_URL}/change-password`, data);
+    return api.post(`${BASE_URL}/password/change`, {
+      old_password: data.currentPassword,
+      new_password: data.newPassword,
+    });
   },
 };
 

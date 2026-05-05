@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import App from "next/app";
 import { AppProviders } from "@/components/providers/AppProviders";
 
+const inter = Inter({ subsets: ["latin"] });
+
 export const metadata: Metadata = {
-  title: "MAD Platform",
-  description: "Production-ready Next.js application",
-  referrer: 'no-referrer-when-downgrade',
+  title: "Session-Ops",
+  description: "MAD school operations platform",
+  referrer: "no-referrer-when-downgrade",
 };
 
 export default function RootLayout({
@@ -17,10 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* ✅ Add this meta tag */}
         <meta name="referrer" content="no-referrer-when-downgrade" />
       </head>
-      <body>
+      <body className={inter.className}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

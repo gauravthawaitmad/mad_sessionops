@@ -26,7 +26,8 @@ from ninja.responses import Response
 from pydantic import ValidationError as PydanticValidationError
 
 from sessionops import auth
-from sessionops.api.auth import auth_router
+from sessionops.api.auth_api import auth_router
+from sessionops.api.schools_api import schools_router
 from sessionops.api.user_api import user_router
 from sessionops.exceptions import (
     AuthenticationError,
@@ -175,14 +176,18 @@ def ninja_default_error_handler(request, exc: Exception):
 # Mount routers from api modules
 # =============================================================================
 
-# Authentication routes (mostly public - auth=None on individual routes)
-# Prefix: /api/v1/auth/
+# Authentication routes (mostly public — auth=None on individual routes)
+# Prefix: /api/auth/
 api.add_router("/api/auth/", auth_router)
 
 # User management routes (requires authentication)
 # Prefix: /api/users/
 user_router.tags = ["Users"]
 api.add_router("/api/users/", user_router)
+
+# Schools routes (scope-filtered by RBAC)
+# Prefix: /api/schools/
+api.add_router("/api/schools/", schools_router)
 
 
 # =============================================================================

@@ -41,12 +41,15 @@ from sessionops.schemas import (
     AuthResponseSchema,
     ChangePasswordSchema,
     ErrorResponseSchema,
+    ForgotPasswordSchema,
     GoogleAuthSchema,
     LoginSchema,
     LogoutSchema,
     MessageResponseSchema,
     RefreshTokenSchema,
     RegisterSchema,
+    ResetPasswordSchema,
+    SetPasswordSchema,
     TokenResponseSchema,
     UserResponseSchema,
     UserUpdateSchema,
@@ -94,6 +97,7 @@ def handle_auth_error(error: AuthenticationError):
         "GOOGLE_ALREADY_USED": 409,
         "NO_PASSWORD_AUTH": 400,
         "WRONG_PASSWORD": 400,
+        "EMAIL_NOT_FOUND": 404,
     }
 
     status = status_map.get(error.error_code, 400)
@@ -525,28 +529,8 @@ def link_google(request, data: GoogleAuthSchema):
     """,
 )
 def change_password(request, data: ChangePasswordSchema):
-    """
-    Change the current user's password.
-
-    Example Request:
-        POST /api/v1/auth/password/change
-        Authorization: Bearer eyJ...
-        Content-Type: application/json
-
-        {
-            "old_password": "OldPass123!",
-            "new_password": "NewPass456!"
-        }
-
-    Example Response (200):
-        {
-            "message": "Password changed successfully",
-            "success": true
-        }
-    """
     from sessionops.models import User
 
-    # Get user from token
     user_id = getattr(request, "user", None)
     if not user_id or not hasattr(user_id, "email"):
         raise HttpError(401, "User not found")
@@ -558,9 +542,112 @@ def change_password(request, data: ChangePasswordSchema):
 
     try:
         AuthService.change_password(user, data)
+        return MessageResponseSchema(message="Password changed successfully", success=True)
+    except AuthenticationError as e:
+        handle_auth_error(e)
+
+
+# =============================================================================
+# FORGOT PASSWORD — public, sends Brevo reset email
+# =============================================================================
+
+
+@auth_router.post(
+    "/password/forgot",
+    auth=None,
+    response={200: MessageResponseSchema, 404: ErrorResponseSchema},
+    summary="Request password reset email",
+    description="""
+    Send a password-reset email to the given address.
+
+    Returns 404 if the email is not associated with any active account —
+    this platform is internal and enumeration is not a concern.
+    The reset link is valid for **30 minutes** and can only be used once.
+    A new request voids all previous unused links for the same account.
+    """,
+)
+def forgot_password(request, data: ForgotPasswordSchema):
+    try:
+        AuthService.request_password_reset(data.email)
         return MessageResponseSchema(
-            message="Password changed successfully",
+            message="A password-set link has been sent to your email.",
             success=True,
         )
+    except AuthenticationError as e:
+        handle_auth_error(e)
+
+
+# =============================================================================
+# VALIDATE RESET TOKEN — public, called on page load before showing form
+# =============================================================================
+
+
+@auth_router.get(
+    "/password/reset/validate",
+    auth=None,
+    response={200: MessageResponseSchema},
+    summary="Check whether a reset token is still valid",
+    description="Returns success=true if the token exists, is unused, and has not expired. No state is changed.",
+)
+def validate_reset_token(request, token: str):
+    result = AuthService.validate_reset_token(token)
+    return MessageResponseSchema(message=result["reason"], success=result["valid"])
+
+
+# =============================================================================
+# RESET PASSWORD — public, consumes token from email link
+# =============================================================================
+
+
+@auth_router.post(
+    "/password/reset",
+    auth=None,
+    response={200: MessageResponseSchema, 400: ErrorResponseSchema},
+    summary="Reset password with token",
+    description="""
+    Set a new password using the token received by email.
+
+    The token is single-use and expires after 30 minutes.
+    """,
+)
+def reset_password(request, data: ResetPasswordSchema):
+    try:
+        AuthService.reset_password(data.token, data.new_password)
+        return MessageResponseSchema(message="Password reset successfully.", success=True)
+    except AuthenticationError as e:
+        handle_auth_error(e)
+
+
+# =============================================================================
+# SET PASSWORD — JWT-protected, for Hasura-synced users with no password yet
+# =============================================================================
+
+
+@auth_router.post(
+    "/password/set",
+    auth=jwt_auth,
+    response={200: MessageResponseSchema, 400: ErrorResponseSchema},
+    summary="Set password for first time (Hasura-synced users)",
+    description="""
+    Set a password for an account that was created via Hasura sync and has no
+    password auth yet. Requires a valid JWT (user must be logged in via Google
+    or a temp token issued during first-time setup).
+    """,
+)
+def set_password(request, data: SetPasswordSchema):
+    from sessionops.models import User
+
+    user_id = getattr(request, "user", None)
+    if not user_id or not hasattr(user_id, "email"):
+        raise HttpError(401, "User not found")
+
+    try:
+        user = User.objects.get(email=user_id.email)
+    except User.DoesNotExist:
+        raise HttpError(401, "User not found")
+
+    try:
+        AuthService.set_password_first_time(user, data.new_password)
+        return MessageResponseSchema(message="Password set successfully.", success=True)
     except AuthenticationError as e:
         handle_auth_error(e)

@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { store, persistor } from "./store";
 import { Spinner } from "@/components/ui";
+import { AuthInitializer } from "@/components/providers/AuthInitializer";
 
 /**
  * ============================================
@@ -55,7 +56,7 @@ export function ReduxProvider({ children }: ReduxProviderProps) {
         }
         persistor={persistor}
       >
-        {children}
+        <AuthInitializer>{children}</AuthInitializer>
       </PersistGate>
     </Provider>
   );

@@ -17,7 +17,11 @@ Each milestone:
 - Ends with users actually using what was built
 - Builds on the previous milestone — does not redo work
 
-The principle: **easy first, complex later.** Things with fewer architectural decisions ship earlier. Things with cross-cutting concerns (Google OAuth, real-time sync, year progression) come later, when the foundation is stable.
+**The principles:**
+
+1. **Build basic CRUD first.** Don't block users from collecting data. Polish features (checklists, UX guidance) come later, once the data model works.
+2. **Easy first, complex later.** Things with fewer architectural decisions ship earlier. Things with cross-cutting concerns (year progression, Google OAuth, real-time webhook sync replacement) come later.
+3. **A milestone is the smallest useful product release.** Don't add scope in the middle. If a need surfaces, address it next milestone.
 
 ---
 
@@ -39,15 +43,15 @@ If any of those fail, the milestone is not done. Don't move to the next mileston
 
 ## Timeline overview
 
-| # | Milestone | Theme | Status | Detailed doc |
-|---|---|---|---|---|
-| M1 | Auth + School Visibility | Password login, RBAC, Hasura sync, school list + detail | In progress | `docs/milestones/M1.md` |
-| M2 | School Configuration | Academic year, classes, sections, session dates, holidays | Not started | Written at M2 start |
-| M3 | People in Schools | Children, volunteers, school-volunteer assignments | Not started | Written at M3 start |
-| M4 | Scheduling | Slots, slot-classes, schedule validation | Not started | Written at M4 start |
-| M5 | Google OAuth + Admin Operations | Google sign-in, sync admin dashboard, year progression, webhook sync | Not started | Written at M5 start |
+| # | Milestone | Theme | Features | Status | Detailed doc |
+|---|---|---|---|---|---|
+| M1 | Auth + School Visibility | Password login, RBAC, Hasura sync, school list + detail | 5 | In progress | `docs/milestones/M1.md` |
+| M2 | School Structure + Children | Academic year, classes, sections, children CRUD | 9 | Not started | Written at M2 start |
+| M3 | Volunteers + Scheduling | Volunteer assignments, slots, slot-classes, schedule validation | 10 | Not started | Written at M3 start |
+| M4 | Calendar + Ops + Webhook Sync | Session dates, holidays, deactivation alerts, Hasura webhooks | 6 | Not started | Written at M4 start |
+| M5 | Activation, Polish, Admin Ops | Google OAuth, sync admin dashboard, year progression, setup checklist, cross-school conflict, Celery+Redis | 12 | Not started | Written at M5 start |
 
-**Total expected duration:** 10 weeks of build + stabilization. Each milestone's start date is "when the previous milestone ships," not a fixed calendar date.
+**Total expected duration:** 10 weeks of build + stabilization. Each milestone's start date is "when the previous milestone ships," not a fixed calendar date. M5 may run slightly longer (2-2.5 weeks) given its size; build at the pace M1-M4 actually takes.
 
 ---
 
@@ -76,179 +80,192 @@ If any of those fail, the milestone is not done. Don't move to the next mileston
 
 - Google OAuth (M5)
 - School configuration (M2)
-- Children, volunteers, slots (M3, M4)
-- Real-time webhook sync (M5)
+- Children, volunteers, slots (M2-M3)
+- Real-time webhook sync (M4)
 - Sync admin UI (M5)
 
 > **Detailed M1 spec:** `docs/milestones/M1.md`
 
 ---
 
-# Milestone 2 — School Configuration
+# Milestone 2 — School Structure + Children
 
 **Status:** Not started
-**Production goal:** A CO can fully configure a school for the academic year — link an academic year, add classes, add sections, set session start/end dates, log holidays.
+**Production goal:** A CO can build out a school's class structure (academic year → classes → sections) and enroll children into sections.
 
 ## Features (planned — finalize at M2 start)
 
-- **F-M2-1** Academic year management — link a year to a school, switch active year
-- **F-M2-2** Classes — add/edit classes for a school
+- **F-M2-1** Academic year management — create academic year, link year to school. M2 supports current year only; year switching/progression deferred to M5.
+- **F-M2-2** Classes — add/edit classes for a school under the active academic year
 - **F-M2-3** Sections — add/edit sections under classes; max-5-children rule visible in UI
-- **F-M2-4** Session dates — start and end dates for the academic session
-- **F-M2-5** Holidays — log planned closures and special days
-- **F-M2-6** Setup completeness checklist — visible on school overview, shows what's still missing
-- **F-M2-7** Activate Structure tab — currently disabled placeholder; M2 makes it real
-- **F-M2-8** Activate Calendar tab — same; M2 makes it real
+- **F-M3-1** Children list & enrollment — add child, assign to section, basic info
+- **F-M3-2** Children edit — update info, change section
+- **F-M3-3** Children deactivation — soft-delete with mandatory removed_reason
+- **F-M3-4** Children reactivation — bring back a previously-deactivated child
+- **F-M3-5** Children list filters — by section, status, search
+- **F-M3-10** Activate Children tab — currently disabled placeholder; M2 makes it real
 
 ## Major in-scope items
 
-- All structure-related school configuration (the "shell" of an operational school)
-- New tabs activated on school detail page: Structure, Calendar
-- Setup checklist computation (how many classes, sections, dates are configured vs missing)
+- Foundational academic year (creation only, single active year for M2)
+- Full class + section CRUD
+- Full child lifecycle (enroll, edit, deactivate, reactivate, list, filter)
+- Children tab activated on school detail page
 
 ## Major out-of-scope items
 
-- Children enrollment (M3)
+- Year progression / year switching (M5)
 - Volunteer assignment (M3)
-- Slot creation or scheduling (M4)
-- Bulk class/section import (later — manual entry only in M2)
-- Past-year archive view (later)
+- Slot scheduling (M3)
+- Setup completeness checklist (M5 — UX polish, not foundational)
+- Activate Structure tab visual (M5 — content shown via Children tab in M2)
+- Calendar tab (M5)
+- Bulk children import (later)
 
 ## Open questions to resolve at M2 start
 
-- Are academic years per-school or platform-wide? (Single global year vs per-school year)
 - Class naming convention — "Class 5", "Grade 5", "5th", or whatever Hasura sends?
-- Holiday categories — single list vs typed (national, regional, school-specific)?
-- Is Calendar tab read-only summary, or does it allow editing dates from the calendar view?
+- Mandatory child fields vs optional (what's the minimum to enroll)?
+- What happens to a section when its assigned children all get deactivated?
+- Is academic year per-school or platform-wide for M2? (Recommend platform-wide single year, simpler.)
 
 > **Detailed M2 spec:** Written when M2 begins.
 
 ---
 
-# Milestone 3 — People in Schools
+# Milestone 3 — Volunteers + Scheduling
 
 **Status:** Not started
-**Production goal:** A CO can enroll children into sections and assign volunteers to a school. Both lifecycles fully supported.
+**Production goal:** A CO can assign volunteers to a school and build the teaching schedule (slots + slot-class assignments).
 
 ## Features (planned — finalize at M3 start)
 
-- **F-M3-1** Children list and enrollment — add child, assign to section, basic info
-- **F-M3-2** Children edit — update info, change section
-- **F-M3-3** Children deactivation with mandatory reason — soft-delete with `removed_reason`
-- **F-M3-4** Children reactivation — bring back a previously-deactivated child
-- **F-M3-5** Children list filters — by section, by status, by search
 - **F-M3-6** Volunteer assignment — assign a volunteer (existing user) to a school
-- **F-M3-7** Volunteer removal with cascade handling — remove from school, deal with their assignments
+- **F-M3-7** Volunteer removal — remove from school, basic cascade handling
 - **F-M3-8** CHO scope activation — CHO users now see schools where they have an active assignment
-- **F-M3-9** Synced volunteer deactivation alert — when a volunteer's user record gets deactivated via sync, surface this to admins
-- **F-M3-10** Activate Children tab — currently disabled placeholder
 - **F-M3-11** Activate Volunteers tab — currently disabled placeholder
+- **F-M4-1** Slot creation — define a time slot (day, start time, end time) for a school
+- **F-M4-2** Slot edit and delete — change times; soft-delete slots
+- **F-M4-3** Slot-class assignment — assign section + subject + 1-2 volunteers to a slot
+- **F-M4-4** Schedule validation — no overlapping slots for same volunteer, vol1 ≠ vol2, valid section/volunteer
+- **F-M4-6** Schedule view — visual representation of the week's slots and assignments
+- **F-M4-7** Activate Slots tab — currently disabled placeholder
 
 ## Major in-scope items
 
-- Full child lifecycle (enroll, edit, deactivate, reactivate, list)
-- Volunteer assignment to schools
+- Volunteer-to-school assignment (creation + removal)
 - CHO RBAC scope becomes real (was empty in M1, M2)
-- Two new tabs activated on school detail
+- Full slot CRUD (create, edit, delete)
+- Slot-class composition (section + subject + volunteers)
+- All scheduling business rules enforced (volunteer count, overlaps, etc.)
+- Volunteers tab + Slots tab activated
 
 ## Major out-of-scope items
 
-- Slot scheduling (M4)
-- Bulk children import (later)
-- Child attendance tracking (later — out of M1-M5 scope unless reprioritized)
+- Move volunteer between slot-classes (M4 — fast-follow feature)
+- Volunteer-deactivation alert (M4)
+- Cross-school volunteer conflict (M5)
+- Recurring slot templates (later)
+- Substitute volunteer workflow (later)
 - Volunteer performance metrics (later)
-- Parent communication features (later)
 
 ## Open questions to resolve at M3 start
 
-- Mandatory child fields vs optional (what's the minimum to enroll)?
 - Volunteer-to-school enforcement: 1 volunteer per school confirmed in business rules — does this apply per academic year or forever?
-- What happens to a section when its assigned children all get deactivated?
-- Volunteer deactivation alert: in-app notification only, or email too?
+- Slot duration constraints — minimum/maximum length?
+- Subjects: predefined list or free-text?
+- Time zone handling — all slots in IST, or user-locale aware?
 
 > **Detailed M3 spec:** Written when M3 begins.
 
 ---
 
-# Milestone 4 — Scheduling
+# Milestone 4 — Calendar + Ops Follow-up + Hasura Webhooks
 
 **Status:** Not started
-**Production goal:** A CO can create teaching slots and schedule which sections + volunteers + subjects fill each slot.
+**Production goal:** Schools can record session calendars (start/end dates + holidays). Volunteer reassignment is supported. Hasura sync moves from cron-based to webhook-based for real-time updates.
 
 ## Features (planned — finalize at M4 start)
 
-- **F-M4-1** Slot creation — define a time slot (day, start time, end time) for a school
-- **F-M4-2** Slot edit and delete (soft-delete) — change times, remove slots
-- **F-M4-3** Slot-class assignment — assign section + subject + 1-2 volunteers to a slot
-- **F-M4-4** Schedule validation — no overlapping slots for same volunteer, vol1 ≠ vol2, valid section/volunteer
+- **F-M2-4** Session dates — start/end dates for the academic session
+- **F-M2-5** Holidays — log planned closures and special days
+- **F-M3-9** Synced volunteer deactivation alert — surface to admins when a user record gets deactivated via sync
 - **F-M4-5** Move volunteer between slot-classes — reassignment workflow
-- **F-M4-6** Schedule view — visual representation of the week's slots and assignments
-- **F-M4-7** Activate Slots tab — currently disabled placeholder
-- **F-M4-8** Schedule conflict detection across schools — flag if a volunteer is double-booked
+- **F-M5-5** Webhook receiver from Hasura — replace 6h cron with real-time updates (or supplement: webhook + safety-net cron)
+- **F-M5-9** Field-level sync diff — track which fields changed between sync runs (foundational for the webhook flow)
 
 ## Major in-scope items
 
-- Full slot creation, editing, deletion
-- Slot-class composition (section + subject + volunteers)
-- All scheduling business rules enforced (volunteer count, overlaps, etc.)
-- Slots tab activated on school detail
+- Session calendar (dates + holidays — small but foundational)
+- Volunteer reassignment between slot-classes
+- Reactive ops: alert admins when sync deactivates a volunteer with active assignments
+- Hasura webhook integration — real-time data updates replacing 6h cron polling
+- Sync diff tracking — enables targeted re-sync and audit
 
 ## Major out-of-scope items
 
-- Recurring slot templates (later — M4 creates each slot individually)
-- Substitute volunteer workflow (later)
-- Automatic schedule generation (never — humans schedule)
-- Calendar view across schools (out of M4 — possible M5 addition)
+- Setup completeness checklist (M5)
+- Activate Calendar tab visually (M5 — data captured here, UI shell in M5)
+- Cross-school volunteer conflict detection (M5)
+- Sync admin dashboard UI (M5)
+- Year progression (M5)
 
 ## Open questions to resolve at M4 start
 
-- Slot duration constraints — minimum/maximum length?
-- Subjects: predefined list or free-text?
-- Cross-school volunteer schedule conflict — is it a hard block or a warning?
-- Time zone handling — all slots in IST, or user-locale aware?
+- Webhook authentication from Hasura — what mechanism? Shared secret in headers?
+- When webhook arrives, does cron continue as a safety net, or get disabled?
+- Holiday categories — single list vs typed (national, regional, school-specific)?
+- Sync diff storage — JSONB column on SyncRun, or a separate SyncDiff table?
+- Volunteer deactivation alert: in-app notification, email, or both?
 
 > **Detailed M4 spec:** Written when M4 begins.
 
 ---
 
-# Milestone 5 — Google OAuth + Admin Operations
+# Milestone 5 — Activation, Polish, Admin Operations
 
 **Status:** Not started
-**Production goal:** Users can sign in with Google. Admins can monitor sync health, manually trigger syncs, and run year progression. Real-time webhook sync replaces (or supplements) cron-based sync.
+**Production goal:** All deferred UX polish, admin tooling, and the second auth method ship together. The product is feature-complete.
 
 ## Features (planned — finalize at M5 start)
 
+- **F-M2-6** Setup completeness checklist — visible on school overview, shows what's still missing
+- **F-M2-7** Activate Structure tab — visual shell for class/section structure (data already exists from M2)
+- **F-M2-8** Activate Calendar tab — visual shell for session calendar (data already exists from M4)
+- **F-M4-8** Cross-school conflict detection — flag if a volunteer is double-booked across schools
 - **F-M5-1** Google OAuth sign-in — activate the F01a backend code that's been sitting paused; build frontend Google flow
 - **F-M5-2** Sync admin dashboard — see sync run history, status, counts, errors
 - **F-M5-3** Manual sync trigger UI — "Sync now" button for admins
 - **F-M5-4** Sync health alerts — Sentry/email if sync fails N times in a row
-- **F-M5-5** Webhook receiver from Hasura — replace 6-hour cron with real-time updates (or supplement: webhook + safety-net cron)
 - **F-M5-6** Year progression workflow — promote children at end of year, archive old data
 - **F-M5-7** Year progression preview — show what will change before committing
-- **F-M5-8** Volunteer-deactivation alerts — admin sees impacted assignments when a volunteer's user record deactivates
-- **F-M5-9** Field-level sync diff (optional) — track which fields changed between sync runs
+- **F-M5-8** Volunteer-deactivation admin alerts — admin sees impacted assignments when a volunteer's user record deactivates
 - **F-M5-10** Celery + Redis introduction — replace cron-based sync with proper async queue
 
 ## Major in-scope items
 
 - Google OAuth (full flow, frontend reactivated)
 - Sync admin UI for monitoring and manual triggers
-- Webhook-based real-time sync
 - Year progression flow
 - Celery and Redis for queueing
+- All deferred UX polish: setup checklist, tab visuals, conflict detection
 
 ## Major out-of-scope items
 
-- Bulk admin operations beyond year progression (e.g., bulk school deactivation) — defer until needed
-- Custom sync schedules per environment — assume one global schedule
+- Bulk admin operations beyond year progression (defer until needed)
 - Multi-tenant admin features — out of scope; single MAD organization only
+- Custom sync schedules per environment — assume one global schedule
 
 ## Open questions to resolve at M5 start
 
-- Webhook authentication from Hasura — what mechanism? Shared secret in headers?
 - Year progression — does it run automatically on a date, or always manual trigger?
 - Hosted-domain restriction on Google OAuth — restrict to `@makeadiff.in` only, or allow any verified domain?
-- Should sync dashboard show field-level diffs, or just per-run aggregate counts?
+- Should sync dashboard show field-level diffs (already captured in M4's sync diff feature), or just per-run aggregate counts?
+- Cross-school conflict — hard block on save, or warning that lets the CO continue?
+
+## Note on M5 size
+
+M5 has 12 features — heaviest milestone in this plan. That's the trade-off for ruthlessly deferring polish through M1-M4. By the time M5 starts, you'll have 4 milestones of velocity data and can pace this realistically. M5 may take 2.5 weeks instead of 2; that's expected.
 
 > **Detailed M5 spec:** Written when M5 begins.
 

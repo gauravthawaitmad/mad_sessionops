@@ -58,11 +58,20 @@ export function useAuth() {
       })).unwrap();
 
       showSuccess('Welcome back!');
-      router.push('/dashboard');
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('next');
+      // Only follow relative paths to prevent open redirect.
+      const destination = next && next.startsWith('/') ? next : '/schools';
+      router.push(destination);
 
       return { success: true };
     } catch (err: any) {
-      showApiError(err);
+      // Auth failures (wrong credentials) are shown inline by the form via
+      // Redux state — no toast needed. Only surface unexpected errors.
+      const isAuthFailure = typeof err === 'string' || err?.code === 'AUTH_ERROR';
+      if (!isAuthFailure) {
+        showApiError(err);
+      }
       return { success: false, error: err };
     }
   }, [dispatch, router]);
@@ -76,7 +85,7 @@ export function useAuth() {
 
       await dispatch(loginWithGoogleToken(googleToken)).unwrap();
       showSuccess('Welcome back!');
-      router.push('/dashboard');
+      router.push('/home');
 
       return { success: true };
     } catch (err: any) {
@@ -102,7 +111,7 @@ export function useAuth() {
       })).unwrap();
 
       showSuccess('Account created successfully!');
-      router.push('/dashboard');
+      router.push('/home');
 
       return { success: true };
     } catch (err: any) {

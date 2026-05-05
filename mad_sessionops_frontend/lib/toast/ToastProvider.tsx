@@ -27,18 +27,18 @@ export function ToastProvider() {
           fontSize: "14px",
         },
 
-        // Success style
+        // Success: 4s auto-dismiss (UI_REFERENCE)
         success: {
-          duration: 3000,
+          duration: 4000,
           iconTheme: {
             primary: "#10b981",
             secondary: "#fff",
           },
         },
 
-        // Error style
+        // Error: manual-dismiss only (UI_REFERENCE)
         error: {
-          duration: 5000,
+          duration: Infinity,
           iconTheme: {
             primary: "#ef4444",
             secondary: "#fff",
