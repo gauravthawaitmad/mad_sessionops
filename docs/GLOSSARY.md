@@ -13,16 +13,16 @@ Terms that matter in Session-Ops. When Claude Code uses the wrong word, bugs fol
 **MAD roles** — A user's role in MAD's organization is stored as a comma-separated string in `User.user_role` (synced from Hasura). A single user may hold multiple roles. The role string drives access to Session-Ops.
 
 **Allowed roles** (any one grants Session-Ops login):
-- **CO Full Time** — Full-time City Officer. Manages assigned schools.
-- **CO Part Time** — Part-time City Officer. Same Session-Ops permissions as Full Time. The distinction is HR-internal.
-- **CHO** — Chief Hour Officer. Sees schools where they have an active volunteer assignment.
+- **CO Full Time** — Full-time Community Organizer. Manages assigned schools.
+- **CO Part Time** — Part-time Community organizer. Same Session-Ops permissions as Full Time. The distinction is HR-internal.
+- **CHO** — Chapter Organizer. Sees schools where they have an active volunteer assignment.
 - **CXO** — CXO-level access. Treated as standard Session-Ops user (not admin).
 - **Function Lead** — Grants admin scope. Sees all schools.
 - **Project Associate** — Grants admin scope. Sees all schools.
 - **Project Lead** — Grants admin scope. Sees all schools.
 
 **Disallowed-alone roles** (never grant Session-Ops access on their own):
-- **Academic Support** — MAD staff supporting academic content. No Session-Ops login.
+- **Academic Support** — MAD volunteer supporting academic content. No Session-Ops login.
 - **Wingman** — Volunteer-adjacent role. No Session-Ops login.
 - **Fellow** — MAD fellow. No Session-Ops login. (Note: "Fellow" appears in some scheduling UI as a non-volunteer who can teach — that's a separate concept from the role gate. A user with role `"Fellow"` alone cannot log in, but a slot may have a fellow assigned.)
 - **Youth** — Youth program participant. No Session-Ops login.
@@ -74,9 +74,8 @@ These three terms are related but distinct. Getting them confused causes real bu
 
 **Inactive / Deactivated** — `is_active=False`. The record exists in the database but is not in use. Business rules ignore it (e.g., max-5-children counts only active).
 
-**Soft-deleted** — `is_deleted=True`. Same practical effect as deactivation. Field name varies by model for historical reasons:
-- Most models: `is_active=False` means deactivated
-- Some older models: `is_deleted=True` means deactivated
+**Soft-deleted** — `removed=True` and `is_active=false`. Same practical effect as deactivation. Field name varies by model for historical reasons:
+- Most models: `is_active=False` and `removed=true` means deactivated
 
 Treat both as the same concept. **There is no hard delete.**
 
@@ -97,10 +96,6 @@ Treat both as the same concept. **There is no hard delete.**
 ## Infrastructure
 
 **RDS** — AWS Relational Database Service. Managed Postgres. We run in ap-south-1 (Mumbai) for latency.
-
-**Celery** — Async task queue. Workers pull tasks from Redis, execute, write results.
-
-**Celery Beat** — Scheduler for periodic tasks. Runs alongside workers.
 
 **uv** — Python package manager. Replaces pip/poetry. We use `uv sync --frozen` for reproducible installs.
 

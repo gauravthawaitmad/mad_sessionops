@@ -1,0 +1,3 @@
+# Root-level gitignore
+# Protects docker compose env substitution file from accidental commit
+.env

@@ -1,0 +1,25 @@
+# Local Docker test with staging credentials (RDS, Brevo, Google OAuth).
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.local-staging.yml up --build
+
+services:
+
+  backend:
+    env_file:
+      - ./mad_sessionops_backend/.env.staging
+    environment:
+      REDIS_HOST: redis
+
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+        NEXT_PUBLIC_APP_ENV: staging
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: "665756451396-rgnaukah8oid76hfvdfct7m8dokmsjjd.apps.googleusercontent.com"
+        NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
+        NEXT_PUBLIC_ENABLE_DEBUG: "true"
+        NEXT_PUBLIC_ENABLE_MOCK_API: "false"
+        NEXT_PUBLIC_LOG_LEVEL: info
+        NEXT_PUBLIC_API_TIMEOUT: "30000"

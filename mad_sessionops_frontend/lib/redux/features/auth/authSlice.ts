@@ -47,16 +47,36 @@ export const initializeAuth = createAsyncThunk(
       const state = getState() as RootState;
       const { accessToken, refreshToken, user } = state.auth;
 
-      if (!accessToken || !user) {
+      // No session at all.
+      if (!refreshToken) {
         return null;
       }
 
-      // Ensure the middleware cookie is in sync after a hard reload.
-      setAuthCookie(accessToken);
+      // Full session — sync the cookie and return.
+      if (accessToken && user) {
+        setAuthCookie(accessToken);
+        return { user, accessToken, refreshToken };
+      }
 
-      return { user, accessToken, refreshToken: refreshToken! };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
+      // Partial state: refresh token exists but access token is missing.
+      // Use the refresh token to recover the session silently.
+      const tokenResponse = await services.auth.refreshToken(refreshToken);
+      setAuthCookie(tokenResponse.accessToken);
+
+      // If user data is persisted, trust it. Otherwise the user must log in again.
+      if (!user) {
+        return null;
+      }
+
+      return {
+        user,
+        accessToken: tokenResponse.accessToken,
+        refreshToken,
+      };
+    } catch {
+      // Refresh failed — treat as logged out so the user gets a clean login.
+      clearAuthCookie();
+      return null;
     }
   }
 );
@@ -150,11 +170,16 @@ export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { getState }) => {
     const state = getState() as RootState;
-    const refreshToken = state.auth.refreshToken;
+    const { accessToken, refreshToken } = state.auth;
     try {
-      if (refreshToken) await services.auth.logout(refreshToken);
+      // Only hit the backend if we have a valid session to blacklist.
+      // Without an access token the request would 401 and trigger the
+      // refresh interceptor, creating an unintended cycle.
+      if (accessToken && refreshToken) {
+        await services.auth.logout(refreshToken);
+      }
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Logout API error (continuing local cleanup):", error);
     } finally {
       clearAuthCookie();
     }

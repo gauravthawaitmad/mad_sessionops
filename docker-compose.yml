@@ -1,0 +1,89 @@
+name: sessionops
+
+# Local development with Docker — no nginx, direct port exposure.
+# Uses mad_sessionops_backend/.env.development for backend secrets.
+#
+# Usage:
+#   docker compose up --build          # first run
+#   docker compose up -d               # subsequent runs
+#   docker compose logs -f             # follow logs
+#   docker compose down                # stop and remove containers
+#
+# For staging EC2:
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
+
+services:
+
+  # ---------------------------------------------------------------------------
+  redis:
+  # ---------------------------------------------------------------------------
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - sessionops-net
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  backend:
+  # ---------------------------------------------------------------------------
+    build:
+      context: ./mad_sessionops_backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./mad_sessionops_backend/.env.development
+    environment:
+      REDIS_HOST: redis
+    networks:
+      - sessionops-net
+    ports:
+      - "8000:8000"
+    volumes:
+      - staticfiles:/app/staticfiles
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/healthcheck || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  frontend:
+  # ---------------------------------------------------------------------------
+    build:
+      context: ./mad_sessionops_frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+        NEXT_PUBLIC_APP_ENV: development
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+        NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
+        NEXT_PUBLIC_ENABLE_DEBUG: "true"
+        NEXT_PUBLIC_ENABLE_MOCK_API: "false"
+        NEXT_PUBLIC_LOG_LEVEL: debug
+        NEXT_PUBLIC_API_TIMEOUT: "30000"
+    restart: unless-stopped
+    networks:
+      - sessionops-net
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+networks:
+  sessionops-net:
+    driver: bridge
+
+volumes:
+  redis-data:
+  staticfiles:

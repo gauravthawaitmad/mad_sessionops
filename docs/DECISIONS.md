@@ -187,7 +187,7 @@ Format:
 
 **Context:** MAD needs audit trails. Mistakes must be recoverable. Historical analysis must include deactivated records.
 
-**Decision:** No model in the domain layer gets hard-deleted. Deactivation is `is_active=False` or `is_deleted=True`. Default queryset filters out deactivated rows; admins can include them via explicit methods.
+**Decision:** No model in the domain layer gets hard-deleted. Deactivation is `is_active=False` and `removed=True`. Default queryset filters out deactivated rows; admins can include them via explicit methods.
 
 **Consequences:**
 - Every unique constraint needs careful thought (uniqueness including soft-deleted? only active?)
@@ -228,7 +228,7 @@ Format:
 
 **Context:** Should each school have its own academic year, or should the whole system share one?
 
-**Decision:** One `AcademicYear` globally active at a time. All schools operate under it.
+**Decision:** One `schoolAcaddmicYear` globally active at a time. All schools operate under it.
 
 **Consequences:**
 - Year progression is one operation, not N
@@ -262,26 +262,6 @@ Format:
 
 ---
 
-## D013 — Celery + Redis for async work
-
-**Date:** Planning phase
-**Status:** Accepted
-
-**Context:** We need async processing for Hasura sync, year progression, and future notifications.
-
-**Decision:** Celery 5.3+ with Redis as broker and result backend.
-
-**Consequences:**
-- Mature, well-documented
-- Redis is a dependency (fine, needed anyway for caching if we add it)
-- Windows dev needs `--pool=solo` (solo developer, Windows machine — this is fine)
-
-**Alternatives:**
-- **Django-Q** — simpler but less flexible. Rejected — we'll outgrow it.
-- **Dramatiq** — nice API, smaller ecosystem. Rejected.
-- **Plain cron** — no retries, no observability. Rejected.
-
----
 
 ## D014 — Two separate repositories, not a monorepo
 
@@ -549,42 +529,7 @@ The original implementation collapsed UserAuth to a one-to-one Google-only model
 
 ---
 
-## D025 — No hard deletes — two-layer enforcement, third layer deferred
 
-**Date:** F01a redesign (final)
-**Status:** Accepted
-
-**Context:** R9 in BUSINESS_RULES forbids hard deletes. Original plan was three layers: application override, FK PROTECT cascades, and DB user permissions. The third layer (separate `sessionops_app_user` without DELETE permission) added operational complexity that wasn't worth blocking F01a delivery for.
-
-**Decision:** Enforce no-hard-delete at two layers in v1:
-
-1. **Application:** `SoftDeleteBaseModel` provides `delete()` that does soft-delete and `hard_delete()` that raises. Inherited by every domain model.
-2. **FK cascades:** Every FK uses `on_delete=PROTECT`. Cascade-driven hard deletes can't fire.
-
-**Layer 3 deferred:** A separate restricted DB user (`sessionops_app_user` with no DELETE permission) was planned but deferred. Currently the Django app connects with a single user that has full permissions on the `mad_sessionops_dev` schema. This means a bug that issues `Model.objects.filter(...).delete()` would succeed instead of being blocked by the DB.
-
-**Why deferred:**
-- Single-developer project; code review catches most bypass cases
-- Multi-user setup added 1-2 days of debugging that wasn't paying off
-- Adding Layer 3 later is a ~30-minute change (new DB user, GRANT/REVOKE, switch env var); no migration needed
-
-**Trigger to add Layer 3:**
-- First production deployment, OR
-- Adding a second developer, OR
-- Any time after F01a/F01b ship and the system has stabilized
-
-**Consequences of deferral:**
-- Trust in app-layer enforcement is higher than ideal
-- Code review must check for `.delete()` on querysets specifically
-- A future audit may flag this; resolution is the planned 30-minute fix
-
-**Alternatives:**
-- **All three layers from day one:** the right textbook answer; lost too much time on it. Rejected for v1.
-- **Triggers:** stronger than DB user permissions; more operational complexity. Rejected.
-- **No enforcement, "be careful":** rejected.
-
-
----
 
 ## D026 — Application tables live in `mad_sessionops_<env>` schema
 

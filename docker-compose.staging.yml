@@ -1,0 +1,27 @@
+# Staging overrides for dev.sessionops.makeadiff.in
+# System nginx (already on EC2) handles routing — no nginx container.
+# Add a server block to your existing nginx pointing to :3000 and :8000.
+#
+# Usage (on EC2):
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
+
+services:
+
+  backend:
+    env_file:
+      - ./mad_sessionops_backend/.env.staging
+    environment:
+      REDIS_HOST: redis
+
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: https://dev.sessionops.makeadiff.in/api
+        NEXT_PUBLIC_APP_URL: https://dev.sessionops.makeadiff.in
+        NEXT_PUBLIC_APP_ENV: staging
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+        NEXT_PUBLIC_ENABLE_ANALYTICS: "false"
+        NEXT_PUBLIC_ENABLE_DEBUG: "true"
+        NEXT_PUBLIC_ENABLE_MOCK_API: "false"
+        NEXT_PUBLIC_LOG_LEVEL: info
+        NEXT_PUBLIC_API_TIMEOUT: "30000"

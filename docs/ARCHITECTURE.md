@@ -15,21 +15,16 @@ Session-Ops is a two-repo system with one external dependency:┌─────
 ▼                 ▼                 ▼
 ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
 │ PostgreSQL   │  │  Redis       │  │  Hasura      │
-│ (AWS RDS)    │  │  (broker)    │  │  (external)  │
+│ (AWS RDS)    │  │     │  │  (external)  │
 └──────────────┘  └──────┬───────┘  └──────┬───────┘
-│                 │
-▼                 │ webhook
-┌──────────────┐         │
-│ Celery       │◄────────┘
-│ worker+beat  │
-└──────────────┘
+
 
 ## Actors and their flows
 
 Three actor categories touch Session-Ops:
 
-- **CO (City Officer)** — full-time or part-time. Manages schools assigned to them. 80% of daily usage.
-- **CHO (Chief Operating Officer)** — oversight role. Sees schools where they have an active volunteer assignment.
+- **CO (Comunity Organizer)** — full-time or part-time. Manages schools assigned to them. 80% of daily usage.
+- **CHO (Chapter Orgnaizer)** — manage single school which they've assigned to.
 - **Admin / Functional Lead / Project Associate** — god-mode. See everything, including sync health and year progression.
 - **Academic Support / Fellow** — exist in the user model but **have no login to Session-Ops.** They are referenced in scheduling but do not authenticate.
 
@@ -75,8 +70,6 @@ returns the created instance.
 Endpoint serializes via ChildReadSchema, returns 201.
 
 
-The key invariant: **business rules live in the service (step 6).** The view doesn't know about them. The model stores data but doesn't enforce rules beyond what a DB constraint can express.
-
 ## Where logic lives
 
 | Layer | Responsibility | Never does |
@@ -85,9 +78,8 @@ The key invariant: **business rules live in the service (step 6).** The view doe
 | `schemas/` (Pydantic) | Shape validation, field-level validation | Cross-record rules (uniqueness, counts, relationships) |
 | `services/` | All business rules, all multi-step transactions, all cross-model validation | HTTP concerns (status codes, headers) |
 | `models/` | Data shape, relationships, simple field validators | Uniqueness across other tables, role-based filtering |
-| `tasks/` (Celery) | Async work: sync, notifications, year progression | Anything synchronous a user is waiting on |
 
-If you find yourself writing business logic in a router, stop and move it to a service. If you find a service doing HTTP-specific things (building response objects, setting status codes), stop and move that back to the router.
+
 
 ## Authentication flow
 
@@ -132,7 +124,7 @@ Two layers of enforcement, both required:
 
 This filtering lives in service layer query helpers, not in raw views. See `docs/RBAC.md` (Sprint 2) for the helper contract.
 
-## Hasura sync (Sprint 6)
+## Hasura sync 
 
 External users and partners sync from a Hasura source of truth via webhooks:Hasura (event) → webhook → /api/webhooks/hasura (backend endpoint)
 → validates HMAC signature
@@ -151,9 +143,8 @@ Invariants:
 - Deletes from Hasura translate to soft-deletes in Session-Ops, never hard deletes.
 - Admin dashboard surfaces sync failures with enough context to manually recover.
 
-Full detail in `docs/HASURA_SYNC.md` (Sprint 6).
 
-## Year progression (Sprint 7)
+## Year progression
 
 Once a year, an admin runs the year-progression pipeline:
 Admin triggers progression from admin UI
@@ -171,7 +162,6 @@ On approval, task flips new AcademicYear.is_active=True and old to False
 All downstream queries immediately see the new year
 
 
-This is a dangerous operation. It happens once a year. It has its own dedicated feature doc (`docs/features/F08-year-progression.md`) when Sprint 7 approaches.
 
 ## Deployment (brief)
 

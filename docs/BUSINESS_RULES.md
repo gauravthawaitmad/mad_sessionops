@@ -88,33 +88,28 @@ Rules are enforced at the **service layer** (Python), not at the DB layer, unles
 
 **Enforcement:** Service layer on year progression transitions. The flip is atomic (old year deactivated + new year activated in one transaction).
 
-**Denormalization:** `School.active_year` is a convenience field. When `AcademicYear.is_active` flips, a background task updates `School.active_year` for all schools. This denormalization is accepted for read performance.
+**Denormalization:** `School_academic_year` table only single row should be active
 
 ## Soft delete
 
 ### R9 — No hard deletes anywhere — enforced at two layers (Layer 3 deferred)
 
-**Rule:** No model in the domain layer ever has a row removed. Deactivation is via `is_active=False`, recorded with `deleted_at` and (when known) `deleted_by`.
+**Rule:** model in the domain layer ever has a colymn removed. Deactivation is via `removed=true` and `is_active = false`, recorded with `deleted_at` and (when known) `deleted_by`.
 
-**Rationale:** Audit trail. Mistake recovery. Retrospective analytics. Regulatory expectations for an organization working with children.
 
 **Enforcement is layered. Two layers are active in v1; a third layer is deferred for future.**
 
 **Layer 1 — Application code (active):**
 - Every domain model inherits from `SoftDeleteBaseModel` (or implements its pattern directly, as User does).
-- `delete()` sets `is_active=False`, records audit fields, never issues SQL DELETE.
+- `delete()` sets `is_active=False` amd `removed=true`   , records audit fields, never issues SQL DELETE.
 - `hard_delete()` always raises `NotImplementedError`. Anyone who actually wanted a hard delete cannot get one accidentally.
-- Custom managers filter `is_active=True` by default. Use `.all_with_deleted()` to see soft-deleted rows.
+- Custom managers filter `is_active=True` and `removed=false` by default. Use `.all_with_deleted()` to see soft-deleted rows.
 
 **Layer 2 — Foreign key cascades blocked (active):**
 - Every FK uses `on_delete=models.PROTECT`.
 - This means: even if Layer 1 were bypassed, deleting a parent row would fail because of dependent children.
 - PROTECT is the explicit "this hard-delete is not allowed" signal in the schema.
 
-**Layer 3 — Database user permissions (deferred):**
-- The original plan was to run the Django app as `sessionops_app_user` with no DELETE permission, ensuring even raw SQL deletes via app connections fail.
-- Deferred to keep early development momentum. Single DB user is used in v1.
-- If/when Layer 3 is added: create restricted user, grant only SELECT/INSERT/UPDATE on `mad_sessionops_<env>` schema, switch Django's `DBUSER` env var. ~30 minutes of work; no migration needed.
 
 **Risk acknowledged by deferring Layer 3:** A queryset `delete()` call (e.g., `Model.objects.filter(...).delete()`) bypasses the model's `delete()` override and issues SQL DELETE. With Layer 3, this would fail at the DB. Without Layer 3, it succeeds and silently removes rows. Mitigations:
 - Code review checks for `.delete()` calls on querysets
@@ -126,13 +121,12 @@ Rules are enforced at the **service layer** (Python), not at the DB layer, unles
 - Celery result rows, cache entries — infrastructure
 - `EmailRateLimit` rows — insert-only audit; no deletion mechanism in v1, may add periodic pruning later
 
-Domain models — User, UserAuth, Partner, School, Class, Section, Volunteer, Child, Slot, etc. — never get hard-deleted under any circumstance.
 
 **Note on PasswordResetToken:** Despite being short-lived data, password reset tokens follow the no-hard-delete rule via the **one-row-per-user UPDATE-in-place** pattern. A user has exactly one PasswordResetToken row that is overwritten on each new reset request. The row stays for audit; the token within is consumed or rotated.
 
 **What "deletion" means for users in practice:**
 - "Delete a child" → `child.is_active=False`, record `deleted_at`, `deleted_by`, mandatory `removed_reason` (R10)
-- "Remove a volunteer from school" → soft-delete the SchoolVolunteer row; the Volunteer record remains
+- "Remove a volunteer from school" → soft-delete the SchoolVolunteer row `is_acive=false and removed=true`; the Volunteer record remains
 - "Deactivate a user" (HR offboarding) → `user.is_active=False` (typically via Hasura sync)
 
 **If hard-delete is ever genuinely needed:** explicit migration, reviewed, run manually. Never a runtime code path.
@@ -181,23 +175,6 @@ Domain models — User, UserAuth, Partner, School, Class, Section, Volunteer, Ch
 
 ---
 
-### R14 — Admission numbers are unique within a school
-
-**Rule:** `Child.admission_number` must be unique across all children (including soft-deleted) within the same school.
-
-**Rationale:** Admission numbers are school-issued and don't get reused. They're how MAD matches children across systems.
-
-**Enforcement:** DB unique constraint on `(school_id, admission_number)`. Service layer pre-check for a friendlier error.
-
----
-
-### R15 — Guardian phone numbers are stored in E.164
-
-**Rule:** Phone numbers stored on `Child.guardian_phone` and related fields are normalized to E.164 format (`+91...`). Input validation converts common Indian formats (10-digit, with/without +91, with spaces/dashes) to E.164.
-
-**Rationale:** Integration-friendly. Enables deduplication and messaging without downstream normalization.
-
-**Enforcement:** Pydantic schema validator on input; DB stores the normalized form.
 
 ## Operational
 
@@ -210,15 +187,6 @@ Domain models — User, UserAuth, Partner, School, Class, Section, Volunteer, Ch
 **Enforcement:** Sync tasks use upsert patterns keyed on Hasura IDs, not blind inserts. Tests verify replay.
 
 ---
-
-### R17 — Year progression is irreversible once committed
-
-**Rule:** Once `AcademicYear.is_active` flips, rollback requires manual DB intervention. The UI provides a dry-run preview before commit.
-
-**Rationale:** Thousands of rows change atomically. Undoing is impractical.
-
-**Enforcement:** Two-step UI: preview → confirm. Backend exposes `preview_progression()` and `commit_progression()` as separate service calls.
-
 ---
 
 ## Conventions, not rules
