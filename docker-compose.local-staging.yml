@@ -1,15 +1,11 @@
 # Local Docker test with staging credentials (RDS, Brevo, Google OAuth).
+# Set BACKEND_ENV_FILE in the root .env file before running:
+#   echo "BACKEND_ENV_FILE=./mad_sessionops_backend/.env.staging" >> .env
 #
 # Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.local-staging.yml up --build
 
 services:
-
-  backend:
-    env_file:
-      - ./mad_sessionops_backend/.env.staging
-    environment:
-      REDIS_HOST: redis
 
   frontend:
     build:

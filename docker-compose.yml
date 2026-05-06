@@ -37,7 +37,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
-      - ./mad_sessionops_backend/.env.development
+      - ${BACKEND_ENV_FILE:-./mad_sessionops_backend/.env.development}
     environment:
       REDIS_HOST: redis
     networks:
