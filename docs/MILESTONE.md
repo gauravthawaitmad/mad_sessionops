@@ -45,8 +45,8 @@ If any of those fail, the milestone is not done. Don't move to the next mileston
 
 | # | Milestone | Theme | Features | Status | Detailed doc |
 |---|---|---|---|---|---|
-| M1 | Auth + School Visibility | Password login, RBAC, Hasura sync, school list + detail | 5 | In progress | `docs/milestones/M1.md` |
-| M2 | School Structure + Children | Academic year, classes, sections, children CRUD | 9 | Not started | Written at M2 start |
+| M1 | Auth + School Visibility | Password login, RBAC, Hasura sync, school list + detail | 5 | Complete | `docs/milestones/M1.md` |
+| M2 | School Structure + Children | Academic year, classes, sections, children CRUD | 9 | In progress — backend + frontend complete; production deploy pending | `docs/milestones/M2.md` |
 | M3 | Volunteers + Scheduling | Volunteer assignments, slots, slot-classes, schedule validation | 10 | Not started | Written at M3 start |
 | M4 | Calendar + Ops + Webhook Sync | Session dates, holidays, deactivation alerts, Hasura webhooks | 6 | Not started | Written at M4 start |
 | M5 | Activation, Polish, Admin Ops | Google OAuth, sync admin dashboard, year progression, setup checklist, cross-school conflict, Celery+Redis | 12 | Not started | Written at M5 start |
@@ -90,20 +90,22 @@ If any of those fail, the milestone is not done. Don't move to the next mileston
 
 # Milestone 2 — School Structure + Children
 
-**Status:** Not started
+**Status:** In progress — backend + frontend complete (2026-05-07); production deploy pending
 **Production goal:** A CO can build out a school's class structure (academic year → classes → sections) and enroll children into sections.
 
 ## Features (planned — finalize at M2 start)
 
-- **F-M2-1** Academic year management — create academic year, link year to school. M2 supports current year only; year switching/progression deferred to M5.
-- **F-M2-2** Classes — add/edit classes for a school under the active academic year
-- **F-M2-3** Sections — add/edit sections under classes; max-5-children rule visible in UI
-- **F-M3-1** Children list & enrollment — add child, assign to section, basic info
-- **F-M3-2** Children edit — update info, change section
-- **F-M3-3** Children deactivation — soft-delete with mandatory removed_reason
-- **F-M3-4** Children reactivation — bring back a previously-deactivated child
-- **F-M3-5** Children list filters — by section, status, search
-- **F-M3-10** Activate Children tab — currently disabled placeholder; M2 makes it real
+- **F-M2-1** Activate structure tab — currently disabled placeholder; M2 makes it real
+- **F-M2-2** Activate Children tab — currently disabled placeholder; M2 makes it real
+- **F-M2-3** Academic year management — create academic year, link year to school. M2 supports current year only; year switching/progression deferred to M5.
+- **F-M2-4** Classes — add/edit classes for a school under the active academic year
+- **F-M2-5** Sections — add/edit sections under classes; max-5-children rule visible in UI
+- **F-M3-6** Children list & enrollment — add child, assign to section, basic info
+- **F-M3-7** Children edit — update info, change section
+- **F-M3-8** Children deactivation — soft-delete with mandatory removed_reason
+- **F-M3-9** Children reactivation — bring back a previously-deactivated child
+- **F-M3-10** Children list filters — by section, status, search
+
 
 ## Major in-scope items
 

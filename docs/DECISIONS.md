@@ -556,3 +556,73 @@ Third-party Django framework tables (django_*, auth_*, token_blacklist_*, django
 - **Tables in `public`:** simpler but loses isolation. Rejected because the database is shared.
 - **Per-Django-app schemas:** over-engineering. Rejected.
 - **One database per app:** heavier infrastructure. Rejected.
+
+---
+
+## D027 — M2 models use dual-flag soft delete, not SoftDeleteBaseModel
+
+**Date:** M2 build (2026-05-07)
+**Status:** Accepted
+
+**Context:** M1 models (User, Partner) use `SoftDeleteBaseModel` which provides `is_active` only. M2 introduces history tables (ChildClass, ChildClassSection, etc.) where a row can be in one of three states: active, archived (history-preserved), or soft-deleted.
+
+**Decision:** M2 models do NOT inherit `SoftDeleteBaseModel`. Each M2 model defines three explicit fields: `is_active`, `removed`, `deleted_at`. A custom `M2ActiveManager` filters `is_active=True, removed=False` by default. `all_objects = models.Manager()` is the unfiltered escape hatch.
+
+| `is_active` | `removed` | Meaning |
+|---|---|---|
+| `true` | `false` | Active, current record |
+| `false` | `false` | Archived (history; excluded from active queries but preserved) |
+| `false` | `true` | Soft-deleted (treated as deleted, preserved in DB) |
+
+**Consequences:**
+- Consistent with Bubble-era data patterns already in the DB
+- History tables can differentiate "superseded row" from "deleted row" without a separate flag
+- More fields per row than M1 pattern; accepted for the richer semantics
+
+**Alternatives:**
+- **Extend SoftDeleteBaseModel with a `removed` flag:** would require changing M1 models or duplicating. Rejected.
+- **Single `is_active` flag:** cannot distinguish archived from deleted. Rejected.
+
+
+
+## D029 — Child reactivation auto-restores last known section
+
+**Date:** M2 build (2026-05-07)
+**Status:** Accepted
+
+**Context:** The M2 spec planned for CO to pick a target section when reactivating a child (POST body `{class_section_id}`). This matches how the reactivation flow works when a child returns after switching schools. But for the common case — a child returning to the same school — making the CO re-select the same section is unnecessary friction.
+
+**Decision:** `reactivate_child` service looks up the child's most recent `ChildClassSection` history row (`removed=False`) and restores them to that section. If that section is no longer active or is at capacity, the service raises a clear error.
+
+**Consequences:**
+- Simpler CO flow for the common case (returning child, same section)
+- If section is gone or full, CO gets an error and must contact admin to resolve — acceptable edge case
+- The original body param (`class_section_id`) is not used; if section reassignment on reactivation is needed, it should be done as a separate edit after reactivation
+
+**Alternatives:**
+- **CO picks section in reactivation modal:** more flexible, more friction. Deferred to a later milestone if needed.
+
+---
+
+## D030 — ChildRemovalLog is append-only, removal_reason is free text
+
+**Date:** M2 build (2026-05-07)
+**Status:** Accepted
+
+**Context:** The M2 spec planned a `ChildRemovalLog` with an enum `removed_reason` (5 choices), `other_details` free text when reason=`other`, `co_id` bare int, and `school_id` redundant column. The spec also gave the log `is_active`/`removed` soft-delete flags.
+
+**Decision:** `ChildRemovalLog` is built as a simple append-only audit table:
+- `removal_reason` is free text (`TextField`) — COs can express any reason without being constrained to a 5-choice dropdown
+- `removed_by` is a FK to `User` (not a bare `co_id` int) for referential clarity
+- `school_id` dropped (derivable from `child.school_id`)
+- `other_details` dropped (subsumed into free-text `removal_reason`)
+- No `is_active`/`removed` flags — the log is append-only and rows are never modified
+
+**Consequences:**
+- Simpler table, simpler schema
+- Cannot filter removal logs by category in SQL without parsing free text — if reporting by category is needed later, enum field can be added in a migration
+- Log rows are permanently preserved; reactivation does not modify them
+
+**Alternatives:**
+- **Keep enum reasons:** useful for categorical reporting but adds friction at enrollment time. Deferred.
+- **Soft-delete the log:** adds complexity with no benefit for an audit log. Rejected.

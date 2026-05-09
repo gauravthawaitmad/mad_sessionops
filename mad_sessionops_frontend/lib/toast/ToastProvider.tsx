@@ -36,9 +36,9 @@ export function ToastProvider() {
           },
         },
 
-        // Error: manual-dismiss only (UI_REFERENCE)
+        // Error: 8s auto-dismiss
         error: {
-          duration: Infinity,
+          duration: 8000,
           iconTheme: {
             primary: "#ef4444",
             secondary: "#fff",

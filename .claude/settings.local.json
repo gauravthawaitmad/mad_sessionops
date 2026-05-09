@@ -24,7 +24,19 @@
       "Bash(docker rm *)",
       "Bash(curl -s http://localhost:8000/healthcheck)",
       "Bash(curl -s http://localhost:3000)",
-      "Bash(xargs grep -l \"sync\\\\|management.*command\")"
+      "Bash(xargs grep -l \"sync\\\\|management.*command\")",
+      "Bash(python -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\(json.dumps\\(p.get\\('scripts',{}\\), indent=2\\)\\)\")",
+      "Bash(npx next *)",
+      "PowerShell(git *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(ls \"C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend\\\\sessionops\\\\migrations\\\\\" | Where-Object { $_.Name -match \"^0011\" })",
+      "PowerShell(ls \"C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_frontend\\\\app\\\\\" -Recurse | Where-Object { $_.Name -eq \"page.tsx\" } | Select-Object FullName)",
+      "PowerShell(Set-Location \"C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_frontend\"; $env:npm_lifecycle_event = \"\"; node \"node_modules/next/dist/bin/next\" lint 2>&1 | Select-Object -Last 50)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Lenovo\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--MAD-WORKSPACE-mad-sessionops\\\\bb0b9431-dc4f-4fa1-b559-0aa73b46550e\\\\tasks\\\\byro0j30r.output\" -Wait -Tail 50)",
+      "Bash(Select-String -Pattern \"passed|failed|error|PASSED|FAILED|ERROR|warning|test session\" --SimpleMatch)",
+      "Bash(node node_modules/next/dist/bin/next lint --help)",
+      "Bash(npx eslint *)",
+      "Bash(docker info *)"
     ]
   }
 }

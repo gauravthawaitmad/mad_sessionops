@@ -44,6 +44,10 @@ makemigrations app="sessionops":
 migrate:
     uv run python manage.py migrate --database migrate
 
+# Seed M2 catalog data (academic year, program, class catalog) — run after migrate
+seed-m2:
+    uv run python manage.py seed_m2_catalog
+
 # Show migration status
 migrations:
     uv run python manage.py showmigrations

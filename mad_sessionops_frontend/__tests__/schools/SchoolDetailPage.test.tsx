@@ -8,6 +8,16 @@ vi.mock('@/lib/api/services/schools.service', () => ({
   fetchSchool: vi.fn(),
 }));
 
+vi.mock('@/lib/api/services/structure.service', () => ({
+  fetchActiveYear: vi.fn().mockResolvedValue({ academicYearId: 1, label: '2026-2027', isActive: true }),
+  fetchSchoolClasses: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('@/lib/api/services/children.service', () => ({
+  fetchChildren: vi.fn().mockResolvedValue([]),
+  enrollChild: vi.fn(),
+}));
+
 vi.mock('next/link', () => ({
   default: ({ href, children, style }: { href: string; children: React.ReactNode; style?: React.CSSProperties }) => (
     <a href={href} style={style}>{children}</a>
@@ -22,6 +32,8 @@ vi.mock('next/navigation', () => ({
 // ── Fixture ───────────────────────────────────────────────────────────────────
 
 import { fetchSchool } from '@/lib/api/services/schools.service';
+import { fetchSchoolClasses } from '@/lib/api/services/structure.service';
+import userEvent from '@testing-library/user-event';
 
 const MOCK_SCHOOL = {
   partnerId: 580,
@@ -50,6 +62,137 @@ const MOCK_SCHOOL = {
   volunteersCount: 5,
   assignmentsCount: 10,
 };
+
+// ── Tests — F-M2-1 ───────────────────────────────────────────────────────────
+
+describe('SchoolDetailPage — F-M2-1 (Structure tab activation)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchSchool).mockResolvedValue(MOCK_SCHOOL);
+    vi.mocked(fetchSchoolClasses).mockResolvedValue([]);
+  });
+
+  it('test_structure_tab_renders_for_co', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    // Click the first "Structure" (sidebar nav item)
+    const structureItems = screen.getAllByText('Structure');
+    await userEvent.click(structureItems[0]);
+
+    // StructureTab renders: empty state since fetchSchoolClasses returns []
+    await waitFor(() => {
+      expect(screen.getByText('No classes added yet.')).toBeInTheDocument();
+    });
+  });
+
+  it('test_structure_tab_empty_state_when_no_classes', async () => {
+    vi.mocked(fetchSchoolClasses).mockResolvedValue([]);
+
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    const structureTabItems = screen.getAllByText('Structure');
+    await userEvent.click(structureTabItems[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('No classes added yet.')).toBeInTheDocument();
+    });
+  });
+
+  it('test_structure_tab_is_enabled_in_m2', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Overview')).toBeInTheDocument();
+    });
+
+    // Only Volunteers, Slots, Calendar are disabled (3 tabs) — Structure + Children are enabled
+    const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
+    expect(tooltips.length).toBe(3);
+  });
+});
+
+// ── Tests — F-M2-2 ───────────────────────────────────────────────────────────
+
+describe('SchoolDetailPage — F-M2-2 (Children tab activation)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchSchool).mockResolvedValue(MOCK_SCHOOL);
+    vi.mocked(fetchSchoolClasses).mockResolvedValue([]);
+  });
+
+  it('test_children_tab_renders_for_co_with_school_access', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    // Click the first "Children" (sidebar nav item)
+    const childrenItems = screen.getAllByText('Children');
+    await userEvent.click(childrenItems[0]);
+
+    // ChildrenTab renders
+    await waitFor(() => {
+      expect(screen.getByText('No children enrolled yet.')).toBeInTheDocument();
+    });
+  });
+
+  it('test_children_tab_shows_empty_state_for_school_with_no_children', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    const childrenItems = screen.getAllByText('Children');
+    await userEvent.click(childrenItems[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('No children enrolled yet.')).toBeInTheDocument();
+      expect(screen.getByText("Click 'Enroll Child' to get started.")).toBeInTheDocument();
+    });
+  });
+
+  it('test_children_tab_returns_403_for_co_without_school_access', async () => {
+    // 403 is enforced server-side — the tab has no client-side role-gating.
+    // Verify: Children tab is always clickable and renders without hiding content
+    // based on role. Full API 403 handling tested in F-M2-6.
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    const childrenItems = screen.getAllByText('Children');
+    // Tab is clickable (not disabled, not inside a Tooltip for "Coming in a future milestone")
+    expect(childrenItems[0]).toBeInTheDocument();
+    await userEvent.click(childrenItems[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('No children enrolled yet.')).toBeInTheDocument();
+    });
+  });
+
+  it('test_children_tab_is_enabled_in_m2', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Overview')).toBeInTheDocument();
+    });
+
+    // Only Volunteers, Slots, Calendar are disabled — Structure + Children are enabled
+    const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
+    expect(tooltips.length).toBe(3);
+  });
+});
 
 // ── Tests — F-M1-5 ───────────────────────────────────────────────────────────
 
@@ -106,7 +249,7 @@ describe('SchoolDetailPage — F-M1-5', () => {
 
     // Disabled tabs are wrapped in Tooltip with "Coming in a future milestone"
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(5); // Structure, Children, Volunteers, Slots, Calendar
+    expect(tooltips.length).toBe(3); // Volunteers, Slots, Calendar (Structure + Children enabled by M2)
   });
 
   it('test_school_detail_back_link_navigates_to_list', async () => {

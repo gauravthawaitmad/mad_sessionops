@@ -58,8 +58,6 @@ Service enforces business rules:
 
 Section is_active=True, not soft-deleted
 Section has < 5 active children
-Child.admission_number is unique within school
-Guardian phone matches E.164 pattern
 Raises ValidationError or ConflictError if any fail.
 
 

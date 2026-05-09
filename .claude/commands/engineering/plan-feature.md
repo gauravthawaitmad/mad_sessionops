@@ -20,7 +20,6 @@ Before generating any plan:
 - Read `docs/ARCHITECTURE.md` for system context
 - Read `docs/BUSINESS_RULES.md` for relevant rules
 - Read `docs/GLOSSARY.md` for domain terms
-- Read both `CLAUDE.md` files (backend + frontend) for conventions
 
 If the feature doesn't have a milestone doc entry, STOP and ask the human to scope it first.
 
