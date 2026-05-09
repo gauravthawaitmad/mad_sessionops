@@ -48,3 +48,33 @@ def can_view_school(user: User, partner: Partner) -> bool:
     if scope == "co":
         return partner.co_id == user.user_id
     return False
+
+
+def can_modify_school(user: User, partner: Partner) -> bool:
+    """Return True if the user may write to this partner's data (M2+).
+
+    Semantically identical to can_view_school; separate function for clarity
+    at call sites where intent is write, not read.
+    """
+    return can_view_school(user, partner)
+
+
+def get_school_or_403(user: User, school_id: int) -> Partner:
+    """Return the Partner for school_id if visible to user, else raise PermissionDenied."""
+    from sessionops.exceptions import NotFound, PermissionDenied
+
+    try:
+        partner = Partner.objects.get(partner_id=school_id)
+    except Partner.DoesNotExist:
+        raise NotFound(f"School {school_id} not found.")
+    if not can_view_school(user, partner):
+        raise PermissionDenied()
+    return partner
+
+
+def require_admin_scope(user: User) -> None:
+    """Raise PermissionDenied if the user does not have admin scope."""
+    from sessionops.exceptions import PermissionDenied
+
+    if _classify(user) != "admin":
+        raise PermissionDenied("Admin scope required.")

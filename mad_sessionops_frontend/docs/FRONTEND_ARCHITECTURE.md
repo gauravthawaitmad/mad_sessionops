@@ -177,11 +177,6 @@ Rule of thumb: the route page is a server component that renders a single top-le
 
 React Hook Form + Zod resolvers. No custom form state.
 
-```tsconst schema = z.object({
-admission_number: z.string().min(1),
-guardian_phone: z.string().regex(/^+91\d{10}$/, 'Invalid phone'),
-});const form = useForm({ resolver: zodResolver(schema) });
-
 The Zod schema is **client-side UX validation only.** The authoritative validation is on the backend (Pydantic + service layer). The frontend shows errors faster; the backend is the source of truth.
 
 When backend returns a 400 with field errors, the form maps them back to field-level errors via RHF's `setError`.

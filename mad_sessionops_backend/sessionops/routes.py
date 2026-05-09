@@ -26,8 +26,11 @@ from ninja.responses import Response
 from pydantic import ValidationError as PydanticValidationError
 
 from sessionops import auth
+from sessionops.api.academic_years_api import academic_years_router
 from sessionops.api.auth_api import auth_router
+from sessionops.api.children_api import children_router
 from sessionops.api.schools_api import schools_router
+from sessionops.api.structure_api import classes_catalog_router, structure_router
 from sessionops.api.user_api import user_router
 from sessionops.exceptions import (
     AuthenticationError,
@@ -188,6 +191,20 @@ api.add_router("/api/users/", user_router)
 # Schools routes (scope-filtered by RBAC)
 # Prefix: /api/schools/
 api.add_router("/api/schools/", schools_router)
+
+# Academic year routes
+# Prefix: /api/academic-years/
+api.add_router("/api/academic-years/", academic_years_router)
+
+# Structure routes (school-scoped: classes + sections)
+# Prefix: /api/schools/{school_id}/classes/, /api/schools/{school_id}/sections/
+api.add_router("/api/schools/", structure_router)
+
+# Class catalog (global, not school-scoped): /api/classes/, /api/classes/section-codes/
+api.add_router("/api/classes/", classes_catalog_router)
+
+# Children routes (school-scoped: enroll, edit, deactivate, reactivate, list)
+api.add_router("/api/schools/", children_router)
 
 
 # =============================================================================

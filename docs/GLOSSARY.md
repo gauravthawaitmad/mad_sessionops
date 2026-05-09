@@ -40,7 +40,7 @@ Terms that matter in Session-Ops. When Claude Code uses the wrong word, bugs fol
 
 **Section** — A subdivision of a class. Example: "5-A", "5-B". Has up to 5 active children. Max 5 is the hardest rule in the system.
 
-**Child** — A student enrolled in a section. Has an admission number unique within the school. Has a guardian phone. Has an `is_active` flag and a `removed_reason` that is mandatory when set inactive.
+**Child** — A student enrolled in a section. Has an child_id unique across table. Has an `is_active` flag and a `removed_reason` that is mandatory when set inactive.
 
 **Volunteer** — An external person (not MAD staff) who teaches sections. Assigned to exactly one school. Has contact info and an onboarding record.
 

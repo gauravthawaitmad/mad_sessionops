@@ -45,6 +45,20 @@ from sessionops.models.password_reset_token import PasswordResetToken
 from sessionops.models.partner import Partner
 from sessionops.models.sync_run import SyncRun
 
+# M2 models
+from sessionops.models.academic_year import AcademicYear, SchoolAcademicYear
+from sessionops.models.program import Program
+from sessionops.models.grade_class import Class, SchoolClass
+from sessionops.models.class_section import ClassSection
+from sessionops.models.child import (
+    Child,
+    ChildClass,
+    ChildClassSection,
+    BatchChild,
+    ChildProgram,
+    ChildRemovalLog,
+)
+
 __all__ = [
     "SoftDeleteBaseModel",
     "SoftDeleteManager",
@@ -53,4 +67,17 @@ __all__ = [
     "PasswordResetToken",
     "Partner",
     "SyncRun",
+    # M2
+    "AcademicYear",
+    "SchoolAcademicYear",
+    "Program",
+    "Class",
+    "SchoolClass",
+    "ClassSection",
+    "Child",
+    "ChildClass",
+    "ChildClassSection",
+    "BatchChild",
+    "ChildProgram",
+    "ChildRemovalLog",
 ]

@@ -21,6 +21,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { fetchSchool, type SchoolDetail } from '@/lib/api/services/schools.service';
+import { fetchActiveYear } from '@/lib/api/services/structure.service';
+import { StructureTab } from '@/components/schools/structure/StructureTab';
+import { ChildrenTab } from '@/components/schools/children/ChildrenTab';
 import { colors } from '@/config/design-tokens';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -40,14 +43,14 @@ const ACCENT         = '#2563EB';
 
 const TABS = [
   { key: 'overview',   label: 'Overview',    icon: LayoutDashboard, enabled: true  },
-  { key: 'structure',  label: 'Structure',   icon: BookOpen,        enabled: false },
-  { key: 'children',   label: 'Children',    icon: Users,           enabled: false },
+  { key: 'structure',  label: 'Structure',   icon: BookOpen,        enabled: true  },
+  { key: 'children',   label: 'Children',    icon: Users,           enabled: true  },
   { key: 'volunteers', label: 'Volunteers',  icon: UserCheck,       enabled: false },
   { key: 'slots',      label: 'Slots',       icon: Clock,           enabled: false },
   { key: 'calendar',   label: 'Calendar',    icon: Calendar,        enabled: false },
 ];
 
-function WorkspaceSidebar({ active }: { active: string }) {
+function WorkspaceSidebar({ active, onTabChange }: { active: string; onTabChange: (key: string) => void }) {
   return (
     <Box
       sx={{
@@ -107,6 +110,7 @@ function WorkspaceSidebar({ active }: { active: string }) {
           const item = (
             <Box
               key={key}
+              onClick={enabled ? () => onTabChange(key) : undefined}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -510,14 +514,22 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
   const [school, setSchool] = useState<SchoolDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [activeYear, setActiveYear] = useState('');
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setNotFound(false);
 
-    fetchSchool(partnerId)
-      .then((data) => { if (!cancelled) { setSchool(data); setLoading(false); } })
+    Promise.all([fetchSchool(partnerId), fetchActiveYear()])
+      .then(([data, year]) => {
+        if (!cancelled) {
+          setSchool(data);
+          setActiveYear(year.label);
+          setLoading(false);
+        }
+      })
       .catch((err) => {
         if (!cancelled) {
           setLoading(false);
@@ -587,7 +599,7 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
     <Box sx={{ display: 'flex', width: '100%', minHeight: '100vh', bgcolor: '#F8FAFC' }}>
 
       {/* Sidebar — sticky, full viewport height */}
-      {loading ? <SidebarSkeleton /> : <WorkspaceSidebar active="overview" />}
+      {loading ? <SidebarSkeleton /> : <WorkspaceSidebar active={activeTab} onTabChange={setActiveTab} />}
 
       {/* Right panel — scrollable */}
       <Box
@@ -669,6 +681,25 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
                       <Typography sx={{ fontSize: '12px' }}>{school.coName}</Typography>
                     </Box>
                   )}
+                  {activeYear && (
+                    <Box
+                      sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        px: 1,
+                        py: 0.25,
+                        borderRadius: '6px',
+                        bgcolor: '#EFF6FF',
+                        border: '1px solid #BFDBFE',
+                      }}
+                    >
+                      <BookOpen size={11} strokeWidth={2} color="#2563EB" />
+                      <Typography sx={{ fontSize: '11px', fontWeight: 600, color: '#1D4ED8' }}>
+                        {activeYear}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </Box>
@@ -676,7 +707,15 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
         </Box>
 
         {/* Content */}
-        {loading ? <ContentSkeleton /> : (school && <OverviewContent school={school} />)}
+        {loading ? (
+          <ContentSkeleton />
+        ) : school && (
+          <>
+            {activeTab === 'overview'   && <OverviewContent school={school} />}
+            {activeTab === 'structure'  && <StructureTab schoolId={partnerId} activeYear={activeYear} />}
+            {activeTab === 'children'   && <ChildrenTab schoolId={partnerId} activeYear={activeYear} />}
+          </>
+        )}
 
       </Box>
     </Box>
