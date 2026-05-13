@@ -48,6 +48,14 @@ migrate:
 seed-m2:
     uv run python manage.py seed_m2_catalog
 
+# Full startup check: migrate + seed + status summary (same as Docker entrypoint)
+bootstrap:
+    uv run python manage.py db_startup
+
+# DB state summary — quick check without re-running migrations
+dbcheck:
+    uv run python manage.py db_startup
+
 # Show migration status
 migrations:
     uv run python manage.py showmigrations

@@ -36,7 +36,12 @@
       "Bash(Select-String -Pattern \"passed|failed|error|PASSED|FAILED|ERROR|warning|test session\" --SimpleMatch)",
       "Bash(node node_modules/next/dist/bin/next lint --help)",
       "Bash(npx eslint *)",
-      "Bash(docker info *)"
+      "Bash(docker info *)",
+      "Bash(Get-ChildItem \"C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend\\\\sessionops\\\\migrations\" -Filter \"00*.py\")",
+      "Bash(Select-Object Name)",
+      "Bash(Sort-Object Name)",
+      "Bash(Get-ChildItem \"C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend\\\\sessionops\\\\management\\\\commands\" -Filter \"*.py\")",
+      "Bash(Select-Object -ExpandProperty Name)"
     ]
   }
 }
