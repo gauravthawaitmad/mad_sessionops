@@ -24,6 +24,7 @@ import {
   type SchoolClassItem,
   type SectionItem,
 } from '@/lib/api/services/structure.service';
+import { showApiError } from '@/lib/toast/toast';
 import { AddClassModal } from './AddClassModal';
 import { AddSectionModal } from './AddSectionModal';
 
@@ -270,8 +271,8 @@ function ClassCard({
       setSections((prev) => prev.filter((s) => s.classSectionId !== removeTarget.classSectionId));
       setRemoveTarget(null);
     } catch (err: any) {
-      const msg = err?.response?.data?.error?.message ?? 'Failed to remove section.';
-      setSectionError(msg);
+      setRemoveTarget(null);
+      showApiError(err);
     } finally {
       setRemovingSection(false);
     }
@@ -435,7 +436,7 @@ function ClassCard({
       <RemoveSectionDialog
         open={Boolean(removeTarget)}
         sectionName={removeTarget?.sectionName ?? ''}
-        onCancel={() => { setRemoveTarget(null); setSectionError(''); }}
+        onCancel={() => setRemoveTarget(null)}
         onConfirm={handleRemoveSectionConfirm}
         confirming={removingSection}
       />
@@ -451,7 +452,6 @@ export function StructureTab({ schoolId, activeYear }: StructureTabProps) {
   const [addOpen, setAddOpen] = useState(false);
   const [removeTarget, setRemoveTarget] = useState<SchoolClassItem | null>(null);
   const [removing, setRemoving] = useState(false);
-  const [removeError, setRemoveError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -466,14 +466,13 @@ export function StructureTab({ schoolId, activeYear }: StructureTabProps) {
   async function handleRemoveConfirm() {
     if (!removeTarget) return;
     setRemoving(true);
-    setRemoveError('');
     try {
       await removeSchoolClass(schoolId, removeTarget.schoolClassId);
       setClasses((prev) => prev.filter((c) => c.schoolClassId !== removeTarget.schoolClassId));
       setRemoveTarget(null);
     } catch (err: any) {
-      const msg = err?.response?.data?.error?.message ?? 'Failed to remove class.';
-      setRemoveError(msg);
+      setRemoveTarget(null);
+      showApiError(err);
     } finally {
       setRemoving(false);
     }
@@ -536,10 +535,6 @@ export function StructureTab({ schoolId, activeYear }: StructureTabProps) {
         </Box>
       )}
 
-      {removeError && (
-        <Typography sx={{ fontSize: '13px', color: DANGER, mt: 1 }}>{removeError}</Typography>
-      )}
-
       <AddClassModal
         open={addOpen}
         schoolId={schoolId}
@@ -551,7 +546,7 @@ export function StructureTab({ schoolId, activeYear }: StructureTabProps) {
       <RemoveClassDialog
         open={Boolean(removeTarget)}
         className={removeTarget?.className ?? ''}
-        onCancel={() => { setRemoveTarget(null); setRemoveError(''); }}
+        onCancel={() => setRemoveTarget(null)}
         onConfirm={handleRemoveConfirm}
         confirming={removing}
       />

@@ -31,8 +31,8 @@ except Exception as e:
     print(f"Schema step warning: {e}", file=sys.stderr)
 PYEOF
 
-    echo ">>> Running migrations..."
-    python manage.py migrate --noinput --database migrate
+    echo ">>> Running DB startup (migrate + seed)..."
+    python manage.py db_startup
 
     # Run Hasura sync only on staging and production.
     # Development uses local/test data — skip sync to avoid hitting real Hasura.
