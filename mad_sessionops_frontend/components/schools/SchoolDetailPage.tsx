@@ -25,6 +25,7 @@ import { fetchActiveYear } from '@/lib/api/services/structure.service';
 import { StructureTab } from '@/components/schools/structure/StructureTab';
 import { ChildrenTab } from '@/components/schools/children/ChildrenTab';
 import { VolunteerListTab } from '@/components/schools/volunteers/VolunteerListTab';
+import { SlotListTab } from '@/components/schools/slots/SlotListTab';
 import { colors } from '@/config/design-tokens';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -47,7 +48,7 @@ const TABS = [
   { key: 'structure',  label: 'Structure',   icon: BookOpen,        enabled: true  },
   { key: 'children',   label: 'Children',    icon: Users,           enabled: true  },
   { key: 'volunteers', label: 'Volunteers',  icon: UserCheck,       enabled: true  },
-  { key: 'slots',      label: 'Slots',       icon: Clock,           enabled: false },
+  { key: 'slots',      label: 'Slots',       icon: Clock,           enabled: true  },
   { key: 'calendar',   label: 'Calendar',    icon: Calendar,        enabled: false },
 ];
 
@@ -716,6 +717,7 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
             {activeTab === 'structure'   && <StructureTab schoolId={partnerId} activeYear={activeYear} />}
             {activeTab === 'children'    && <ChildrenTab schoolId={partnerId} activeYear={activeYear} />}
             {activeTab === 'volunteers'  && <VolunteerListTab schoolId={partnerId} />}
+            {activeTab === 'slots'       && <SlotListTab schoolId={partnerId} />}
           </>
         )}
 
