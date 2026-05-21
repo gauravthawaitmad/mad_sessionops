@@ -24,6 +24,7 @@ import { fetchSchool, type SchoolDetail } from '@/lib/api/services/schools.servi
 import { fetchActiveYear } from '@/lib/api/services/structure.service';
 import { StructureTab } from '@/components/schools/structure/StructureTab';
 import { ChildrenTab } from '@/components/schools/children/ChildrenTab';
+import { VolunteerListTab } from '@/components/schools/volunteers/VolunteerListTab';
 import { colors } from '@/config/design-tokens';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -45,7 +46,7 @@ const TABS = [
   { key: 'overview',   label: 'Overview',    icon: LayoutDashboard, enabled: true  },
   { key: 'structure',  label: 'Structure',   icon: BookOpen,        enabled: true  },
   { key: 'children',   label: 'Children',    icon: Users,           enabled: true  },
-  { key: 'volunteers', label: 'Volunteers',  icon: UserCheck,       enabled: false },
+  { key: 'volunteers', label: 'Volunteers',  icon: UserCheck,       enabled: true  },
   { key: 'slots',      label: 'Slots',       icon: Clock,           enabled: false },
   { key: 'calendar',   label: 'Calendar',    icon: Calendar,        enabled: false },
 ];
@@ -711,9 +712,10 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
           <ContentSkeleton />
         ) : school && (
           <>
-            {activeTab === 'overview'   && <OverviewContent school={school} />}
-            {activeTab === 'structure'  && <StructureTab schoolId={partnerId} activeYear={activeYear} />}
-            {activeTab === 'children'   && <ChildrenTab schoolId={partnerId} activeYear={activeYear} />}
+            {activeTab === 'overview'    && <OverviewContent school={school} />}
+            {activeTab === 'structure'   && <StructureTab schoolId={partnerId} activeYear={activeYear} />}
+            {activeTab === 'children'    && <ChildrenTab schoolId={partnerId} activeYear={activeYear} />}
+            {activeTab === 'volunteers'  && <VolunteerListTab schoolId={partnerId} />}
           </>
         )}
 

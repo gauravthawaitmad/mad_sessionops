@@ -113,9 +113,9 @@ describe('SchoolDetailPage — F-M2-1 (Structure tab activation)', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 
-    // Only Volunteers, Slots, Calendar are disabled (3 tabs) — Structure + Children are enabled
+    // Only Slots, Calendar are disabled (2 tabs) — Structure + Children + Volunteers enabled in M3
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(3);
+    expect(tooltips.length).toBe(2);
   });
 });
 
@@ -188,9 +188,9 @@ describe('SchoolDetailPage — F-M2-2 (Children tab activation)', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 
-    // Only Volunteers, Slots, Calendar are disabled — Structure + Children are enabled
+    // Only Slots, Calendar are disabled — Structure + Children + Volunteers enabled in M3
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(3);
+    expect(tooltips.length).toBe(2);
   });
 });
 
@@ -237,7 +237,7 @@ describe('SchoolDetailPage — F-M1-5', () => {
 
     // All non-overview tab labels are present in DOM
     // MUI Tooltip clones elements internally, so multiple matches are expected
-    const disabledLabels = ['Structure', 'Volunteers', 'Slots', 'Calendar'];
+    const disabledLabels = ['Structure', 'Volunteers', 'Slots', 'Calendar', 'Children'];
     for (const label of disabledLabels) {
       const elements = screen.getAllByText(label);
       expect(elements.length).toBeGreaterThan(0);
@@ -249,7 +249,7 @@ describe('SchoolDetailPage — F-M1-5', () => {
 
     // Disabled tabs are wrapped in Tooltip with "Coming in a future milestone"
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(3); // Volunteers, Slots, Calendar (Structure + Children enabled by M2)
+    expect(tooltips.length).toBe(2); // Slots, Calendar (Structure + Children + Volunteers enabled by M3)
   });
 
   it('test_school_detail_back_link_navigates_to_list', async () => {
