@@ -32,6 +32,10 @@ from sessionops.api.children_api import children_router
 from sessionops.api.schools_api import schools_router
 from sessionops.api.structure_api import classes_catalog_router, structure_router
 from sessionops.api.user_api import user_router
+from sessionops.api.volunteers_api import volunteers_router
+from sessionops.api.slots_api import slots_router
+from sessionops.api.slot_classes_api import slot_classes_router
+from sessionops.api.schedule_api import schedule_router
 from sessionops.exceptions import (
     AuthenticationError,
     ConflictError,
@@ -205,6 +209,18 @@ api.add_router("/api/classes/", classes_catalog_router)
 
 # Children routes (school-scoped: enroll, edit, deactivate, reactivate, list)
 api.add_router("/api/schools/", children_router)
+
+# Volunteers routes (school-scoped: list auto-populated from Worknode)
+api.add_router("/api/schools/", volunteers_router)
+
+# Slots routes (school-scoped: CRUD)
+api.add_router("/api/schools/", slots_router)
+
+# Slot-classes routes (slot-scoped: CRUD)
+api.add_router("/api/schools/", slot_classes_router)
+
+# Schedule view (school-scoped: read-only weekly schedule)
+api.add_router("/api/schools/", schedule_router)
 
 
 # =============================================================================

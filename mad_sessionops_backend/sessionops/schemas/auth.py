@@ -441,6 +441,20 @@ class UserResponseSchema(Schema):
     user_created_datetime: datetime
 
 
+class ScopeWarningSchema(Schema):
+    """Emitted on login when the user has no visible schools."""
+
+    code: str
+    message: str
+
+
+class PermissionsResponseSchema(Schema):
+    """Response for GET /api/auth/me/permissions/?school_id=X."""
+
+    can_view: bool
+    can_modify: bool
+
+
 class AuthResponseSchema(Schema):
     """
     Combined response for login/register with user info and tokens.
@@ -456,12 +470,14 @@ class AuthResponseSchema(Schema):
                 "access_token": "...",
                 "refresh_token": "...",
                 ...
-            }
+            },
+            "scope_warning": null
         }
     """
 
     user: UserResponseSchema
     tokens: TokenResponseSchema
+    scope_warning: Optional[ScopeWarningSchema] = None
 
 
 class MessageResponseSchema(Schema):

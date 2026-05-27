@@ -92,6 +92,8 @@ export interface AuthState {
   error: string | null;
   lastActivity: number | null;
   sessionTimeout: number;
+
+  scopeWarning?: ScopeWarning | null;
 }
 
 // ============================================
@@ -113,6 +115,11 @@ export interface RegisterData {
   acceptTerms: boolean;
 }
 
+export interface ScopeWarning {
+  code: string;
+  message: string;
+}
+
 /**
  * Auth Response from Backend
  */
@@ -120,8 +127,8 @@ export interface AuthResponse {
   user: User;
   accessToken: string;
   refreshToken: string;
-  // Backend tells us when to refresh, no need to decode
   expiresIn: number; // seconds until token expires
+  scopeWarning?: ScopeWarning | null;
 }
 
 /**

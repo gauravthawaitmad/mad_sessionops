@@ -7,7 +7,6 @@
 - [x] Create placeholder `SlotListTab` component (stub until F-M3-5)
 - [x] Add slots tab tests to `SchoolDetailPage.test.tsx`
 - [x] Run `npm run test` (20/20 pass)
-- [ ] Commit
 
 ## Blockers
 - None yet

@@ -103,6 +103,7 @@ class Command(BaseCommand):
         try:
             self._seed_academic_year()
             self._seed_program_and_classes()
+            self._seed_subjects()
             self.stdout.write("")
             return True
         except Exception as exc:
@@ -152,6 +153,26 @@ class Command(BaseCommand):
             self.stdout.write(_ok(f"Classes 5th-8th  ({created_count} created, {existing} already existed)"))
         else:
             self.stdout.write(_ok("Classes 5th-8th  (already seeded)"))
+
+    def _seed_subjects(self):
+        from sessionops.models import Program, Subject
+
+        program, _ = Program.objects.get_or_create(program_name="Foundation Program")
+        catalog = ["Foundation Day 1", "Foundation Day 2"]
+        created_count = 0
+        for name in catalog:
+            _, c = Subject.objects.get_or_create(
+                subject_name=name,
+                defaults={"program_id": program},
+            )
+            if c:
+                created_count += 1
+
+        existing = len(catalog) - created_count
+        if created_count:
+            self.stdout.write(_ok(f"Subjects  ({created_count} created, {existing} already existed)"))
+        else:
+            self.stdout.write(_ok("Subjects  (already seeded)"))
 
     # ── Footer ─────────────────────────────────────────────────────────────────
 

@@ -298,3 +298,64 @@ None. All resolved:
 - `user_display_name` + `user_login` confirmed as the display fields
 - Hasura field mapping confirmed: `chapter_id` → `partner_id`; ignored: `chapter_validation`, `cho_id`, `cho_name`, `co_id`
 - Response root key: `prod_external_apps_chapter_mapping`
+
+---
+
+## Amendments (post-implementation)
+
+### A1 — Fix `active_slot_class_count` (was always 0)
+
+**File:** `services/volunteers/list.py`
+
+The original implementation hard-coded `active_slot_class_count: 0` with a comment deferring to F-M3-7. `SlotClassSectionVolunteer` already exists, so the count is now computed:
+
+```python
+active_slot_class_count = SlotClassSectionVolunteer.objects.filter(
+    volunteer_id=v,
+    is_active=True,
+    removed=False,
+    slot_class_section_id__slot_id__school_id=school_id,
+).count()
+```
+
+Traversal: `SlotClassSectionVolunteer → SlotClassSection → Slot → school_id (BigIntegerField)`.
+
+### A2 — Volunteer detail fields in API response
+
+**Files:** `services/volunteers/list.py`, `schemas/volunteers.py`
+
+Added `email`, `contact`, `city`, `state` to the serialized volunteer dict and schema:
+
+```python
+class VolunteerCardSchema(Schema):
+    ...
+    email: str
+    contact: str | None = None
+    city: str | None = None
+    state: str | None = None
+```
+
+`contact`, `city`, `state` are nullable (`null=True` on the model).
+
+### A3 — Volunteer detail drawer (frontend)
+
+**Files:** `VolunteerCard.tsx`, `VolunteerDetailDrawer.tsx`, `VolunteerListTab.tsx`
+
+- `VolunteerCard` is now clickable (hover highlight + pointer cursor). Added `onClick` prop.
+- New `VolunteerDetailDrawer` — MUI `Drawer` anchored right, slides in on card click. Shows: teaching badge, `user_id`, `email`, `user_login`, `contact`, `city`, `state`.
+- `VolunteerListTab` manages `selected: VolunteerCard | null` state and renders the drawer.
+
+### A3 — New test cases
+
+Added to `tests/test_f_m3_3_volunteers.py`:
+
+**`TestListSchoolVolunteers` (new):**
+- `test_list_school_volunteers_returns_contact_detail_fields` — email, contact, city, state present and correct
+- `test_list_school_volunteers_returns_null_for_missing_contact_fields` — nullable fields return None when not set
+
+**`TestActiveSlotClassCount` (new class):**
+- `test_active_slot_class_count_reflects_actual_assignments` — count is 1 after one assignment
+- `test_active_slot_class_count_zero_when_no_assignments` — count is 0 with no assignments
+- `test_active_slot_class_count_ignores_other_school_assignments` — cross-school isolation
+- `test_active_slot_class_count_ignores_removed_assignments` — removed=True rows excluded
+- `test_active_slot_class_count_increments_for_multiple_assignments` — count is 2 with two assignments

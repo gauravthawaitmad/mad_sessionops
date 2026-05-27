@@ -51,10 +51,11 @@ function capacityColor(count: number): string {
 interface StructureTabProps {
   schoolId: number;
   activeYear: string;
+  canModify?: boolean;
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────
-function EmptyState({ onAdd }: { onAdd: () => void }) {
+function EmptyState({ onAdd }: { onAdd?: () => void }) {
   return (
     <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
       <Box
@@ -77,9 +78,11 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <Typography sx={{ fontSize: '13px', color: TEXT_MUTED, textAlign: 'center', maxWidth: 300 }}>
         Add a class from the catalog to start building the school&apos;s structure.
       </Typography>
-      <Button variant="contained" size="small" startIcon={<Plus size={14} />} onClick={onAdd} sx={{ mt: 1 }}>
-        Add Class
-      </Button>
+      {onAdd && (
+        <Button variant="contained" size="small" startIcon={<Plus size={14} />} onClick={onAdd} sx={{ mt: 1 }}>
+          Add Class
+        </Button>
+      )}
     </Box>
   );
 }
@@ -445,7 +448,7 @@ function ClassCard({
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export function StructureTab({ schoolId, activeYear }: StructureTabProps) {
+export function StructureTab({ schoolId, activeYear, canModify = true }: StructureTabProps) {
   const [classes, setClasses] = useState<SchoolClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -494,15 +497,17 @@ export function StructureTab({ schoolId, activeYear }: StructureTabProps) {
             </Typography>
           )}
         </Box>
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<Plus size={14} />}
-          onClick={() => setAddOpen(true)}
-          disabled={loading}
-        >
-          Add Class
-        </Button>
+        {canModify && (
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<Plus size={14} />}
+            onClick={() => setAddOpen(true)}
+            disabled={loading}
+          >
+            Add Class
+          </Button>
+        )}
       </Box>
 
       {/* Body */}
@@ -519,7 +524,7 @@ export function StructureTab({ schoolId, activeYear }: StructureTabProps) {
       )}
 
       {!loading && !error && classes.length === 0 && (
-        <EmptyState onAdd={() => setAddOpen(true)} />
+        <EmptyState onAdd={canModify ? () => setAddOpen(true) : undefined} />
       )}
 
       {!loading && !error && classes.length > 0 && (

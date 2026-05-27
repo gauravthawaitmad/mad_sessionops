@@ -45,6 +45,16 @@ from sessionops.models.password_reset_token import PasswordResetToken
 from sessionops.models.partner import Partner
 from sessionops.models.sync_run import SyncRun
 
+# M3 models
+from sessionops.models.partner_worknode import PartnerWorknode
+from sessionops.models.subject import Subject
+from sessionops.models.school_volunteer import SchoolVolunteer
+from sessionops.models.slot import Slot
+from sessionops.models.class_section_subject import ClassSectionSubject
+from sessionops.models.child_subject import ChildSubject
+from sessionops.models.slot_class_section import SlotClassSection
+from sessionops.models.slot_class_section_volunteer import SlotClassSectionVolunteer
+
 # M2 models
 from sessionops.models.academic_year import AcademicYear, SchoolAcademicYear
 from sessionops.models.program import Program
@@ -67,6 +77,15 @@ __all__ = [
     "PasswordResetToken",
     "Partner",
     "SyncRun",
+    # M3
+    "PartnerWorknode",
+    "Subject",
+    "SchoolVolunteer",
+    "Slot",
+    "ClassSectionSubject",
+    "ChildSubject",
+    "SlotClassSection",
+    "SlotClassSectionVolunteer",
     # M2
     "AcademicYear",
     "SchoolAcademicYear",

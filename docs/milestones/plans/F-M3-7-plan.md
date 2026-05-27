@@ -5,7 +5,7 @@
 The most complex M3 feature. CO opens a slot, clicks "Add Class to Slot", and composes: section + subject + Vol1 (required) + Vol2 (optional). On submit, five tables receive rows in a single atomic transaction: `ClassSectionSubject`, `ChildSubject` (per active child), `SlotClassSection`, `SlotClassSectionVolunteer` (1-2 rows), and `SchoolVolunteer` (if not already active at this school). Business rules R2, R3, R4, R5, R6 are all enforced here. This feature also extends the M2 `enroll_child` and `soft_delete_section` services.
 
 ## Blast Radius
-
+can
 | Surface | Impact | Notes |
 |---------|--------|-------|
 | Backend models | 4 NEW | `ClassSectionSubject`, `ChildSubject`, `SlotClassSection`, `SlotClassSectionVolunteer` |
@@ -406,3 +406,23 @@ DELETE errors: 403, 404
 None. All resolved:
 - CHO has full CRUD on slot-classes within scope (confirmed per F-M3-4)
 - `get_or_create_school_academic_year` available at `services/academic_year/queries.py`
+
+---
+
+## Amendments (post-implementation)
+
+### A1 — Fix: Vol1 picker did not block Vol2's current selection
+
+**File:** `AddSlotClassModal.tsx`
+
+**Bug:** Selecting Vol2 = X first, then Vol1 = X was allowed in the UI — the Vol1 picker only disabled volunteers already in `usedVolIds` (existing slot assignments), not the currently selected Vol2. The composition preview would show the same volunteer in both slots.
+
+**Fix:** Added `isVol2 = v.userId === vol2Id` check in the Vol1 column. Disabled state is now `busy || isVol2`, with disabled reason `'Selected as Vol 2'`. The Vol2 column already blocked Vol1 correctly — no change needed there.
+
+Server-side R3 enforcement was already correct (`create_slot_class` step 8, Pydantic `model_validator`).
+
+### A2 — UX: Cap volunteer list height for large volunteer pools
+
+**File:** `AddSlotClassModal.tsx`
+
+Both volunteer columns (Vol1 and Vol2) now have `maxHeight: 240px; overflowY: auto` on their list containers. The modal stays compact regardless of volunteer count; each column scrolls independently. A small `pr: 0.5` keeps the scrollbar from overlapping card content.

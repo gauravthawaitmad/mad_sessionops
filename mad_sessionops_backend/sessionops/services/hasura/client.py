@@ -59,6 +59,26 @@ def fetch_users() -> list[dict]:
     return rows
 
 
+def fetch_chapter_mapping() -> list[dict]:
+    """
+    Fetch all chapter → worknode mappings from Hasura REST API.
+
+    Returns the list of dicts from prod_external_apps_chapter_mapping.
+    Only rows with chapter_validation=true are returned by the query param.
+    Raises HasuraError on non-200 response.
+    """
+    url = f"{_base_url()}/api/rest/chapter_mapping"
+    params = {"chapter_validation": "true"}
+    response = requests.get(url, headers=_headers(), params=params, timeout=60)
+
+    if response.status_code != 200:
+        raise HasuraError(
+            f"Hasura /chapter_mapping returned {response.status_code}: {response.text[:500]}"
+        )
+
+    return response.json().get("prod_external_apps_chapter_mapping", [])
+
+
 def fetch_partners(updated_after: datetime | None = None) -> list[dict]:
     """
     Fetch all partners from Hasura REST API.

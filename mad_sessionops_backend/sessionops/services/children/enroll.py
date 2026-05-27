@@ -9,7 +9,9 @@ from sessionops.models import (
     ChildClass,
     ChildClassSection,
     ChildProgram,
+    ChildSubject,
     ClassSection,
+    ClassSectionSubject,
     Partner,
     SchoolAcademicYear,
     User,
@@ -115,6 +117,24 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
             child_id=child,
             created_by=user,
         )
+
+        # 11. M3 extension: create ChildSubject for any active subjects on this section
+        active_css = list(
+            ClassSectionSubject.objects.filter(
+                class_section_id=section,
+                is_active=True,
+                removed=False,
+            )
+        )
+        if active_css:
+            ChildSubject.objects.bulk_create([
+                ChildSubject(
+                    child_id=child,
+                    class_section_subject_id=css,
+                    created_by=user,
+                )
+                for css in active_css
+            ])
 
     # Re-fetch with annotations for response serialization
     from sessionops.services.children.queries import list_children

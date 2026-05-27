@@ -41,7 +41,22 @@
       "Bash(Select-Object Name)",
       "Bash(Sort-Object Name)",
       "Bash(Get-ChildItem \"C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend\\\\sessionops\\\\management\\\\commands\" -Filter \"*.py\")",
-      "Bash(Select-Object -ExpandProperty Name)"
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(node -e \"const pkg = require\\('./node_modules/next/package.json'\\); console.log\\(pkg.version\\);\")",
+      "Bash(python -c \"import django; django.setup\\(\\); from django.db import connection; cursor = connection.cursor\\(\\); cursor.execute\\('SELECT current_user, session_user'\\); print\\(cursor.fetchone\\(\\)\\); cursor.execute\\('SELECT has_table_privilege\\(current_user, \\\\'program\\\\', \\\\'SELECT\\\\'\\)'\\); print\\('has SELECT on program:', cursor.fetchone\\(\\)\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(set DJANGO_SETTINGS_MODULE=sessionops.settings)",
+      "Bash(python -c \"import django; django.setup\\(\\); from django.db import connection; c = connection.cursor\\(\\); c.execute\\('SELECT tablename, tableowner FROM pg_tables WHERE schemaname=chr\\(112\\)||chr\\(117\\)||chr\\(98\\)||chr\\(108\\)||chr\\(105\\)||chr\\(99\\)'\\); rows = c.fetchall\\(\\); print\\(chr\\(10\\).join\\(f'{r[0]} -> {r[1]}' for r in rows\\)\\)\")",
+      "Bash(del \"C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend\\\\sessionops\\\\migrations\\\\0014_m3_subject_school_volunteer_slot.py\")",
+      "Read(//c/c/MAD_WORKSPACE/mad_sessionops/mad_sessionops_backend/sessionops/services/**)",
+      "Bash(Get-ChildItem *)",
+      "PowerShell(Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend; just serve' -WindowStyle Normal)",
+      "PowerShell(Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_frontend; npm run dev' -WindowStyle Normal)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(netstat *)",
+      "PowerShell(Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend; just serve' -WindowStyle Normal; Write-Host \"Launched.\")",
+      "PowerShell(Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend; uv run python manage.py runserver 0.0.0.0:8000' -WindowStyle Normal; Write-Host \"Launched.\")",
+      "Bash(xargs grep -l \"list_school_volunteers\\\\|volunteers\")"
     ]
   }
 }
