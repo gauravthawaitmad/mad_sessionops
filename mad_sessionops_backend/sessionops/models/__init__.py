@@ -55,6 +55,10 @@ from sessionops.models.child_subject import ChildSubject
 from sessionops.models.slot_class_section import SlotClassSection
 from sessionops.models.slot_class_section_volunteer import SlotClassSectionVolunteer
 
+# M4 models
+from sessionops.models.session_details import SchoolSessionDetails
+from sessionops.models.school_holiday import SchoolHoliday, HOLIDAY_REASONS
+
 # M2 models
 from sessionops.models.academic_year import AcademicYear, SchoolAcademicYear
 from sessionops.models.program import Program
@@ -70,6 +74,9 @@ from sessionops.models.child import (
 )
 
 __all__ = [
+    "SchoolSessionDetails",
+    "SchoolHoliday",
+    "HOLIDAY_REASONS",
     "SoftDeleteBaseModel",
     "SoftDeleteManager",
     "User",

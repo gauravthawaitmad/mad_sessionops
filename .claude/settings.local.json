@@ -56,7 +56,10 @@
       "PowerShell(netstat *)",
       "PowerShell(Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend; just serve' -WindowStyle Normal; Write-Host \"Launched.\")",
       "PowerShell(Start-Process powershell -ArgumentList '-NoExit', '-Command', 'cd C:\\\\MAD_WORKSPACE\\\\mad_sessionops\\\\mad_sessionops_backend; uv run python manage.py runserver 0.0.0.0:8000' -WindowStyle Normal; Write-Host \"Launched.\")",
-      "Bash(xargs grep -l \"list_school_volunteers\\\\|volunteers\")"
+      "Bash(xargs grep -l \"list_school_volunteers\\\\|volunteers\")",
+      "Bash(grep -E \"\\\\.md$\")",
+      "Bash(python *)",
+      "Bash(where gh *)"
     ]
   }
 }

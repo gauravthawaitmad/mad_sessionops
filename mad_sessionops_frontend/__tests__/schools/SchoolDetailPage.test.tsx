@@ -8,6 +8,40 @@ vi.mock('@/lib/api/services/schools.service', () => ({
   fetchSchool: vi.fn(),
 }));
 
+vi.mock('@/lib/api/services/sessions.service', () => ({
+  fetchSchoolSession: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('@/lib/api/services/slots.service', () => ({
+  fetchSlots: vi.fn().mockResolvedValue([]),
+  createSlot: vi.fn(),
+  updateSlot: vi.fn(),
+  deleteSlot: vi.fn(),
+}));
+
+vi.mock('@/lib/api/services/slot_classes.service', () => ({
+  fetchSlotClasses: vi.fn().mockResolvedValue([]),
+  createSlotClass: vi.fn(),
+  updateSlotClass: vi.fn(),
+  deleteSlotClass: vi.fn(),
+}));
+
+vi.mock('@/lib/api/services/volunteers.service', () => ({
+  fetchVolunteers: vi.fn().mockResolvedValue({ volunteers: [], totalCount: 0 }),
+}));
+
+vi.mock('@/lib/api/services/schedule.service', () => ({
+  fetchSchedule: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('@/lib/api/services/permissions.service', () => ({
+  fetchPermissions: vi.fn().mockResolvedValue({ canModify: true }),
+}));
+
+vi.mock('@/lib/hooks/useUserCan', () => ({
+  useUserCan: vi.fn().mockReturnValue({ canModify: true }),
+}));
+
 vi.mock('@/lib/api/services/structure.service', () => ({
   fetchActiveYear: vi.fn().mockResolvedValue({ academicYearId: 1, label: '2026-2027', isActive: true }),
   fetchSchoolClasses: vi.fn().mockResolvedValue([]),
@@ -113,9 +147,9 @@ describe('SchoolDetailPage — F-M2-1 (Structure tab activation)', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 
-    // Only Calendar is disabled (1 tab) — Structure + Children + Volunteers + Slots enabled in M3
+    // All tabs enabled in M4 — no "Coming in a future milestone" tooltips
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(1);
+    expect(tooltips.length).toBe(0);
   });
 });
 
@@ -188,9 +222,9 @@ describe('SchoolDetailPage — F-M2-2 (Children tab activation)', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 
-    // Only Calendar is disabled — Structure + Children + Volunteers + Slots enabled in M3
+    // All tabs enabled in M4 — no "Coming in a future milestone" tooltips
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(1);
+    expect(tooltips.length).toBe(0);
   });
 });
 
@@ -226,7 +260,7 @@ describe('SchoolDetailPage — F-M1-5', () => {
     expect(screen.getByText('Ramesh Kumar')).toBeInTheDocument();
   });
 
-  it('test_school_detail_disables_other_tabs', async () => {
+  it('test_school_detail_all_tabs_enabled_in_m4', async () => {
     vi.mocked(fetchSchool).mockResolvedValue(MOCK_SCHOOL);
 
     render(<SchoolDetailPage partnerId={580} />);
@@ -235,21 +269,16 @@ describe('SchoolDetailPage — F-M1-5', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 
-    // All non-overview tab labels are present in DOM
-    // MUI Tooltip clones elements internally, so multiple matches are expected
-    const disabledLabels = ['Structure', 'Volunteers', 'Slots', 'Calendar', 'Children'];
-    for (const label of disabledLabels) {
+    // All tab labels are present in DOM
+    const tabLabels = ['Structure', 'Volunteers', 'Slots', 'Calendar', 'Children', 'Schedule'];
+    for (const label of tabLabels) {
       const elements = screen.getAllByText(label);
       expect(elements.length).toBeGreaterThan(0);
     }
 
-    // "Children" tab exists (MUI Tooltip may clone it, so use getAllByText)
-    const childrenTabs = screen.getAllByText('Children');
-    expect(childrenTabs.length).toBeGreaterThan(0);
-
-    // Disabled tabs are wrapped in Tooltip with "Coming in a future milestone"
+    // M4: all tabs enabled — zero "Coming in a future milestone" tooltips
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(1); // Calendar only (Structure + Children + Volunteers + Slots enabled by M3)
+    expect(tooltips.length).toBe(0);
   });
 
   it('test_school_detail_back_link_navigates_to_list', async () => {
@@ -352,7 +381,7 @@ describe('SchoolDetailPage — F-M3-2 (Slots tab activation)', () => {
 
     await waitFor(() => {
       expect(screen.getByText('No slots configured yet.')).toBeInTheDocument();
-      expect(screen.getByText("Click 'Add Slot' to create one.")).toBeInTheDocument();
+      expect(screen.getByText("Click 'Add Slot' to schedule the first teaching slot.")).toBeInTheDocument();
     });
   });
 
@@ -363,8 +392,8 @@ describe('SchoolDetailPage — F-M3-2 (Slots tab activation)', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 
-    // Only Calendar is disabled — Structure + Children + Volunteers + Slots enabled in M3
+    // All tabs enabled in M4 — no "Coming in a future milestone" tooltips
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(1);
+    expect(tooltips.length).toBe(0);
   });
 });

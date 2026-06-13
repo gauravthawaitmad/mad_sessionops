@@ -18,14 +18,26 @@ const REQUEST_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000",
 // Prevent multiple simultaneous refresh calls — queue waiting requests.
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshFailedSubscribers: (() => void)[] = [];
 
 function subscribeTokenRefresh(cb: (token: string) => void) {
   refreshSubscribers.push(cb);
 }
 
+function subscribeTokenRefreshFailed(cb: () => void) {
+  refreshFailedSubscribers.push(cb);
+}
+
 function onTokenRefreshed(token: string) {
   refreshSubscribers.forEach((cb) => cb(token));
   refreshSubscribers = [];
+  refreshFailedSubscribers = [];
+}
+
+function onTokenRefreshFailed() {
+  refreshFailedSubscribers.forEach((cb) => cb());
+  refreshSubscribers = [];
+  refreshFailedSubscribers = [];
 }
 
 // ============================================================================
@@ -170,6 +182,18 @@ apiClient.interceptors.response.use(
         });
       }
 
+      // Already retried once after a token refresh — don't loop.
+      if (config._retry) {
+        clearAuthCookie();
+        storeDispatch({ type: "auth/resetAuth" });
+        if (typeof window !== "undefined") window.location.href = "/login";
+        return Promise.reject({
+          message: "Session expired. Please sign in again.",
+          code: "SESSION_EXPIRED",
+          status: 401,
+        });
+      }
+
       // Protected endpoint returned 401 — access token expired, try refresh.
       if (!isRefreshing) {
         isRefreshing = true;
@@ -199,9 +223,11 @@ apiClient.interceptors.response.use(
           }
 
           isRefreshing = false;
+          config._retry = true;
           return apiClient.request(config);
         } catch {
           isRefreshing = false;
+          onTokenRefreshFailed();
           clearAuthCookie();
           storeDispatch({ type: "auth/resetAuth" });
           if (typeof window !== "undefined") window.location.href = "/login";
@@ -213,12 +239,20 @@ apiClient.interceptors.response.use(
         }
       }
 
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         subscribeTokenRefresh((token: string) => {
           if (config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
           }
+          config._retry = true;
           resolve(apiClient.request(config));
+        });
+        subscribeTokenRefreshFailed(() => {
+          reject({
+            message: "Session expired. Please sign in again.",
+            code: "SESSION_EXPIRED",
+            status: 401,
+          });
         });
       });
     }

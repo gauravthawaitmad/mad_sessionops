@@ -1,24 +1,35 @@
 from django.core.management.base import BaseCommand
 
-from sessionops.services.sync import run_sync
+from sessionops.models import SyncRun
+from sessionops.services.sync.incremental import run_incremental_sync
 
 
 class Command(BaseCommand):
-    help = "Pull users and partners from Hasura and upsert into local DB."
+    help = "Run incremental Hasura sync for all entities (user, partner, partner_worknode)."
 
     def handle(self, *args, **options):
-        self.stdout.write("Starting Hasura sync...")
+        self.stdout.write("Starting incremental Hasura sync...")
 
-        sync_run = run_sync(progress=self.stdout.write)
+        results = run_incremental_sync(run_type=SyncRun.RUN_TYPE_AUTO, triggered_by=None)
 
-        if sync_run.status == "success":
-            self.stdout.write(self.style.SUCCESS(
-                f"Sync complete (all) — "
-                f"users: {sync_run.users_created} created / {sync_run.users_updated} updated | "
-                f"partners: {sync_run.partners_created} created / {sync_run.partners_updated} updated"
-            ))
-        else:
-            self.stderr.write(self.style.ERROR(
-                f"Sync FAILED: {sync_run.error_message}"
-            ))
+        all_ok = True
+        for entity_type, run in results.items():
+            if run is None:
+                self.stderr.write(
+                    self.style.ERROR(f"  {entity_type}: FAILED (see sync_run table)")
+                )
+                all_ok = False
+            else:
+                count = (
+                    run.users_fetched
+                    if entity_type == SyncRun.ENTITY_TYPE_USER
+                    else run.partners_fetched
+                    if entity_type == SyncRun.ENTITY_TYPE_PARTNER
+                    else 0
+                )
+                self.stdout.write(
+                    self.style.SUCCESS(f"  {entity_type}: {run.status} ({count} records fetched)")
+                )
+
+        if not all_ok:
             raise SystemExit(1)
