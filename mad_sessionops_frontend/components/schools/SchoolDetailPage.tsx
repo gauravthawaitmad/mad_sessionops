@@ -27,6 +27,7 @@ import { ChildrenTab } from '@/components/schools/children/ChildrenTab';
 import { VolunteerListTab } from '@/components/schools/volunteers/VolunteerListTab';
 import { SlotListTab } from '@/components/schools/slots/SlotListTab';
 import { ScheduleView } from '@/components/schools/schedule/ScheduleView';
+import { CalendarTab } from '@/components/schools/calendar/CalendarTab';
 import { useUserCan } from '@/lib/hooks/useUserCan';
 import { colors } from '@/config/design-tokens';
 
@@ -52,7 +53,7 @@ const TABS = [
   { key: 'volunteers', label: 'Volunteers',  icon: UserCheck,       enabled: true  },
   { key: 'slots',      label: 'Slots',       icon: Clock,           enabled: true  },
   { key: 'schedule',   label: 'Schedule',    icon: Calendar,        enabled: true  },
-  { key: 'calendar',   label: 'Calendar',    icon: Calendar,        enabled: false },
+  { key: 'calendar',   label: 'Calendar',    icon: Calendar,        enabled: true  },
 ];
 
 function WorkspaceSidebar({ active, onTabChange }: { active: string; onTabChange: (key: string) => void }) {
@@ -723,6 +724,7 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
             {activeTab === 'volunteers'  && <VolunteerListTab schoolId={partnerId} />}
             {activeTab === 'slots'       && <SlotListTab schoolId={partnerId} canModify={canModify} />}
             {activeTab === 'schedule'    && <ScheduleView schoolId={partnerId} />}
+            {activeTab === 'calendar'    && <CalendarTab schoolId={partnerId} />}
           </>
         )}
 

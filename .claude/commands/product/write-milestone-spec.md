@@ -12,8 +12,6 @@ Write or refine a milestone specification document.
 ## Process
 
 ### 1. Read Context
-
-- Read `docs/MILESTONE.md` for the milestone's planned scope
 - Read the previous milestone's detailed doc for format reference (`docs/milestones/M1.md`)
 - Read `docs/BUSINESS_RULES.md` for relevant rules
 - Read `docs/GLOSSARY.md` for terms
