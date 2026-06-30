@@ -19,6 +19,8 @@ Two API instances:
 =============================================================================
 """
 
+import os
+
 from django.http import JsonResponse
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
@@ -27,7 +29,9 @@ from pydantic import ValidationError as PydanticValidationError
 
 from sessionops import auth
 from sessionops.api.academic_years_api import academic_years_router
+from sessionops.api.admin_realtime_events_api import admin_realtime_events_router
 from sessionops.api.admin_sync_api import admin_sync_router
+from sessionops.api.realtime_sync_api import router as realtime_sync_router
 from sessionops.api.auth_api import auth_router
 from sessionops.api.children_api import children_router
 from sessionops.api.schools_api import schools_router
@@ -233,6 +237,13 @@ api.add_router("/api/schools/", holidays_router)
 
 # Admin sync dashboard (admin-only read endpoints)
 api.add_router("/api/admin/", admin_sync_router)
+
+# Admin realtime events — list, detail, manual sync trigger
+api.add_router("/api/admin/realtime-events", admin_realtime_events_router)
+
+# Internal realtime sync endpoint (path from env var, auth handled inside the router)
+_internal_sync_path = os.getenv("INTERNAL_SYNC_ENDPOINT_PATH", "/sync-user-internal")
+api.add_router(_internal_sync_path, realtime_sync_router)
 
 
 # =============================================================================
