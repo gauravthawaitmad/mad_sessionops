@@ -20,7 +20,8 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import { Plus, Search, X, User, Pencil, UserMinus, UserCheck } from 'lucide-react';
 import { fetchChildren, type ChildItem, type ListChildrenParams } from '@/lib/api/services/children.service';
-import { fetchSchoolClasses, fetchSections, type SchoolClassItem, type SectionItem } from '@/lib/api/services/structure.service';
+import { fetchSchoolClasses, type SchoolClassItem } from '@/lib/api/services/structure.service';
+import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
 import { EnrollChildModal } from './EnrollChildModal';
 import { EditChildDrawer } from './EditChildDrawer';
 import { DeactivateChildModal } from './DeactivateChildModal';
@@ -287,12 +288,22 @@ function ChildRow({
 
       {/* Class */}
       <TableCell sx={{ py: 1.25 }}>
-        <Typography sx={{ fontSize: '13px', color: '#475569' }}>{child.currentClassName || '—'}</Typography>
+        <Typography sx={{ fontSize: '13px', color: '#475569' }}>{child.currentSchoolClass?.className || '—'}</Typography>
       </TableCell>
 
-      {/* Section */}
+      {/* Bucket */}
       <TableCell sx={{ py: 1.25 }}>
-        <Typography sx={{ fontSize: '13px', color: '#475569' }}>{child.currentSectionName || '—'}</Typography>
+        {child.currentSection ? (
+          <Typography sx={{ fontSize: '13px', color: '#475569' }}>
+            {child.currentSection.sectionDisplayName ?? child.currentSection.sectionName}
+          </Typography>
+        ) : (
+          <Chip
+            label="Unassigned"
+            size="small"
+            sx={{ fontSize: '11px', fontWeight: 600, height: 20, borderRadius: '4px', bgcolor: '#F1F5F9', color: '#64748B' }}
+          />
+        )}
       </TableCell>
 
       {/* Status */}
@@ -357,9 +368,9 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
   const [debouncedSearch, setDebounced] = useState('');
   const [status, setStatus]             = useState<StatusFilter>('active');
   const [classId, setClassId]           = useState<number | null>(null);
-  const [sectionId, setSectionId]       = useState<number | null>(null);
+  const [bucketFilter, setBucketFilter] = useState<'all' | 'unassigned' | number>('all');
   const [classes, setClasses]           = useState<SchoolClassItem[]>([]);
-  const [sections, setSections]         = useState<SectionItem[]>([]);
+  const [buckets, setBuckets]           = useState<BucketItem[]>([]);
   const [enrollOpen, setEnrollOpen]             = useState(false);
   const [editChild, setEditChild]               = useState<ChildItem | null>(null);
   const [deactivateChild, setDeactivateChild]   = useState<ChildItem | null>(null);
@@ -369,7 +380,6 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
 
   function handleClassChange(id: number | null) {
     setClassId(id);
-    setSectionId(null);
   }
 
   // Debounce search input
@@ -383,14 +393,13 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
     fetchSchoolClasses(schoolId).then(setClasses).catch(() => {});
   }, [schoolId]);
 
-  // Load sections when class selection changes
+  // Load buckets once for the filter dropdown — independent of class (buckets are class-agnostic)
   useEffect(() => {
-    if (!classId) { setSections([]); return; }
-    fetchSections(schoolId, classId).then(setSections).catch(() => {});
-  }, [classId, schoolId]);
+    fetchBuckets(schoolId).then(setBuckets).catch(() => {});
+  }, [schoolId]);
 
   // Main data load — status='all' so status tab changes are instant (client-side)
-  // class_id and section_id are sent to the API since inactive children have no active assignment
+  // class_id/section_id/unassigned are sent to the API since inactive children have no active assignment
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -400,7 +409,8 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
         const params: ListChildrenParams = { status: 'all' };
         if (debouncedSearch) params.search = debouncedSearch;
         if (classId)   params.class_id = classId;
-        if (sectionId) params.section_id = sectionId;
+        if (bucketFilter === 'unassigned') params.unassigned = true;
+        else if (bucketFilter !== 'all')   params.section_id = bucketFilter;
         const data = await fetchChildren(schoolId, params);
         if (cancelled) return;
         setAllChildren(data);
@@ -416,7 +426,7 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
     }
     load();
     return () => { cancelled = true; };
-  }, [schoolId, debouncedSearch, classId, sectionId, refreshKey]);
+  }, [schoolId, debouncedSearch, classId, bucketFilter, refreshKey]);
 
   // Derived — status tab changes are instant (client-side)
   const displayChildren =
@@ -433,7 +443,7 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
     all:      loading ? null : totalActive + totalInactive,
   };
 
-  const hasFilters = !!debouncedSearch || !!classId || !!sectionId;
+  const hasFilters = !!debouncedSearch || !!classId || bucketFilter !== 'all';
   const isEmpty    = !loading && !loadError && allChildren.length === 0 && !hasFilters;
   const noResults  = !loading && !loadError && displayChildren.length === 0 && !isEmpty;
 
@@ -551,17 +561,17 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
               </FormControl>
             )}
 
-            {/* Section filter — disabled when no class selected */}
-            {classes.length > 0 && (
-              <FormControl size="small" disabled={!classId}>
+            {/* Bucket filter — independent of class (buckets are class-agnostic) */}
+            {buckets.length > 0 && (
+              <FormControl size="small">
                 <Select
-                  value={sectionId ?? ''}
-                  onChange={(e) => setSectionId(e.target.value ? Number(e.target.value) : null)}
+                  value={bucketFilter}
+                  onChange={(e) => setBucketFilter(e.target.value === 'all' || e.target.value === 'unassigned' ? e.target.value : Number(e.target.value))}
                   displayEmpty
                   sx={{
                     fontSize: '13px',
                     borderRadius: '8px',
-                    minWidth: 110,
+                    minWidth: 130,
                     bgcolor: '#FAFAFA',
                     '& .MuiOutlinedInput-notchedOutline': { borderColor: BORDER },
                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
@@ -569,12 +579,15 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
                     '& .MuiSelect-select': { py: '6.5px' },
                   }}
                 >
-                  <MenuItem value="">
-                    <Typography sx={{ fontSize: '13px', color: MUTED }}>All sections</Typography>
+                  <MenuItem value="all">
+                    <Typography sx={{ fontSize: '13px', color: MUTED }}>All buckets</Typography>
                   </MenuItem>
-                  {sections.map((s) => (
-                    <MenuItem key={s.classSectionId} value={s.classSectionId}>
-                      <Typography sx={{ fontSize: '13px' }}>{s.sectionCode}</Typography>
+                  <MenuItem value="unassigned">
+                    <Typography sx={{ fontSize: '13px' }}>Unassigned</Typography>
+                  </MenuItem>
+                  {buckets.map((b) => (
+                    <MenuItem key={b.classSectionId} value={b.classSectionId}>
+                      <Typography sx={{ fontSize: '13px' }}>{b.sectionDisplayName ?? b.sectionName}</Typography>
                     </MenuItem>
                   ))}
                 </Select>
@@ -607,7 +620,7 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
 
         {/* ── States ── */}
         {isEmpty && <EmptyState onEnroll={canModify ? () => setEnrollOpen(true) : undefined} />}
-        {noResults && <NoResults onClear={() => { setSearch(''); handleClassChange(null); }} />}
+        {noResults && <NoResults onClear={() => { setSearch(''); handleClassChange(null); setBucketFilter('all'); }} />}
 
         {/* ── Table ── */}
         {!isEmpty && !noResults && !loadError && (
@@ -621,7 +634,7 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: TH_BG }}>
-                  {['Name', 'Gender', 'Age', 'Class', 'Section', 'Status', ''].map((h) => (
+                  {['Name', 'Gender', 'Age', 'Class', 'Bucket', 'Status', ''].map((h) => (
                     <TableCell
                       key={h}
                       sx={{

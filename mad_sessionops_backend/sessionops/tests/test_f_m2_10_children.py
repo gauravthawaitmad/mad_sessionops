@@ -80,6 +80,7 @@ def _make_section(school_id: int, user: User, code: str = "A", class_code: str =
 def _enroll(school_id: int, section: ClassSection, user: User, **kwargs) -> Child:
     defaults = dict(
         first_name="Asha", last_name="Kumar", gender="female", age=10,
+        school_class_id=section.school_class_id_id,
         class_section_id=section.class_section_id,
     )
     defaults.update(kwargs)

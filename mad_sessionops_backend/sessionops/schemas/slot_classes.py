@@ -1,25 +1,37 @@
 from ninja import Schema
-from pydantic import model_validator
+from pydantic import field_validator
+
+
+def _validate_volunteer_ids(v: list[int]) -> list[int]:
+    if len(v) < 1:
+        raise ValueError("At least 1 volunteer required.")
+    if len(v) > 5:
+        raise ValueError("Maximum 5 volunteers allowed.")
+    if len(v) != len(set(v)):
+        raise ValueError("Volunteer IDs must be unique.")
+    return v
 
 
 class SlotClassCreateSchema(Schema):
     class_section_id: int
-    subject_id: int
-    volunteer_1_id: int
-    volunteer_2_id: int | None = None
+    volunteer_ids: list[int]
 
-    @model_validator(mode="after")
-    def vol1_ne_vol2(self):
-        if self.volunteer_2_id and self.volunteer_1_id == self.volunteer_2_id:
-            raise ValueError("Vol1 and Vol2 cannot be the same volunteer.")
-        return self
+    @field_validator("volunteer_ids")
+    @classmethod
+    def validate_volunteer_ids(cls, v: list[int]) -> list[int]:
+        return _validate_volunteer_ids(v)
 
 
 class SlotClassUpdateSchema(Schema):
-    volunteer_1_id:   int | None = None
-    volunteer_2_id:   int | None = None
     class_section_id: int | None = None
-    subject_id:       int | None = None
+    volunteer_ids: list[int] | None = None
+
+    @field_validator("volunteer_ids")
+    @classmethod
+    def validate_volunteer_ids(cls, v: list[int] | None) -> list[int] | None:
+        if v is None:
+            return v
+        return _validate_volunteer_ids(v)
 
 
 class VolunteerInSlotClassSchema(Schema):
@@ -32,6 +44,7 @@ class SlotClassReadSchema(Schema):
     slot_class_section_id: int
     class_section_id: int
     section_name: str
+    section_display_name: str | None
     subject_name: str
     volunteers: list[VolunteerInSlotClassSchema]
     active_children_count: int

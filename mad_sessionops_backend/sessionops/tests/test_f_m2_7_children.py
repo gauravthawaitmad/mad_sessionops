@@ -83,6 +83,7 @@ def _make_section(school_id: int, user: User, code: str = "A", class_code: str =
 def _enroll(school_id: int, section: ClassSection, user: User, **kwargs) -> Child:
     defaults = dict(
         first_name="Asha", last_name="Kumar", gender="female", age=10,
+        school_class_id=section.school_class_id_id,
         class_section_id=section.class_section_id,
     )
     defaults.update(kwargs)
@@ -220,46 +221,124 @@ class TestEditChildSectionChange:
             edit_child(child.child_id, ChildEditIn(class_section_id=sec_308.class_section_id), user)
 
 
+def _make_sixth_class(school_id: int, user: User) -> SchoolClass:
+    program = Program.objects.get(program_id=1)
+    from sessionops.models import Class
+    cls_6, _ = Class.objects.get_or_create(
+        class_code="6",
+        defaults={"class_name": "6th", "program_id": program, "is_active": True},
+    )
+    say = SchoolAcademicYear.objects.get(school_id=school_id)
+    return SchoolClass.objects.create(
+        school_id=school_id,
+        school_academic_year_id=say,
+        class_id_id=cls_6.class_id,
+        created_by=user,
+    )
+
+
 @pytest.mark.django_db
 class TestEditChildClassChange:
-    def test_class_change_creates_child_class_history(self):
+    def test_class_change_via_explicit_school_class_id(self):
+        """M6: class change is explicit (school_class_id), independent of any
+        bucket/section change — no longer a side effect of section change."""
         user = _make_user("e9@t.com")
         _make_partner(309)
-        # Two different classes in the same school
         sec_5a = _make_section(309, user, code="A", class_code="5")
-        # Create a 6th class section
-        program = Program.objects.get(program_id=1)
-        from sessionops.models import Class
-        cls_6, _ = Class.objects.get_or_create(
-            class_code="6",
-            defaults={"class_name": "6th", "program_id": program, "is_active": True},
-        )
-        say = SchoolAcademicYear.objects.get(school_id=309)
-        sc_6 = SchoolClass.objects.create(
-            school_id=309,
-            school_academic_year_id=say,
-            class_id_id=cls_6.class_id,
-            created_by=user,
-        )
-        sec_6a = ClassSection.objects.create(
-            school_class_id=sc_6,
-            school_id=309,
-            section_code="A",
-            section_name="6th - A",
-            created_by=user,
-        )
+        sc_6 = _make_sixth_class(309, user)
 
         child = _enroll(309, sec_5a, user)
-        edit_child(child.child_id, ChildEditIn(class_section_id=sec_6a.class_section_id), user)
+        edit_child(
+            child.child_id,
+            ChildEditIn(school_class_id=sc_6.school_class_id),
+            user,
+        )
 
         # Old ChildClass soft-deleted
         assert ChildClass.objects.filter(
             child_id=child, is_active=False, removed=True
         ).exists()
-        # New ChildClass created for 6th
+        # New ChildClass created for 6th — exactly one active row
         assert ChildClass.objects.filter(
             child_id=child, school_class_id=sc_6, is_active=True
         ).exists()
+        assert ChildClass.objects.filter(child_id=child, is_active=True).count() == 1
+
+    def test_bucket_change_alone_does_not_touch_class(self):
+        """The old 'class follows section' side effect is removed in M6 — a
+        bucket has no school_class_id to follow anyway."""
+        user = _make_user("e9b@t.com")
+        _make_partner(3091)
+        sec_a = _make_section(3091, user, code="A")
+        sec_b = ClassSection.objects.create(
+            school_class_id=sec_a.school_class_id,
+            school_id=3091,
+            section_code="B",
+            section_name="5th - B",
+            created_by=user,
+        )
+        child = _enroll(3091, sec_a, user)
+        original_cc_id = ChildClass.objects.get(child_id=child, is_active=True).child_class_id
+
+        edit_child(child.child_id, ChildEditIn(class_section_id=sec_b.class_section_id), user)
+
+        current_cc = ChildClass.objects.get(child_id=child, is_active=True)
+        assert current_cc.child_class_id == original_cc_id  # unchanged
+
+    def test_old_child_subject_rows_retained_on_bucket_change(self):
+        """M6 decision #2: ChildSubject rows are never soft-deleted on bucket
+        change — Dots needs the full history."""
+        from sessionops.models import ChildSubject, ClassSectionSubject, Subject
+
+        user = _make_user("e9c@t.com")
+        _make_partner(3092)
+        sec_a = _make_section(3092, user, code="A")
+        sec_b = ClassSection.objects.create(
+            school_class_id=sec_a.school_class_id,
+            school_id=3092,
+            section_code="B",
+            section_name="5th - B",
+            created_by=user,
+        )
+        program = Program.objects.get(program_id=1)
+        subject, _ = Subject.objects.get_or_create(
+            subject_name="Foundation Day 1", defaults={"program_id": program}
+        )
+        css_a = ClassSectionSubject.objects.create(
+            class_section_id=sec_a, subject_id=subject, created_by=user
+        )
+
+        child = _enroll(3092, sec_a, user)
+        ChildSubject.objects.get_or_create(
+            child_id=child, class_section_subject_id=css_a, defaults={"created_by": user}
+        )
+
+        edit_child(child.child_id, ChildEditIn(class_section_id=sec_b.class_section_id), user)
+
+        # Old ChildSubject row (from sec_a) remains active — not soft-deleted
+        assert ChildSubject.objects.filter(
+            child_id=child, class_section_subject_id=css_a, is_active=True, removed=False
+        ).exists()
+
+    def test_class_change_data_quality_guard(self):
+        """Belt-and-braces: if a child somehow has 2+ active ChildClass rows
+        (pre-existing data inconsistency), edit_child refuses to silently
+        pick one — raises instead of guessing."""
+        user = _make_user("e9d@t.com")
+        _make_partner(3093)
+        sec_a = _make_section(3093, user, code="A")
+        sc_6 = _make_sixth_class(3093, user)
+        child = _enroll(3093, sec_a, user)
+
+        # Force a second active ChildClass row directly (bypassing the service)
+        ChildClass.objects.create(child_id=child, school_class_id=sc_6, created_by=user)
+
+        with pytest.raises(ValidationError, match="Data inconsistency"):
+            edit_child(
+                child.child_id,
+                ChildEditIn(school_class_id=sc_6.school_class_id),
+                user,
+            )
 
 
 @pytest.mark.django_db

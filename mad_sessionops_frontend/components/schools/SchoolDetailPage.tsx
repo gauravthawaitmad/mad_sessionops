@@ -22,7 +22,7 @@ import {
 import Link from 'next/link';
 import { fetchSchool, type SchoolDetail } from '@/lib/api/services/schools.service';
 import { fetchActiveYear } from '@/lib/api/services/structure.service';
-import { StructureTab } from '@/components/schools/structure/StructureTab';
+import { BucketsTab } from '@/components/schools/structure/BucketsTab';
 import { ChildrenTab } from '@/components/schools/children/ChildrenTab';
 import { VolunteerListTab } from '@/components/schools/volunteers/VolunteerListTab';
 import { SlotListTab } from '@/components/schools/slots/SlotListTab';
@@ -48,7 +48,7 @@ const ACCENT         = '#2563EB';
 
 const TABS = [
   { key: 'overview',   label: 'Overview',    icon: LayoutDashboard, enabled: true  },
-  { key: 'structure',  label: 'Structure',   icon: BookOpen,        enabled: true  },
+  { key: 'structure',  label: 'Buckets',     icon: BookOpen,        enabled: true  },
   { key: 'children',   label: 'Children',    icon: Users,           enabled: true  },
   { key: 'volunteers', label: 'Volunteers',  icon: UserCheck,       enabled: true  },
   { key: 'slots',      label: 'Slots',       icon: Clock,           enabled: true  },
@@ -719,7 +719,7 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
         ) : school && (
           <>
             {activeTab === 'overview'    && <OverviewContent school={school} />}
-            {activeTab === 'structure'   && <StructureTab schoolId={partnerId} activeYear={activeYear} canModify={canModify} />}
+            {activeTab === 'structure'   && <BucketsTab schoolId={partnerId} canModify={canModify} />}
             {activeTab === 'children'    && <ChildrenTab schoolId={partnerId} activeYear={activeYear} canModify={canModify} />}
             {activeTab === 'volunteers'  && <VolunteerListTab schoolId={partnerId} />}
             {activeTab === 'slots'       && <SlotListTab schoolId={partnerId} canModify={canModify} />}

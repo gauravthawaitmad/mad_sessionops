@@ -1,0 +1,7309 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MAD Backend APIs",
+    "version": "1.0.0",
+    "description": "\n    MAD Sourcing Backend API.\n\n    ## Authentication\n\n    Most endpoints require JWT authentication. Include the access token\n    in the Authorization header:\n\n    ```\n    Authorization: Bearer <access_token>\n    ```\n\n    ### Getting Tokens\n\n    1. **Register**: POST /api/v1/auth/register\n    2. **Login**: POST /api/v1/auth/login\n    3. **Google OAuth**: POST /api/v1/auth/google\n\n    ### Token Refresh\n\n    When access token expires, use the refresh token:\n    POST /api/v1/auth/refresh\n\n    ## Error Responses\n\n    All errors follow this format:\n    ```json\n    {\n        \"detail\": \"Error message\"\n    }\n    ```\n\n    Common status codes:\n    - 400: Bad Request (validation error)\n    - 401: Unauthorized (invalid/expired token)\n    - 403: Forbidden (insufficient permissions)\n    - 404: Not Found\n    - 409: Conflict (resource already exists)\n    - 422: Unprocessable Entity (validation failed)\n    - 500: Internal Server Error\n    "
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_register",
+        "summary": "Register a new user",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Register a new user with email and password.\n\n    **Password Requirements:**\n    - At least 8 characters\n    - At least 1 uppercase letter\n    - At least 1 lowercase letter\n    - At least 1 number\n\n    **Returns:**\n    - User information\n    - JWT access and refresh tokens\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterSchema"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_login",
+        "summary": "Login with email and password",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Authenticate a user with email and password.\n\n    **Returns:**\n    - User information\n    - JWT access and refresh tokens\n\n    **Token Usage:**\n    - Include access_token in Authorization header: `Bearer <token>`\n    - Use refresh_token to get new access_token when expired\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginSchema"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/auth/google/oauth/callback": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_google_auth",
+        "summary": "Login or register with Google",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Authenticate with Google OAuth.\n\n    **Flow:**\n    1. Frontend initiates Google Sign-In\n    2. Google returns ID token to frontend\n    3. Frontend sends ID token to this endpoint\n    4. Backend verifies token and logs in or creates user\n\n    **Behavior:**\n    - If Google account is already linked -> Login\n    - If email exists but Google not linked -> Link Google and login\n    - If new email -> Create user and login\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleAuthSchema"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_refresh_token",
+        "summary": "Refresh access token",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Get a new access token using a refresh token.\n\n    **When to use:**\n    - Access token has expired\n    - API returns 401 Unauthorized\n\n    **Note:**\n    - Refresh token may be rotated (new one returned)\n    - Old refresh token becomes invalid after rotation\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenSchema"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "sessionops_api_auth_api_get_current_user",
+        "summary": "Get current user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Get information about the currently authenticated user.",
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "sessionops_api_auth_api_update_current_user",
+        "summary": "Update current user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Update the current user's profile information.",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_logout",
+        "summary": "Logout user",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Logout the current user by blacklisting their refresh token.\n\n    **Note:**\n    - The refresh token will no longer work\n    - The access token remains valid until expiry\n    - For immediate access revocation, clear tokens on frontend\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/auth/link-google": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_link_google",
+        "summary": "Link Google account",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Link a Google account to an existing user account.\n\n    **Use case:**\n    User registered with password and wants to add Google login.\n\n    **Restrictions:**\n    - Cannot link if Google already linked\n    - Cannot link if Google account used by another user\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleAuthSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/auth/password/change": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_change_password",
+        "summary": "Change password",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Change the current user's password.\n\n    **Requirements:**\n    - User must have password authentication set up\n    - Old password must be correct\n    - New password must meet strength requirements\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/auth/password/forgot": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_forgot_password",
+        "summary": "Request password reset email",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Send a password-reset email to the given address.\n\n    Returns 404 if the email is not associated with any active account —\n    this platform is internal and enumeration is not a concern.\n    The reset link is valid for **30 minutes** and can only be used once.\n    A new request voids all previous unused links for the same account.\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordSchema"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/auth/password/reset/validate": {
+      "get": {
+        "operationId": "sessionops_api_auth_api_validate_reset_token",
+        "summary": "Check whether a reset token is still valid",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns success=true if the token exists, is unused, and has not expired. No state is changed.",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/api/auth/password/reset": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_reset_password",
+        "summary": "Reset password with token",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Set a new password using the token received by email.\n\n    The token is single-use and expires after 30 minutes.\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordSchema"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/auth/password/set": {
+      "post": {
+        "operationId": "sessionops_api_auth_api_set_password",
+        "summary": "Set password for first time (Hasura-synced users)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "\n    Set a password for an account that was created via Hasura sync and has no\n    password auth yet. Requires a valid JWT (user must be logged in via Google\n    or a temp token issued during first-time setup).\n    ",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPasswordSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/auth/me/permissions/": {
+      "get": {
+        "operationId": "sessionops_api_auth_api_get_my_permissions",
+        "summary": "Get caller's permissions for a school",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns can_view and can_modify booleans for the given school_id.",
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/users/": {
+      "get": {
+        "operationId": "sessionops_api_user_api_list_users",
+        "summary": "List Users",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "description": "List all users.\n\nThis is a sample endpoint demonstrating the API structure.",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/users/{user_id}": {
+      "get": {
+        "operationId": "sessionops_api_user_api_get_user",
+        "summary": "Get User",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "schema": {
+              "title": "User Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "description": "Get a specific user by ID.\n\nArgs:\n    user_id: The ID of the user to retrieve",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/": {
+      "get": {
+        "operationId": "sessionops_api_schools_api_list_schools",
+        "summary": "List Schools",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Schools"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{partner_id}": {
+      "get": {
+        "operationId": "sessionops_api_schools_api_get_school",
+        "summary": "Get School",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner_id",
+            "schema": {
+              "title": "Partner Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolDetailSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Schools"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/academic-years/active/": {
+      "get": {
+        "operationId": "sessionops_api_academic_years_api_get_active_year",
+        "summary": "Get Active Year",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicYearOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Return the single currently-active academic year.",
+        "tags": [
+          "Academic Years"
+        ]
+      }
+    },
+    "/api/academic-years/admin/": {
+      "get": {
+        "operationId": "sessionops_api_academic_years_api_list_academic_years",
+        "summary": "List Academic Years",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AcademicYearOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Admin-only: list all academic years.",
+        "tags": [
+          "Academic Years"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_academic_years_api_create_year",
+        "summary": "Create Year",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicYearOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Admin-only: create a new academic year (starts inactive).",
+        "tags": [
+          "Academic Years"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcademicYearCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/academic-years/admin/{academic_year_id}/": {
+      "patch": {
+        "operationId": "sessionops_api_academic_years_api_update_year",
+        "summary": "Update Year",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "academic_year_id",
+            "schema": {
+              "title": "Academic Year Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcademicYearOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Admin-only: update an academic year's label.",
+        "tags": [
+          "Academic Years"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcademicYearUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/classes/": {
+      "get": {
+        "operationId": "sessionops_api_structure_api_list_school_classes",
+        "summary": "List School Classes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SchoolClassOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_structure_api_add_class",
+        "summary": "Add Class",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolClassOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassAddIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/classes/{school_class_id}/": {
+      "delete": {
+        "operationId": "sessionops_api_structure_api_remove_class",
+        "summary": "Remove Class",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "school_class_id",
+            "schema": {
+              "title": "School Class Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/classes/{school_class_id}/sections/": {
+      "get": {
+        "operationId": "sessionops_api_structure_api_list_sections",
+        "summary": "List Sections",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "school_class_id",
+            "schema": {
+              "title": "School Class Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SectionOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_structure_api_add_section",
+        "summary": "Add Section",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "school_class_id",
+            "schema": {
+              "title": "School Class Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SectionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SectionAddIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/classes/{school_class_id}/sections/available-codes/": {
+      "get": {
+        "operationId": "sessionops_api_structure_api_get_available_codes",
+        "summary": "Get Available Codes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "school_class_id",
+            "schema": {
+              "title": "School Class Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailableCodesOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/sections/{class_section_id}/": {
+      "delete": {
+        "operationId": "sessionops_api_structure_api_remove_section",
+        "summary": "Remove Section",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "class_section_id",
+            "schema": {
+              "title": "Class Section Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "sessionops_api_structure_api_edit_bucket_view",
+        "summary": "Edit Bucket View",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "class_section_id",
+            "schema": {
+              "title": "Class Section Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BucketOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BucketEditIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/sections/": {
+      "get": {
+        "operationId": "sessionops_api_structure_api_list_buckets",
+        "summary": "List Buckets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BucketOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_structure_api_add_bucket",
+        "summary": "Add Bucket",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BucketOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BucketAddIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/sections/{section_id}/children/": {
+      "post": {
+        "operationId": "sessionops_api_structure_api_add_bucket_child",
+        "summary": "Add Bucket Child",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "section_id",
+            "schema": {
+              "title": "Section Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BucketChildOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BucketChildAddIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/sections/{section_id}/children/{child_id}/": {
+      "delete": {
+        "operationId": "sessionops_api_structure_api_remove_bucket_child",
+        "summary": "Remove Bucket Child",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "section_id",
+            "schema": {
+              "title": "Section Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "child_id",
+            "schema": {
+              "title": "Child Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "Structure"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/classes/": {
+      "get": {
+        "operationId": "sessionops_api_structure_api_list_class_catalog",
+        "summary": "List Class Catalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClassCatalogItemOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Classes Catalog"
+        ]
+      }
+    },
+    "/api/classes/section-codes/": {
+      "get": {
+        "operationId": "sessionops_api_structure_api_list_section_codes",
+        "summary": "List Section Codes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Classes Catalog"
+        ]
+      }
+    },
+    "/api/schools/{school_id}/children/": {
+      "get": {
+        "operationId": "sessionops_api_children_api_list_children_view",
+        "summary": "List Children View",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "section_id",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Section Id"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "class_id",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Class Id"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "default": "active",
+              "title": "Status",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "unassigned",
+            "schema": {
+              "default": false,
+              "title": "Unassigned",
+              "type": "boolean"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChildOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Children"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_children_api_enroll_child_view",
+        "summary": "Enroll Child View",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Children"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildEnrollIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/children/{child_id}/": {
+      "patch": {
+        "operationId": "sessionops_api_children_api_edit_child_view",
+        "summary": "Edit Child View",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "child_id",
+            "schema": {
+              "title": "Child Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Children"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChildEditIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/children/{child_id}/deactivate/": {
+      "post": {
+        "operationId": "sessionops_api_children_api_deactivate_child_view",
+        "summary": "Deactivate Child View",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "child_id",
+            "schema": {
+              "title": "Child Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Children"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeactivateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/children/{child_id}/reactivate/": {
+      "post": {
+        "operationId": "sessionops_api_children_api_reactivate_child_view",
+        "summary": "Reactivate Child View",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "child_id",
+            "schema": {
+              "title": "Child Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Children"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactivateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/volunteers/": {
+      "get": {
+        "operationId": "sessionops_api_volunteers_api_list_volunteers",
+        "summary": "List Volunteers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolunteerListResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Volunteers"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/slots/": {
+      "get": {
+        "operationId": "sessionops_api_slots_api_get_slots",
+        "summary": "Get Slots",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SlotReadSchema"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Slots"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_slots_api_post_slot",
+        "summary": "Post Slot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlotReadSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Slots"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlotCreateSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/slots/{slot_id}/": {
+      "patch": {
+        "operationId": "sessionops_api_slots_api_patch_slot",
+        "summary": "Patch Slot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "slot_id",
+            "schema": {
+              "title": "Slot Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlotReadSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Slots"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlotUpdateSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "sessionops_api_slots_api_delete_slot",
+        "summary": "Delete Slot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "slot_id",
+            "schema": {
+              "title": "Slot Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlotDeleteResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Slots"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/subjects/": {
+      "get": {
+        "operationId": "sessionops_api_slot_classes_api_get_subjects",
+        "summary": "Get Subjects",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectReadSchema"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Return all seeded subjects (global catalog, no auth needed).",
+        "tags": [
+          "Slot Classes"
+        ]
+      }
+    },
+    "/api/schools/{school_id}/slots/{slot_id}/slot-classes/": {
+      "get": {
+        "operationId": "sessionops_api_slot_classes_api_get_slot_classes",
+        "summary": "Get Slot Classes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "slot_id",
+            "schema": {
+              "title": "Slot Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SlotClassReadSchema"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Slot Classes"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_slot_classes_api_post_slot_class",
+        "summary": "Post Slot Class",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "slot_id",
+            "schema": {
+              "title": "Slot Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlotClassReadSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Slot Classes"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlotClassCreateSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/slots/{slot_id}/slot-classes/{scs_id}/": {
+      "patch": {
+        "operationId": "sessionops_api_slot_classes_api_patch_slot_class",
+        "summary": "Patch Slot Class",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "slot_id",
+            "schema": {
+              "title": "Slot Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "scs_id",
+            "schema": {
+              "title": "Scs Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlotClassReadSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Slot Classes"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SlotClassUpdateSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "sessionops_api_slot_classes_api_delete_slot_class_endpoint",
+        "summary": "Delete Slot Class Endpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "slot_id",
+            "schema": {
+              "title": "Slot Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "scs_id",
+            "schema": {
+              "title": "Scs Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlotClassDeleteResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Slot Classes"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/schedule/": {
+      "get": {
+        "operationId": "sessionops_api_schedule_api_get_schedule",
+        "summary": "Get Schedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "day_of_week",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Day Of Week"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Schedule"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/session/": {
+      "get": {
+        "operationId": "sessionops_api_sessions_api_get_session",
+        "summary": "Get Session",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SessionOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Return the active session for a school, or null if not configured.",
+        "tags": [
+          "Sessions"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_sessions_api_create_session",
+        "summary": "Create Session",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Create a one-time immutable academic session for the school.",
+        "tags": [
+          "Sessions"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/session/defaults/": {
+      "get": {
+        "operationId": "sessionops_api_sessions_api_get_session_defaults_api",
+        "summary": "Get Session Defaults Api",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDefaultsOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Return MOU-based date defaults for the set-session modal pre-fill.",
+        "tags": [
+          "Sessions"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/holidays/": {
+      "get": {
+        "operationId": "sessionops_api_holidays_api_list_holidays_api",
+        "summary": "List Holidays Api",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "start_date",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "end_date",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End Date"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HolidayOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Holidays"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessionops_api_holidays_api_create_holiday_api",
+        "summary": "Create Holiday Api",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Holidays"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HolidayCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/schools/{school_id}/holidays/{holiday_id}/": {
+      "patch": {
+        "operationId": "sessionops_api_holidays_api_edit_holiday_api",
+        "summary": "Edit Holiday Api",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "holiday_id",
+            "schema": {
+              "title": "Holiday Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HolidayOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Holidays"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HolidayPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "sessionops_api_holidays_api_delete_holiday_api",
+        "summary": "Delete Holiday Api",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "school_id",
+            "schema": {
+              "title": "School Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "holiday_id",
+            "schema": {
+              "title": "Holiday Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Holidays"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/admin/sync/runs/": {
+      "get": {
+        "operationId": "sessionops_api_admin_sync_api_list_sync_runs",
+        "summary": "List Sync Runs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SyncRunListItemOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-sync"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/admin/sync/runs/{sync_run_id}/": {
+      "get": {
+        "operationId": "sessionops_api_admin_sync_api_get_sync_run",
+        "summary": "Get Sync Run",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sync_run_id",
+            "schema": {
+              "title": "Sync Run Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncRunDetailOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-sync"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/admin/sync/stats/": {
+      "get": {
+        "operationId": "sessionops_api_admin_sync_api_get_sync_stats",
+        "summary": "Get Sync Stats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStatsOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-sync"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/admin/sync/user-by-login/": {
+      "post": {
+        "operationId": "sessionops_api_admin_sync_api_sync_user_by_login_api",
+        "summary": "Sync User By Login Api",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncUserByLoginOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-sync"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncUserByLoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/admin/sync/trigger/": {
+      "post": {
+        "operationId": "sessionops_api_admin_sync_api_trigger_sync",
+        "summary": "Trigger Sync",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "entity",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncTriggerOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "entity=None       → sync all 3 entities (global concurrent guard)\nentity=user       → sync only users (per-entity guard)\nentity=partner    → sync only partners (per-entity guard)\nentity=partner_worknode → sync only partner worknodes (per-entity guard)",
+        "tags": [
+          "admin-sync"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/admin/realtime-events": {
+      "get": {
+        "operationId": "sessionops_api_admin_realtime_events_api_list_realtime_events",
+        "summary": "List Realtime Events",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "default": 25,
+              "title": "Page Size",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "sync_type",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sync Type"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "event_type",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "user_id_from_source",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id From Source"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeSyncLogListOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-realtime-events"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/admin/realtime-events/sync-user": {
+      "post": {
+        "operationId": "sessionops_api_admin_realtime_events_api_manual_sync_user",
+        "summary": "Manual Sync User",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualSyncOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-realtime-events"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualSyncIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/api/admin/realtime-events/{log_id}": {
+      "get": {
+        "operationId": "sessionops_api_admin_realtime_events_api_get_realtime_event",
+        "summary": "Get Realtime Event",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "log_id",
+            "schema": {
+              "title": "Log Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RealtimeSyncLogDetailOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-realtime-events"
+        ],
+        "security": [
+          {
+            "CustomJwtAuthMiddleware": []
+          }
+        ]
+      }
+    },
+    "/sync-user-internal/{user_id}": {
+      "post": {
+        "operationId": "sessionops_api_realtime_sync_api_sync_user_endpoint",
+        "summary": "Sync User Endpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "schema": {
+              "title": "User Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "internal-sync"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RealtimeSyncUserPayload"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthResponseSchema": {
+        "description": "Combined response for login/register with user info and tokens.\n\nExample Response:\n    {\n        \"user\": {\n            \"user_id\": 1,\n            \"email\": \"john@example.com\",\n            ...\n        },\n        \"tokens\": {\n            \"access_token\": \"...\",\n            \"refresh_token\": \"...\",\n            ...\n        },\n        \"scope_warning\": null\n    }",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserResponseSchema"
+          },
+          "tokens": {
+            "$ref": "#/components/schemas/TokenResponseSchema"
+          },
+          "scope_warning": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScopeWarningSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "user",
+          "tokens"
+        ],
+        "title": "AuthResponseSchema",
+        "type": "object"
+      },
+      "ScopeWarningSchema": {
+        "description": "Emitted on login when the user has no visible schools.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ScopeWarningSchema",
+        "type": "object"
+      },
+      "TokenResponseSchema": {
+        "description": "Schema for authentication token response.\n\nReturned after successful login or registration.\n\nExample Response:\n    {\n        \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI...\",\n        \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI...\",\n        \"token_type\": \"Bearer\",\n        \"expires_in\": 43200\n    }\n\nHow to use the tokens:\n1. Store access_token and refresh_token on client\n2. Include access_token in Authorization header:\n   Authorization: Bearer <access_token>\n3. When access_token expires, use refresh_token to get new one\n4. On logout, send refresh_token to be blacklisted",
+        "example": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "expires_in": 43200,
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "token_type": "Bearer"
+        },
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          },
+          "token_type": {
+            "default": "Bearer",
+            "title": "Token Type",
+            "type": "string"
+          },
+          "expires_in": {
+            "title": "Expires In",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in"
+        ],
+        "title": "TokenResponseSchema",
+        "type": "object"
+      },
+      "UserResponseSchema": {
+        "description": "Schema for user information in responses.\n\nUsed when returning user data (e.g., GET /api/v1/auth/me).\n\nNote: NEVER include sensitive fields like password_hash!\n\nExample Response:\n    {\n        \"user_id\": 1,\n        \"email\": \"john@example.com\",\n        \"user_display_name\": \"John Doe\",\n        \"user_login\": \"john@example.com\",\n        \"user_role\": \"manager\",\n        \"city\": \"Mumbai\",\n        \"state\": \"Maharashtra\",\n        \"center\": \"HQ\",\n        \"auth_methods\": [\"password\", \"google_oauth\"],\n        \"user_created_datetime\": \"2024-01-15T10:30:00Z\"\n    }",
+        "properties": {
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          },
+          "user_login": {
+            "title": "User Login",
+            "type": "string"
+          },
+          "user_role": {
+            "title": "User Role",
+            "type": "string"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "center": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Center"
+          },
+          "auth_methods": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Auth Methods",
+            "type": "array"
+          },
+          "user_created_datetime": {
+            "format": "date-time",
+            "title": "User Created Datetime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "user_display_name",
+          "user_login",
+          "user_role",
+          "user_created_datetime"
+        ],
+        "title": "UserResponseSchema",
+        "type": "object"
+      },
+      "ErrorResponseSchema": {
+        "description": "Schema for error responses.\n\nExample Response:\n    {\n        \"detail\": \"Invalid credentials\",\n        \"error_code\": \"INVALID_CREDENTIALS\"\n    }",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponseSchema",
+        "type": "object"
+      },
+      "RegisterSchema": {
+        "description": "Schema for user registration request.\n\nValidates:\n- Email format\n- Password strength (min 8 chars, 1 uppercase, 1 number)\n- Password confirmation match\n- Display name presence\n\nExample Request:\n    POST /api/v1/auth/register\n    {\n        \"email\": \"john@example.com\",\n        \"password\": \"SecurePass123!\",\n        \"confirm_password\": \"SecurePass123!\",\n        \"user_display_name\": \"John Doe\"\n    }",
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          },
+          "confirm_password": {
+            "title": "Confirm Password",
+            "type": "string"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "confirm_password",
+          "user_display_name"
+        ],
+        "title": "RegisterSchema",
+        "type": "object"
+      },
+      "LoginSchema": {
+        "description": "Schema for password-based login request.\n\nExample Request:\n    POST /api/v1/auth/login\n    {\n        \"email\": \"john@example.com\",\n        \"password\": \"SecurePass123!\"\n    }",
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginSchema",
+        "type": "object"
+      },
+      "GoogleAuthSchema": {
+        "description": "Schema for Google OAuth login/registration using Authorization Code Flow with PKCE.\n\nThis flow is more secure than the implicit flow:\n1. Frontend redirects user to Google\n2. Google redirects back to frontend with authorization code\n3. Frontend sends code + codeVerifier to backend\n4. Backend exchanges code for tokens with Google\n5. Backend verifies id_token and logs in user\n\nExample Request:\n    POST /api/v1/auth/google/oauth/callback\n    {\n        \"code\": \"4/0ASc3gC21p4zbGhx...\",\n        \"code_verifier\": \"Srp1ogh23_MFrr3e6Bvg70votjH...\",\n        \"redirect_uri\": \"http://localhost:3000/auth/callback/google\"\n    }\n\nWhy Authorization Code Flow with PKCE?\n======================================\n- More secure: Code can only be exchanged once\n- PKCE: Prevents authorization code interception attacks\n- Works for SPAs without exposing client secret to frontend",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "codeVerifier": {
+            "title": "Codeverifier",
+            "type": "string"
+          },
+          "redirectUri": {
+            "title": "Redirecturi",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "codeVerifier",
+          "redirectUri"
+        ],
+        "title": "GoogleAuthSchema",
+        "type": "object"
+      },
+      "RefreshTokenSchema": {
+        "description": "Schema for refreshing access token.\n\nExample Request:\n    POST /api/v1/auth/refresh\n    {\n        \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI...\"\n    }",
+        "properties": {
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshTokenSchema",
+        "type": "object"
+      },
+      "UserUpdateSchema": {
+        "description": "Schema for updating user profile.\n\nAll fields are optional - only provided fields will be updated.\n\nExample Request:\n    PUT /api/v1/auth/me\n    {\n        \"user_display_name\": \"John Smith\",\n        \"contact\": \"+91-9876543210\",\n        \"city\": \"Delhi\"\n    }",
+        "properties": {
+          "user_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Display Name"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "center": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Center"
+          }
+        },
+        "title": "UserUpdateSchema",
+        "type": "object"
+      },
+      "MessageResponseSchema": {
+        "description": "Schema for simple message responses.\n\nUsed for operations that don't return data, like logout.\n\nExample Response:\n    {\n        \"message\": \"Successfully logged out\",\n        \"success\": true\n    }",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "default": true,
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "MessageResponseSchema",
+        "type": "object"
+      },
+      "LogoutSchema": {
+        "description": "Schema for logout request.\n\nThe refresh_token is blacklisted on logout to prevent reuse.\n\nExample Request:\n    POST /api/v1/auth/logout\n    {\n        \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI...\"\n    }",
+        "properties": {
+          "refresh_token": {
+            "title": "Refresh Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ],
+        "title": "LogoutSchema",
+        "type": "object"
+      },
+      "ChangePasswordSchema": {
+        "description": "Schema for changing password (when logged in).\n\nExample Request:\n    POST /api/v1/auth/password/change\n    {\n        \"old_password\": \"OldPass123!\",\n        \"new_password\": \"NewPass456!\"\n    }",
+        "properties": {
+          "old_password": {
+            "title": "Old Password",
+            "type": "string"
+          },
+          "new_password": {
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "old_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordSchema",
+        "type": "object"
+      },
+      "ForgotPasswordSchema": {
+        "description": "Request body for POST /api/auth/password/forgot.",
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "ForgotPasswordSchema",
+        "type": "object"
+      },
+      "ResetPasswordSchema": {
+        "description": "Request body for POST /api/auth/password/reset.",
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          },
+          "new_password": {
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "title": "ResetPasswordSchema",
+        "type": "object"
+      },
+      "SetPasswordSchema": {
+        "description": "Request body for POST /api/auth/password/set (first-time setup).",
+        "properties": {
+          "new_password": {
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "new_password"
+        ],
+        "title": "SetPasswordSchema",
+        "type": "object"
+      },
+      "PermissionsResponseSchema": {
+        "description": "Response for GET /api/auth/me/permissions/?school_id=X.",
+        "properties": {
+          "can_view": {
+            "title": "Can View",
+            "type": "boolean"
+          },
+          "can_modify": {
+            "title": "Can Modify",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "can_view",
+          "can_modify"
+        ],
+        "title": "PermissionsResponseSchema",
+        "type": "object"
+      },
+      "SchoolListItemSchema": {
+        "properties": {
+          "partner_id": {
+            "title": "Partner Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "initials": {
+            "title": "Initials",
+            "type": "string"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "contact_person_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Person Name"
+          },
+          "contact_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Phone"
+          },
+          "co_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Co Name"
+          },
+          "setup_status": {
+            "title": "Setup Status",
+            "type": "string"
+          },
+          "children_count": {
+            "default": 0,
+            "title": "Children Count",
+            "type": "integer"
+          },
+          "volunteers_count": {
+            "default": 0,
+            "title": "Volunteers Count",
+            "type": "integer"
+          },
+          "assignments_count": {
+            "default": 0,
+            "title": "Assignments Count",
+            "type": "integer"
+          },
+          "classes_count": {
+            "default": 0,
+            "title": "Classes Count",
+            "type": "integer"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "partner_id",
+          "name",
+          "initials",
+          "setup_status"
+        ],
+        "title": "SchoolListItemSchema",
+        "type": "object"
+      },
+      "SchoolListResponseSchema": {
+        "properties": {
+          "schools": {
+            "items": {
+              "$ref": "#/components/schemas/SchoolListItemSchema"
+            },
+            "title": "Schools",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SchoolSummarySchema"
+          }
+        },
+        "required": [
+          "schools",
+          "summary"
+        ],
+        "title": "SchoolListResponseSchema",
+        "type": "object"
+      },
+      "SchoolSummarySchema": {
+        "properties": {
+          "total_schools": {
+            "title": "Total Schools",
+            "type": "integer"
+          },
+          "fully_configured": {
+            "title": "Fully Configured",
+            "type": "integer"
+          },
+          "children_enrolled": {
+            "title": "Children Enrolled",
+            "type": "integer"
+          },
+          "active_volunteers": {
+            "title": "Active Volunteers",
+            "type": "integer"
+          },
+          "academic_year": {
+            "title": "Academic Year",
+            "type": "string"
+          }
+        },
+        "required": [
+          "total_schools",
+          "fully_configured",
+          "children_enrolled",
+          "active_volunteers",
+          "academic_year"
+        ],
+        "title": "SchoolSummarySchema",
+        "type": "object"
+      },
+      "SchoolDetailSchema": {
+        "properties": {
+          "partner_id": {
+            "title": "Partner Id",
+            "type": "integer"
+          },
+          "partner_name": {
+            "title": "Partner Name",
+            "type": "string"
+          },
+          "address_line_1": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Line 1"
+          },
+          "address_line_2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address Line 2"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "pincode": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pincode"
+          },
+          "school_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School Type"
+          },
+          "partner_affiliation_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Affiliation Type"
+          },
+          "poc_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poc Name"
+          },
+          "poc_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poc Email"
+          },
+          "poc_designation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poc Designation"
+          },
+          "poc_contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poc Contact"
+          },
+          "mou_sign_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mou Sign Date"
+          },
+          "mou_start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mou Start Date"
+          },
+          "mou_end_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mou End Date"
+          },
+          "mou_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mou Url"
+          },
+          "co_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Co Id"
+          },
+          "co_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Co Name"
+          },
+          "synced_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Synced At"
+          },
+          "configuration_status": {
+            "default": "awaiting_setup",
+            "title": "Configuration Status",
+            "type": "string"
+          },
+          "children_count": {
+            "default": 0,
+            "title": "Children Count",
+            "type": "integer"
+          },
+          "classes_count": {
+            "default": 0,
+            "title": "Classes Count",
+            "type": "integer"
+          },
+          "volunteers_count": {
+            "default": 0,
+            "title": "Volunteers Count",
+            "type": "integer"
+          },
+          "assignments_count": {
+            "default": 0,
+            "title": "Assignments Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "partner_id",
+          "partner_name"
+        ],
+        "title": "SchoolDetailSchema",
+        "type": "object"
+      },
+      "AcademicYearOut": {
+        "properties": {
+          "academic_year_id": {
+            "title": "Academic Year Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "academic_year_id",
+          "label",
+          "is_active",
+          "created_at"
+        ],
+        "title": "AcademicYearOut",
+        "type": "object"
+      },
+      "AcademicYearCreateIn": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "AcademicYearCreateIn",
+        "type": "object"
+      },
+      "AcademicYearUpdateIn": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "AcademicYearUpdateIn",
+        "type": "object"
+      },
+      "SchoolClassOut": {
+        "properties": {
+          "school_class_id": {
+            "title": "School Class Id",
+            "type": "integer"
+          },
+          "class_id": {
+            "title": "Class Id",
+            "type": "integer"
+          },
+          "class_name": {
+            "title": "Class Name",
+            "type": "string"
+          },
+          "class_code": {
+            "title": "Class Code",
+            "type": "string"
+          },
+          "program_name": {
+            "title": "Program Name",
+            "type": "string"
+          },
+          "sections_count": {
+            "title": "Sections Count",
+            "type": "integer"
+          },
+          "sections": {
+            "default": [],
+            "items": {},
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "school_class_id",
+          "class_id",
+          "class_name",
+          "class_code",
+          "program_name",
+          "sections_count"
+        ],
+        "title": "SchoolClassOut",
+        "type": "object"
+      },
+      "ClassAddIn": {
+        "properties": {
+          "class_id": {
+            "title": "Class Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "class_id"
+        ],
+        "title": "ClassAddIn",
+        "type": "object"
+      },
+      "SectionOut": {
+        "properties": {
+          "class_section_id": {
+            "title": "Class Section Id",
+            "type": "integer"
+          },
+          "section_code": {
+            "title": "Section Code",
+            "type": "string"
+          },
+          "section_name": {
+            "title": "Section Name",
+            "type": "string"
+          },
+          "active_children_count": {
+            "title": "Active Children Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "class_section_id",
+          "section_code",
+          "section_name",
+          "active_children_count"
+        ],
+        "title": "SectionOut",
+        "type": "object"
+      },
+      "SectionAddIn": {
+        "properties": {
+          "section_code": {
+            "title": "Section Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "section_code"
+        ],
+        "title": "SectionAddIn",
+        "type": "object"
+      },
+      "AvailableCodesOut": {
+        "properties": {
+          "codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Codes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "codes"
+        ],
+        "title": "AvailableCodesOut",
+        "type": "object"
+      },
+      "BucketOut": {
+        "properties": {
+          "class_section_id": {
+            "title": "Class Section Id",
+            "type": "integer"
+          },
+          "section_name": {
+            "title": "Section Name",
+            "type": "string"
+          },
+          "section_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Display Name"
+          },
+          "school_id": {
+            "title": "School Id",
+            "type": "integer"
+          },
+          "school_class_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School Class Id"
+          },
+          "active_children_count": {
+            "title": "Active Children Count",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "class_section_id",
+          "section_name",
+          "section_display_name",
+          "school_id",
+          "school_class_id",
+          "active_children_count",
+          "is_active"
+        ],
+        "title": "BucketOut",
+        "type": "object"
+      },
+      "BucketEditIn": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          }
+        },
+        "title": "BucketEditIn",
+        "type": "object"
+      },
+      "BucketAddIn": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          }
+        },
+        "title": "BucketAddIn",
+        "type": "object"
+      },
+      "BucketChildOut": {
+        "properties": {
+          "child_class_section_id": {
+            "title": "Child Class Section Id",
+            "type": "integer"
+          },
+          "child_id": {
+            "title": "Child Id",
+            "type": "integer"
+          },
+          "class_section_id": {
+            "title": "Class Section Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "child_class_section_id",
+          "child_id",
+          "class_section_id"
+        ],
+        "title": "BucketChildOut",
+        "type": "object"
+      },
+      "BucketChildAddIn": {
+        "properties": {
+          "child_id": {
+            "title": "Child Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "child_id"
+        ],
+        "title": "BucketChildAddIn",
+        "type": "object"
+      },
+      "ClassCatalogItemOut": {
+        "properties": {
+          "class_id": {
+            "title": "Class Id",
+            "type": "integer"
+          },
+          "class_name": {
+            "title": "Class Name",
+            "type": "string"
+          },
+          "class_code": {
+            "title": "Class Code",
+            "type": "string"
+          },
+          "program_name": {
+            "title": "Program Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "class_id",
+          "class_name",
+          "class_code",
+          "program_name"
+        ],
+        "title": "ClassCatalogItemOut",
+        "type": "object"
+      },
+      "ChildOut": {
+        "properties": {
+          "child_id": {
+            "title": "Child Id",
+            "type": "integer"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "gender": {
+            "title": "Gender",
+            "type": "string"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "mother_tongue": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mother Tongue"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "date_of_enrollment": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Enrollment"
+          },
+          "mad_joining_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mad Joining Date"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "current_section": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CurrentSectionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "current_school_class": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CurrentSchoolClassOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "child_id",
+          "first_name",
+          "last_name",
+          "gender",
+          "age",
+          "city",
+          "mother_tongue",
+          "date_of_birth",
+          "date_of_enrollment",
+          "mad_joining_date",
+          "is_active",
+          "current_section",
+          "current_school_class"
+        ],
+        "title": "ChildOut",
+        "type": "object"
+      },
+      "CurrentSchoolClassOut": {
+        "properties": {
+          "school_class_id": {
+            "title": "School Class Id",
+            "type": "integer"
+          },
+          "class_name": {
+            "title": "Class Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "school_class_id",
+          "class_name"
+        ],
+        "title": "CurrentSchoolClassOut",
+        "type": "object"
+      },
+      "CurrentSectionOut": {
+        "properties": {
+          "class_section_id": {
+            "title": "Class Section Id",
+            "type": "integer"
+          },
+          "section_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Display Name"
+          },
+          "section_name": {
+            "title": "Section Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "class_section_id",
+          "section_display_name",
+          "section_name"
+        ],
+        "title": "CurrentSectionOut",
+        "type": "object"
+      },
+      "ChildEnrollIn": {
+        "properties": {
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "male",
+              "female",
+              "other"
+            ],
+            "title": "Gender",
+            "type": "string"
+          },
+          "age": {
+            "title": "Age",
+            "type": "integer"
+          },
+          "school_class_id": {
+            "title": "School Class Id",
+            "type": "integer"
+          },
+          "class_section_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Section Id"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "mother_tongue": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mother Tongue"
+          },
+          "date_of_enrollment": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Enrollment"
+          },
+          "mad_joining_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mad Joining Date"
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "gender",
+          "age",
+          "school_class_id"
+        ],
+        "title": "ChildEnrollIn",
+        "type": "object"
+      },
+      "ChildEditIn": {
+        "properties": {
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "male",
+                  "female",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "school_class_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "School Class Id"
+          },
+          "class_section_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Section Id"
+          },
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "mother_tongue": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mother Tongue"
+          },
+          "date_of_enrollment": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Enrollment"
+          },
+          "mad_joining_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mad Joining Date"
+          }
+        },
+        "title": "ChildEditIn",
+        "type": "object"
+      },
+      "DeactivateIn": {
+        "properties": {
+          "removed_reason": {
+            "enum": [
+              "inactive",
+              "duplicate_entry",
+              "wrong_school_class",
+              "transferred",
+              "dropped_out",
+              "family_declined",
+              "child_declined",
+              "other"
+            ],
+            "title": "Removed Reason",
+            "type": "string"
+          },
+          "other_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Other Details"
+          }
+        },
+        "required": [
+          "removed_reason"
+        ],
+        "title": "DeactivateIn",
+        "type": "object"
+      },
+      "ReactivateIn": {
+        "properties": {
+          "school_class_id": {
+            "title": "School Class Id",
+            "type": "integer"
+          },
+          "class_section_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Section Id"
+          }
+        },
+        "required": [
+          "school_class_id"
+        ],
+        "title": "ReactivateIn",
+        "type": "object"
+      },
+      "VolunteerCardSchema": {
+        "properties": {
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          },
+          "user_login": {
+            "title": "User Login",
+            "type": "string"
+          },
+          "user_role": {
+            "title": "User Role",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "active_slot_class_count": {
+            "title": "Active Slot Class Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id",
+          "user_display_name",
+          "user_login",
+          "user_role",
+          "email",
+          "active_slot_class_count"
+        ],
+        "title": "VolunteerCardSchema",
+        "type": "object"
+      },
+      "VolunteerListResponseSchema": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "volunteers": {
+            "items": {
+              "$ref": "#/components/schemas/VolunteerCardSchema"
+            },
+            "title": "Volunteers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "volunteers"
+        ],
+        "title": "VolunteerListResponseSchema",
+        "type": "object"
+      },
+      "SlotReadSchema": {
+        "properties": {
+          "slot_id": {
+            "title": "Slot Id",
+            "type": "integer"
+          },
+          "slot_name": {
+            "title": "Slot Name",
+            "type": "string"
+          },
+          "day_of_week": {
+            "title": "Day Of Week",
+            "type": "string"
+          },
+          "start_time": {
+            "format": "time",
+            "title": "Start Time",
+            "type": "string"
+          },
+          "end_time": {
+            "format": "time",
+            "title": "End Time",
+            "type": "string"
+          },
+          "recurring": {
+            "title": "Recurring",
+            "type": "boolean"
+          },
+          "slot_class_count": {
+            "default": 0,
+            "title": "Slot Class Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slot_id",
+          "slot_name",
+          "day_of_week",
+          "start_time",
+          "end_time",
+          "recurring"
+        ],
+        "title": "SlotReadSchema",
+        "type": "object"
+      },
+      "SlotCreateSchema": {
+        "properties": {
+          "day_of_week": {
+            "enum": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday"
+            ],
+            "title": "Day Of Week",
+            "type": "string"
+          },
+          "start_time": {
+            "format": "time",
+            "title": "Start Time",
+            "type": "string"
+          },
+          "end_time": {
+            "format": "time",
+            "title": "End Time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day_of_week",
+          "start_time",
+          "end_time"
+        ],
+        "title": "SlotCreateSchema",
+        "type": "object"
+      },
+      "SlotUpdateSchema": {
+        "properties": {
+          "day_of_week": {
+            "anyOf": [
+              {
+                "enum": [
+                  "monday",
+                  "tuesday",
+                  "wednesday",
+                  "thursday",
+                  "friday",
+                  "saturday",
+                  "sunday"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day Of Week"
+          },
+          "start_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Time"
+          },
+          "end_time": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Time"
+          }
+        },
+        "title": "SlotUpdateSchema",
+        "type": "object"
+      },
+      "SlotDeleteResponseSchema": {
+        "properties": {
+          "slot_id": {
+            "title": "Slot Id",
+            "type": "integer"
+          },
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "slot_id",
+          "deleted"
+        ],
+        "title": "SlotDeleteResponseSchema",
+        "type": "object"
+      },
+      "SubjectReadSchema": {
+        "properties": {
+          "subject_id": {
+            "title": "Subject Id",
+            "type": "integer"
+          },
+          "subject_name": {
+            "title": "Subject Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject_id",
+          "subject_name"
+        ],
+        "title": "SubjectReadSchema",
+        "type": "object"
+      },
+      "SlotClassReadSchema": {
+        "properties": {
+          "slot_class_section_id": {
+            "title": "Slot Class Section Id",
+            "type": "integer"
+          },
+          "class_section_id": {
+            "title": "Class Section Id",
+            "type": "integer"
+          },
+          "section_name": {
+            "title": "Section Name",
+            "type": "string"
+          },
+          "section_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Display Name"
+          },
+          "subject_name": {
+            "title": "Subject Name",
+            "type": "string"
+          },
+          "volunteers": {
+            "items": {
+              "$ref": "#/components/schemas/VolunteerInSlotClassSchema"
+            },
+            "title": "Volunteers",
+            "type": "array"
+          },
+          "active_children_count": {
+            "title": "Active Children Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slot_class_section_id",
+          "class_section_id",
+          "section_name",
+          "section_display_name",
+          "subject_name",
+          "volunteers",
+          "active_children_count"
+        ],
+        "title": "SlotClassReadSchema",
+        "type": "object"
+      },
+      "VolunteerInSlotClassSchema": {
+        "properties": {
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          },
+          "user_role": {
+            "title": "User Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "user_display_name",
+          "user_role"
+        ],
+        "title": "VolunteerInSlotClassSchema",
+        "type": "object"
+      },
+      "SlotClassCreateSchema": {
+        "properties": {
+          "class_section_id": {
+            "title": "Class Section Id",
+            "type": "integer"
+          },
+          "volunteer_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Volunteer Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "class_section_id",
+          "volunteer_ids"
+        ],
+        "title": "SlotClassCreateSchema",
+        "type": "object"
+      },
+      "SlotClassUpdateSchema": {
+        "properties": {
+          "class_section_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Section Id"
+          },
+          "volunteer_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volunteer Ids"
+          }
+        },
+        "title": "SlotClassUpdateSchema",
+        "type": "object"
+      },
+      "SlotClassDeleteResponseSchema": {
+        "properties": {
+          "slot_class_section_id": {
+            "title": "Slot Class Section Id",
+            "type": "integer"
+          },
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "slot_class_section_id",
+          "deleted"
+        ],
+        "title": "SlotClassDeleteResponseSchema",
+        "type": "object"
+      },
+      "ScheduleDaySchema": {
+        "properties": {
+          "day_of_week": {
+            "title": "Day Of Week",
+            "type": "string"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleSlotSchema"
+            },
+            "title": "Slots",
+            "type": "array"
+          }
+        },
+        "required": [
+          "day_of_week",
+          "slots"
+        ],
+        "title": "ScheduleDaySchema",
+        "type": "object"
+      },
+      "ScheduleResponseSchema": {
+        "properties": {
+          "school_id": {
+            "title": "School Id",
+            "type": "integer"
+          },
+          "school_name": {
+            "title": "School Name",
+            "type": "string"
+          },
+          "academic_year": {
+            "title": "Academic Year",
+            "type": "string"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleDaySchema"
+            },
+            "title": "Days",
+            "type": "array"
+          }
+        },
+        "required": [
+          "school_id",
+          "school_name",
+          "academic_year",
+          "days"
+        ],
+        "title": "ScheduleResponseSchema",
+        "type": "object"
+      },
+      "ScheduleSlotClassSchema": {
+        "properties": {
+          "slot_class_section_id": {
+            "title": "Slot Class Section Id",
+            "type": "integer"
+          },
+          "section_name": {
+            "title": "Section Name",
+            "type": "string"
+          },
+          "section_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Display Name"
+          },
+          "subject_name": {
+            "title": "Subject Name",
+            "type": "string"
+          },
+          "volunteers": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleVolunteerSchema"
+            },
+            "title": "Volunteers",
+            "type": "array"
+          },
+          "active_children_count": {
+            "title": "Active Children Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "slot_class_section_id",
+          "section_name",
+          "section_display_name",
+          "subject_name",
+          "volunteers",
+          "active_children_count"
+        ],
+        "title": "ScheduleSlotClassSchema",
+        "type": "object"
+      },
+      "ScheduleSlotSchema": {
+        "properties": {
+          "slot_id": {
+            "title": "Slot Id",
+            "type": "integer"
+          },
+          "slot_name": {
+            "title": "Slot Name",
+            "type": "string"
+          },
+          "start_time": {
+            "title": "Start Time",
+            "type": "string"
+          },
+          "end_time": {
+            "title": "End Time",
+            "type": "string"
+          },
+          "slot_classes": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleSlotClassSchema"
+            },
+            "title": "Slot Classes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slot_id",
+          "slot_name",
+          "start_time",
+          "end_time",
+          "slot_classes"
+        ],
+        "title": "ScheduleSlotSchema",
+        "type": "object"
+      },
+      "ScheduleVolunteerSchema": {
+        "properties": {
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "user_display_name": {
+            "title": "User Display Name",
+            "type": "string"
+          },
+          "user_role": {
+            "title": "User Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "user_display_name",
+          "user_role"
+        ],
+        "title": "ScheduleVolunteerSchema",
+        "type": "object"
+      },
+      "SessionOut": {
+        "properties": {
+          "session_id": {
+            "title": "Session Id",
+            "type": "integer"
+          },
+          "school_id": {
+            "title": "School Id",
+            "type": "integer"
+          },
+          "school_academic_year_id": {
+            "title": "School Academic Year Id",
+            "type": "integer"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "school_id",
+          "school_academic_year_id",
+          "start_date",
+          "end_date",
+          "created_at"
+        ],
+        "title": "SessionOut",
+        "type": "object"
+      },
+      "SessionCreateIn": {
+        "properties": {
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start_date",
+          "end_date"
+        ],
+        "title": "SessionCreateIn",
+        "type": "object"
+      },
+      "SessionDefaultsOut": {
+        "properties": {
+          "default_start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Start Date"
+          },
+          "default_end_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default End Date"
+          },
+          "academic_year_label": {
+            "title": "Academic Year Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "academic_year_label"
+        ],
+        "title": "SessionDefaultsOut",
+        "type": "object"
+      },
+      "HolidayOut": {
+        "properties": {
+          "school_holiday_id": {
+            "title": "School Holiday Id",
+            "type": "integer"
+          },
+          "school_id": {
+            "title": "School Id",
+            "type": "integer"
+          },
+          "holiday_reason": {
+            "title": "Holiday Reason",
+            "type": "string"
+          },
+          "holiday_reason_display": {
+            "title": "Holiday Reason Display",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "holiday_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holiday Description"
+          },
+          "remarks": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remarks"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "school_holiday_id",
+          "school_id",
+          "holiday_reason",
+          "holiday_reason_display",
+          "start_date",
+          "end_date",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "HolidayOut",
+        "type": "object"
+      },
+      "HolidayCreateIn": {
+        "properties": {
+          "holiday_reason": {
+            "enum": [
+              "mad_event",
+              "holidays",
+              "cancelled_from_school_end"
+            ],
+            "title": "Holiday Reason",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "holiday_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holiday Description"
+          },
+          "remarks": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remarks"
+          }
+        },
+        "required": [
+          "holiday_reason",
+          "start_date",
+          "end_date"
+        ],
+        "title": "HolidayCreateIn",
+        "type": "object"
+      },
+      "HolidayPatchIn": {
+        "properties": {
+          "holiday_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "mad_event",
+                  "holidays",
+                  "cancelled_from_school_end"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holiday Reason"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          },
+          "holiday_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holiday Description"
+          },
+          "remarks": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remarks"
+          }
+        },
+        "title": "HolidayPatchIn",
+        "type": "object"
+      },
+      "SyncRunListItemOut": {
+        "properties": {
+          "sync_run_id": {
+            "title": "Sync Run Id",
+            "type": "integer"
+          },
+          "sync_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Type"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "records_fetched": {
+            "title": "Records Fetched",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sync_run_id",
+          "status",
+          "started_at",
+          "records_fetched"
+        ],
+        "title": "SyncRunListItemOut",
+        "type": "object"
+      },
+      "SyncRunDetailOut": {
+        "properties": {
+          "sync_run_id": {
+            "title": "Sync Run Id",
+            "type": "integer"
+          },
+          "sync_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync Type"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type"
+          },
+          "updated_after": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated After"
+          },
+          "cursor_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor End"
+          },
+          "target_identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Identifier"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "records_fetched": {
+            "title": "Records Fetched",
+            "type": "integer"
+          },
+          "users_fetched": {
+            "default": 0,
+            "title": "Users Fetched",
+            "type": "integer"
+          },
+          "users_created": {
+            "default": 0,
+            "title": "Users Created",
+            "type": "integer"
+          },
+          "users_updated": {
+            "default": 0,
+            "title": "Users Updated",
+            "type": "integer"
+          },
+          "partners_fetched": {
+            "default": 0,
+            "title": "Partners Fetched",
+            "type": "integer"
+          },
+          "partners_created": {
+            "default": 0,
+            "title": "Partners Created",
+            "type": "integer"
+          },
+          "partners_updated": {
+            "default": 0,
+            "title": "Partners Updated",
+            "type": "integer"
+          },
+          "error_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Details"
+          },
+          "triggered_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triggered By Name"
+          },
+          "user_logins": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Logins"
+          },
+          "partner_ids": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Ids"
+          }
+        },
+        "required": [
+          "sync_run_id",
+          "status",
+          "started_at",
+          "records_fetched"
+        ],
+        "title": "SyncRunDetailOut",
+        "type": "object"
+      },
+      "AdminStatsOut": {
+        "properties": {
+          "entity_stats": {
+            "$ref": "#/components/schemas/EntityStatsOut"
+          },
+          "cron_health": {
+            "$ref": "#/components/schemas/CronHealthOut"
+          }
+        },
+        "required": [
+          "entity_stats",
+          "cron_health"
+        ],
+        "title": "AdminStatsOut",
+        "type": "object"
+      },
+      "CronHealthOut": {
+        "properties": {
+          "healthy": {
+            "title": "Healthy",
+            "type": "boolean"
+          },
+          "last_successful_sync_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Successful Sync At"
+          },
+          "hours_since_last_success": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours Since Last Success"
+          },
+          "next_expected_run": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Expected Run"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "healthy"
+        ],
+        "title": "CronHealthOut",
+        "type": "object"
+      },
+      "EntityStatOut": {
+        "properties": {
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "active": {
+            "title": "Active",
+            "type": "integer"
+          },
+          "inactive": {
+            "title": "Inactive",
+            "type": "integer"
+          },
+          "removed": {
+            "title": "Removed",
+            "type": "integer"
+          },
+          "last_successful_sync": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Successful Sync"
+          }
+        },
+        "required": [
+          "total",
+          "active",
+          "inactive",
+          "removed"
+        ],
+        "title": "EntityStatOut",
+        "type": "object"
+      },
+      "EntityStatsOut": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/EntityStatOut"
+          },
+          "partner": {
+            "$ref": "#/components/schemas/EntityStatOut"
+          },
+          "partner_worknode": {
+            "$ref": "#/components/schemas/EntityStatOut"
+          }
+        },
+        "required": [
+          "user",
+          "partner",
+          "partner_worknode"
+        ],
+        "title": "EntityStatsOut",
+        "type": "object"
+      },
+      "SyncUserByLoginOut": {
+        "properties": {
+          "sync_run_id": {
+            "title": "Sync Run Id",
+            "type": "integer"
+          },
+          "user_login": {
+            "title": "User Login",
+            "type": "string"
+          },
+          "user_name": {
+            "title": "User Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sync_run_id",
+          "user_login",
+          "user_name"
+        ],
+        "title": "SyncUserByLoginOut",
+        "type": "object"
+      },
+      "SyncUserByLoginIn": {
+        "properties": {
+          "user_login": {
+            "description": "User's login email address",
+            "maxLength": 254,
+            "title": "User Login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_login"
+        ],
+        "title": "SyncUserByLoginIn",
+        "type": "object"
+      },
+      "SyncTriggerOut": {
+        "properties": {
+          "user_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Run Id"
+          },
+          "partner_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Run Id"
+          },
+          "partner_worknode_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partner Worknode Run Id"
+          }
+        },
+        "title": "SyncTriggerOut",
+        "type": "object"
+      },
+      "RealtimeSyncLogListOut": {
+        "properties": {
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/RealtimeSyncLogOut"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "page_size",
+          "results"
+        ],
+        "title": "RealtimeSyncLogListOut",
+        "type": "object"
+      },
+      "RealtimeSyncLogOut": {
+        "properties": {
+          "realtime_sync_log_id": {
+            "title": "Realtime Sync Log Id",
+            "type": "integer"
+          },
+          "user_id_from_source": {
+            "title": "User Id From Source",
+            "type": "integer"
+          },
+          "sync_type": {
+            "title": "Sync Type",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "action_taken": {
+            "title": "Action Taken",
+            "type": "string"
+          },
+          "error_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Details"
+          },
+          "field_changes": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Changes"
+          },
+          "cascaded_changes": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cascaded Changes"
+          },
+          "deferred_operations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deferred Operations"
+          },
+          "rules_fired": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rules Fired"
+          },
+          "triggered_by_user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triggered By User Id"
+          },
+          "external_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Event Id"
+          }
+        },
+        "required": [
+          "realtime_sync_log_id",
+          "user_id_from_source",
+          "sync_type",
+          "event_type",
+          "received_at",
+          "status",
+          "action_taken"
+        ],
+        "title": "RealtimeSyncLogOut",
+        "type": "object"
+      },
+      "ManualSyncOut": {
+        "properties": {
+          "log_id": {
+            "title": "Log Id",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "action_taken": {
+            "title": "Action Taken",
+            "type": "string"
+          },
+          "field_changes": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Changes"
+          },
+          "cascaded_changes": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cascaded Changes"
+          },
+          "deferred_operations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deferred Operations"
+          },
+          "error_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Details"
+          }
+        },
+        "required": [
+          "log_id",
+          "status",
+          "action_taken"
+        ],
+        "title": "ManualSyncOut",
+        "type": "object"
+      },
+      "ManualSyncIn": {
+        "properties": {
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          }
+        },
+        "required": [
+          "payload"
+        ],
+        "title": "ManualSyncIn",
+        "type": "object"
+      },
+      "RealtimeSyncLogDetailOut": {
+        "properties": {
+          "realtime_sync_log_id": {
+            "title": "Realtime Sync Log Id",
+            "type": "integer"
+          },
+          "user_id_from_source": {
+            "title": "User Id From Source",
+            "type": "integer"
+          },
+          "sync_type": {
+            "title": "Sync Type",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "received_at": {
+            "format": "date-time",
+            "title": "Received At",
+            "type": "string"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "action_taken": {
+            "title": "Action Taken",
+            "type": "string"
+          },
+          "error_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Details"
+          },
+          "field_changes": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Changes"
+          },
+          "cascaded_changes": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cascaded Changes"
+          },
+          "deferred_operations": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deferred Operations"
+          },
+          "rules_fired": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rules Fired"
+          },
+          "triggered_by_user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triggered By User Id"
+          },
+          "external_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Event Id"
+          },
+          "pre_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pre Snapshot"
+          },
+          "incoming_payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incoming Payload"
+          }
+        },
+        "required": [
+          "realtime_sync_log_id",
+          "user_id_from_source",
+          "sync_type",
+          "event_type",
+          "received_at",
+          "status",
+          "action_taken"
+        ],
+        "title": "RealtimeSyncLogDetailOut",
+        "type": "object"
+      },
+      "RealtimeSyncUserPayload": {
+        "properties": {
+          "user_login": {
+            "title": "User Login",
+            "type": "string"
+          },
+          "user_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Display Name"
+          },
+          "user_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Email"
+          },
+          "user_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Phone"
+          },
+          "user_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Role"
+          },
+          "worknode_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worknode Id"
+          },
+          "user_active_status": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Active Status"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "center": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Center"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "reporting_manager_user_login": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporting Manager User Login"
+          },
+          "reporting_manager_role_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporting Manager Role Code"
+          },
+          "reporting_manager_user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporting Manager User Id"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "x_modified_timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X Modified Timestamp"
+          },
+          "external_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "External Event Id"
+          },
+          "sync_type": {
+            "default": "manual_admin",
+            "title": "Sync Type",
+            "type": "string"
+          },
+          "triggered_by_user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triggered By User Id"
+          }
+        },
+        "required": [
+          "user_login",
+          "event_type"
+        ],
+        "title": "RealtimeSyncUserPayload",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "CustomJwtAuthMiddleware": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "servers": []
+}

@@ -12,7 +12,8 @@ class ChildEnrollIn(Schema):
     last_name:          str
     gender:             Literal["male", "female", "other"]
     age:                int
-    class_section_id:   int
+    school_class_id:    int
+    class_section_id:   int | None = None
     date_of_birth:      date | None = None
     city:               str | None = None
     mother_tongue:      str | None = None
@@ -25,6 +26,7 @@ class ChildEditIn(Schema):
     last_name:          str | None = None
     gender:             Literal["male", "female", "other"] | None = None
     age:                int | None = None
+    school_class_id:    int | None = None
     class_section_id:   int | None = None
     date_of_birth:      date | None = None
     city:               str | None = None
@@ -48,7 +50,19 @@ class DeactivateIn(Schema):
 
 
 class ReactivateIn(Schema):
+    school_class_id:   int
+    class_section_id:  int | None = None
+
+
+class CurrentSectionOut(Schema):
     class_section_id: int
+    section_display_name: str | None
+    section_name: str
+
+
+class CurrentSchoolClassOut(Schema):
+    school_class_id: int
+    class_name: str
 
 
 class ChildOut(Schema):
@@ -63,23 +77,26 @@ class ChildOut(Schema):
     date_of_enrollment:   date | None
     mad_joining_date:     date | None
     is_active:            bool
-    current_class_name:   str
-    current_section_name: str
-    current_section_id:   int | None
-    current_class_id:     int | None  # school_class_id
+    current_section:      CurrentSectionOut | None
+    current_school_class: CurrentSchoolClassOut | None
 
     @staticmethod
-    def resolve_current_class_name(obj) -> str:
-        return getattr(obj, "current_class_name", "") or ""
+    def resolve_current_section(obj) -> CurrentSectionOut | None:
+        sid = getattr(obj, "_current_section_id", None)
+        if not sid:
+            return None
+        return CurrentSectionOut(
+            class_section_id=sid,
+            section_display_name=getattr(obj, "current_section_display_name", None),
+            section_name=getattr(obj, "current_section_name", "") or "",
+        )
 
     @staticmethod
-    def resolve_current_section_name(obj) -> str:
-        return getattr(obj, "current_section_name", "") or ""
-
-    @staticmethod
-    def resolve_current_section_id(obj) -> int | None:
-        return getattr(obj, "_current_section_id", None)
-
-    @staticmethod
-    def resolve_current_class_id(obj) -> int | None:
-        return getattr(obj, "_current_school_class_id", None)
+    def resolve_current_school_class(obj) -> CurrentSchoolClassOut | None:
+        cid = getattr(obj, "_current_school_class_id", None)
+        if not cid:
+            return None
+        return CurrentSchoolClassOut(
+            school_class_id=cid,
+            class_name=getattr(obj, "current_class_name", "") or "",
+        )

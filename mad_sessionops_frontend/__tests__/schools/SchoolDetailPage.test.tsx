@@ -47,6 +47,10 @@ vi.mock('@/lib/api/services/structure.service', () => ({
   fetchSchoolClasses: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock('@/lib/api/services/buckets.service', () => ({
+  fetchBuckets: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock('@/lib/api/services/children.service', () => ({
   fetchChildren: vi.fn().mockResolvedValue([]),
   enrollChild: vi.fn(),
@@ -99,44 +103,42 @@ const MOCK_SCHOOL = {
 
 // ── Tests — F-M2-1 ───────────────────────────────────────────────────────────
 
-describe('SchoolDetailPage — F-M2-1 (Structure tab activation)', () => {
+describe('SchoolDetailPage — F-M6-6 (Buckets tab activation)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchSchool).mockResolvedValue(MOCK_SCHOOL);
     vi.mocked(fetchSchoolClasses).mockResolvedValue([]);
   });
 
-  it('test_structure_tab_renders_for_co', async () => {
+  it('test_buckets_tab_renders_for_co', async () => {
     render(<SchoolDetailPage partnerId={580} />);
 
     await waitFor(() => {
       expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
     });
 
-    // Click the first "Structure" (sidebar nav item)
-    const structureItems = screen.getAllByText('Structure');
-    await userEvent.click(structureItems[0]);
+    // Click the first "Buckets" (sidebar nav item)
+    const bucketsItems = screen.getAllByText('Buckets');
+    await userEvent.click(bucketsItems[0]);
 
-    // StructureTab renders: empty state since fetchSchoolClasses returns []
+    // BucketsTab renders: empty state since fetchBuckets returns []
     await waitFor(() => {
-      expect(screen.getByText('No classes added yet.')).toBeInTheDocument();
+      expect(screen.getByText('No buckets added yet.')).toBeInTheDocument();
     });
   });
 
-  it('test_structure_tab_empty_state_when_no_classes', async () => {
-    vi.mocked(fetchSchoolClasses).mockResolvedValue([]);
-
+  it('test_buckets_tab_empty_state_when_no_buckets', async () => {
     render(<SchoolDetailPage partnerId={580} />);
 
     await waitFor(() => {
       expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
     });
 
-    const structureTabItems = screen.getAllByText('Structure');
-    await userEvent.click(structureTabItems[0]);
+    const bucketsItems = screen.getAllByText('Buckets');
+    await userEvent.click(bucketsItems[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('No classes added yet.')).toBeInTheDocument();
+      expect(screen.getByText('No buckets added yet.')).toBeInTheDocument();
     });
   });
 
@@ -270,7 +272,7 @@ describe('SchoolDetailPage — F-M1-5', () => {
     });
 
     // All tab labels are present in DOM
-    const tabLabels = ['Structure', 'Volunteers', 'Slots', 'Calendar', 'Children', 'Schedule'];
+    const tabLabels = ['Buckets', 'Volunteers', 'Slots', 'Calendar', 'Children', 'Schedule'];
     for (const label of tabLabels) {
       const elements = screen.getAllByText(label);
       expect(elements.length).toBeGreaterThan(0);

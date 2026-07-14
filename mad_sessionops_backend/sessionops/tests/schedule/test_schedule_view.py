@@ -1,8 +1,10 @@
 """
-F-M3-9: Schedule view service tests.
+F-M3-9 / F-M6-5: Schedule view service tests.
 
 Verifies the get_school_schedule service returns the correct structure
-and respects RBAC scope.
+and respects RBAC scope. F-M6-5 dropped subject_id/volunteer_1_id/volunteer_2_id
+from slot-class creation in favor of volunteer_ids, and added section_display_name
+to each slot-class dict (needed by F-M6-8's schedule grid).
 """
 from datetime import time
 from types import SimpleNamespace
@@ -12,6 +14,8 @@ import pytest
 from sessionops.exceptions import PermissionDenied
 from sessionops.models import (
     AcademicYear,
+    Child,
+    ChildClassSection,
     Class,
     ClassSection,
     Partner,
@@ -24,12 +28,20 @@ from sessionops.models import (
 )
 from sessionops.services.slot_classes.create import create_slot_class
 from sessionops.services.slot_classes.schedule import get_school_schedule
+import sessionops.services.slot_classes.helpers as slot_class_helpers
 
 # ── Counters ───────────────────────────────────────────────────────────────────
 
 _UID = iter(range(7_000_000, 7_200_000))
 _SID = iter(range(40_000, 49_999))
 _WID = iter(range(70_000, 79_999))
+
+
+@pytest.fixture(autouse=True)
+def _reset_foundation_subject_cache():
+    slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
+    yield
+    slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -84,7 +96,7 @@ def _make_say(school_id: int, user: User, year: AcademicYear) -> SchoolAcademicY
     return say
 
 
-def _make_section(school_id: int, user: User, class_code: str = "5") -> ClassSection:
+def _make_section(school_id: int, user: User, class_code: str = "5", display_name: str | None = None) -> ClassSection:
     program, _ = Program.objects.get_or_create(program_name="Foundation Program")
     cls, _ = Class.objects.get_or_create(
         class_code=class_code,
@@ -103,17 +115,30 @@ def _make_section(school_id: int, user: User, class_code: str = "5") -> ClassSec
     )
     return ClassSection.objects.create(
         school_class_id=sc, school_id=school_id, section_code="A",
-        section_name=f"{class_code}th - A", is_active=True, created_by=user,
+        section_name=f"{class_code}th - A", section_display_name=display_name,
+        is_active=True, created_by=user,
     )
 
 
-def _make_subject(user: User, name: str = "Foundation Day 1"):
-    from sessionops.models import Subject
-    program, _ = Program.objects.get_or_create(program_name="Foundation Program")
-    subj, _ = Subject.objects.get_or_create(
-        subject_name=name, defaults={"program_id": program}
-    )
-    return subj
+def _add_children(section: ClassSection, count: int, user: User) -> list[Child]:
+    children = []
+    for i in range(count):
+        child = Child.objects.create(
+            school_id=section.school_id,
+            first_name=f"Child{i}",
+            last_name="Test",
+            gender="male",
+            is_active=True,
+            created_by=user,
+        )
+        ChildClassSection.objects.create(
+            child_id=child,
+            class_section_id=section,
+            is_active=True,
+            created_by=user,
+        )
+        children.append(child)
+    return children
 
 
 def _make_volunteer(school_id: int, user: User) -> User:
@@ -149,12 +174,10 @@ def _make_slot(school_id: int, user: User,
     )
 
 
-def _payload(section, subject, vol1, vol2=None):
+def _payload(section, *volunteers):
     return SimpleNamespace(
         class_section_id=section.class_section_id,
-        subject_id=subject.subject_id,
-        volunteer_1_id=vol1.user_id,
-        volunteer_2_id=vol2.user_id if vol2 else None,
+        volunteer_ids=[v.user_id for v in volunteers],
     )
 
 
@@ -229,11 +252,11 @@ def test_schedule_view_includes_volunteers():
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 1, co)
     vol = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
-    create_slot_class(slot.slot_id, _payload(section, subject, vol), co)
+    create_slot_class(slot.slot_id, _payload(section, vol), co)
 
     result = get_school_schedule(sid, co)
     day_map = {d["day_of_week"]: d["slots"] for d in result["days"]}
@@ -245,31 +268,41 @@ def test_schedule_view_includes_volunteers():
 
 
 @pytest.mark.django_db
+def test_schedule_view_includes_section_display_name():
+    """F-M6-8 renders the bucket's display name on schedule-grid cells."""
+    admin = _make_admin()
+    co = _make_co()
+    school = _make_school(co)
+    sid = school.partner_id
+    _make_active_year(admin)
+    section = _make_section(sid, co, display_name="Care Monster")
+    _add_children(section, 1, co)
+    vol = _make_volunteer(sid, co)
+    slot = _make_slot(sid, co)
+
+    create_slot_class(slot.slot_id, _payload(section, vol), co)
+
+    result = get_school_schedule(sid, co)
+    day_map = {d["day_of_week"]: d["slots"] for d in result["days"]}
+    sc = day_map["monday"][0]["slot_classes"][0]
+
+    assert sc["section_display_name"] == "Care Monster"
+
+
+@pytest.mark.django_db
 def test_schedule_view_includes_active_children_count():
     """active_children_count in a slot-class matches enrolled children in the section."""
-    from sessionops.models import Child, ChildClassSection
-
     admin = _make_admin()
     co = _make_co()
     school = _make_school(co)
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 3, co)
     vol = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
-    # Enroll 3 children
-    for i in range(3):
-        child = Child.objects.create(
-            school_id=sid, first_name=f"Child{i}", last_name="T",
-            gender="M", is_active=True, created_by=co,
-        )
-        ChildClassSection.objects.create(
-            child_id=child, class_section_id=section, is_active=True, created_by=co,
-        )
-
-    create_slot_class(slot.slot_id, _payload(section, subject, vol), co)
+    create_slot_class(slot.slot_id, _payload(section, vol), co)
 
     result = get_school_schedule(sid, co)
     day_map = {d["day_of_week"]: d["slots"] for d in result["days"]}

@@ -15,7 +15,7 @@ class SchoolVolunteer(models.Model):
         "sessionops.User", on_delete=models.PROTECT, related_name="school_volunteer_entries"
     )
     school_academic_year_id = models.ForeignKey(
-        "SchoolAcademicYear", on_delete=models.PROTECT
+        "SchoolAcademicYear", on_delete=models.PROTECT, null=True, blank=True
     )
     is_active               = models.BooleanField(default=True)
     removed                 = models.BooleanField(default=False)
@@ -23,7 +23,7 @@ class SchoolVolunteer(models.Model):
     created_at              = models.DateTimeField(auto_now_add=True)
     updated_at              = models.DateTimeField(auto_now=True)
     created_by              = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
+        "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
     updated_by              = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"

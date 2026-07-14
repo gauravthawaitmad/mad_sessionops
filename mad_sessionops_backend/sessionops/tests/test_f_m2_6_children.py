@@ -88,6 +88,7 @@ def _payload(section: ClassSection, **overrides) -> ChildEnrollIn:
         last_name="Kumar",
         gender="female",
         age=10,
+        school_class_id=section.school_class_id_id,
         class_section_id=section.class_section_id,
     )
     defaults.update(overrides)
@@ -160,25 +161,69 @@ class TestEnrollChild:
 
         assert BatchChild.objects.filter(school_id=104, is_active=True).count() == 3
 
-    def test_section_from_other_school_raises_validation_error(self):
+    def test_bucket_from_other_school_raises_validation_error(self):
         user = _make_user("u6@t.com")
         _make_partner(105)
         _make_partner(106)
+        section_local = _make_section(105, user, code="F")
         section_other = _make_section(106, user, code="F")
 
         with pytest.raises(ValidationError, match="does not belong"):
-            enroll_child(105, _payload(section_other), user)
+            enroll_child(
+                105,
+                _payload(section_local, class_section_id=section_other.class_section_id),
+                user,
+            )
 
-    def test_nonexistent_section_raises_not_found(self):
+    def test_school_class_from_other_school_raises_not_found(self):
+        user = _make_user("u6b@t.com")
+        _make_partner(1050)
+        _make_partner(1060)
+        section_other = _make_section(1060, user, code="F")
+
+        with pytest.raises(NotFound, match="School class"):
+            enroll_child(
+                1050,
+                _payload(section_other, school_class_id=section_other.school_class_id_id),
+                user,
+            )
+
+    def test_nonexistent_bucket_raises_not_found(self):
         user = _make_user("u7@t.com")
         _make_partner(107)
-        # No section created
+        section = _make_section(107, user, code="G")
         payload = ChildEnrollIn(
             first_name="Ghost", last_name="Child",
-            gender="male", age=11, class_section_id=99999,
+            gender="male", age=11,
+            school_class_id=section.school_class_id_id,
+            class_section_id=99999,
         )
         with pytest.raises(NotFound):
             enroll_child(107, payload, user)
+
+    def test_nonexistent_school_class_raises_not_found(self):
+        user = _make_user("u7b@t.com")
+        _make_partner(1070)
+        payload = ChildEnrollIn(
+            first_name="Ghost", last_name="Child",
+            gender="male", age=11, school_class_id=99999,
+        )
+        with pytest.raises(NotFound, match="School class"):
+            enroll_child(1070, payload, user)
+
+    def test_enroll_without_bucket_succeeds(self):
+        user = _make_user("u7c@t.com")
+        _make_partner(1071)
+        section = _make_section(1071, user, code="H")
+
+        child = enroll_child(
+            1071,
+            _payload(section, class_section_id=None),
+            user,
+        )
+
+        assert ChildClass.objects.filter(child_id=child, is_active=True).exists()
+        assert not ChildClassSection.objects.filter(child_id=child, is_active=True).exists()
 
     def test_returned_child_has_class_and_section_names(self):
         user = _make_user("u8@t.com")

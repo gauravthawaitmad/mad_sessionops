@@ -27,6 +27,7 @@ def list_children_view(
     class_id: Optional[int] = None,
     status: str = "active",
     search: Optional[str] = None,
+    unassigned: bool = False,
 ):
     get_school_or_403(request.auth, school_id)
     return list(list_children(
@@ -35,6 +36,7 @@ def list_children_view(
         class_id=class_id,
         status=status,
         search=search,
+        unassigned=unassigned,
     ))
 
 

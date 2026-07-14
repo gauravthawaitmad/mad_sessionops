@@ -11,6 +11,7 @@ export interface ScheduleVolunteer {
 export interface ScheduleSlotClass {
   slotClassSectionId: number;
   sectionName: string;
+  sectionDisplayName: string | null;
   subjectName: string;
   volunteers: ScheduleVolunteer[];
   activeChildrenCount: number;
@@ -47,6 +48,7 @@ interface RawVolunteer {
 interface RawSlotClass {
   slot_class_section_id: number;
   section_name: string;
+  section_display_name: string | null;
   subject_name: string;
   volunteers: RawVolunteer[];
   active_children_count: number;
@@ -82,6 +84,7 @@ function mapSlotClass(r: RawSlotClass): ScheduleSlotClass {
   return {
     slotClassSectionId: r.slot_class_section_id,
     sectionName: r.section_name,
+    sectionDisplayName: r.section_display_name,
     subjectName: r.subject_name,
     volunteers: r.volunteers.map(mapVolunteer),
     activeChildrenCount: r.active_children_count,

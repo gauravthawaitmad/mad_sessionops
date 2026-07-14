@@ -59,7 +59,29 @@
       "Bash(xargs grep -l \"list_school_volunteers\\\\|volunteers\")",
       "Bash(grep -E \"\\\\.md$\")",
       "Bash(python *)",
-      "Bash(where gh *)"
+      "Bash(where gh *)",
+      "Bash(command -v gh)",
+      "Read(//usr/local/bin/**)",
+      "Read(//usr/bin/**)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/Lenovo/AppData/Local/Programs/**)",
+      "Read(//c/Users/Lenovo/**)",
+      "Bash(cd C:\\\\\\\\MAD_WORKSPACE\\\\\\\\mad_sessionops\\\\\\\\mad_sessionops_backend)",
+      "PowerShell(uv run *)",
+      "Bash(node -e \"console.log\\(require\\('next/package.json'\\).version\\)\")",
+      "Bash(npx vitest *)",
+      "Bash(cat vitest.config.ts)",
+      "Bash(cat vitest.config.mts)",
+      "Bash(curl -s \"https://api.github.com/repos/makeadiff/mad_sessionops/pulls?state=all&per_page=30&sort=created&direction=desc\")",
+      "Bash(env)",
+      "Bash(rm -f tsconfig.tsbuildinfo)",
+      "Bash(rm -rf .next/cache)",
+      "Bash(tee /c/Users/Lenovo/AppData/Local/Temp/claude/C--MAD-WORKSPACE-mad-sessionops/7c0ce7d5-f2cb-474a-a907-ee5196c5bc81/scratchpad/f-m6-4-test-run.log)",
+      "Bash(./node_modules/.bin/next lint *)",
+      "Bash(./node_modules/.bin/next --version)",
+      "Bash(./node_modules/.bin/eslint --version)",
+      "Bash(./node_modules/.bin/eslint components/schools/structure lib/api/services/buckets.service.ts components/schools/SchoolDetailPage.tsx __tests__/schools/structure __tests__/schools/SchoolDetailPage.test.tsx)",
+      "Bash(timeout 8 bash -c \"cat < /dev/null > /dev/tcp/mad-dalgo-db.cj44c6c8697a.ap-south-1.rds.amazonaws.com/5432\")"
     ]
   }
 }

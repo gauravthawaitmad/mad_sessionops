@@ -9,18 +9,13 @@ import IconButton from '@mui/material/IconButton';
 import LinearProgress from '@mui/material/LinearProgress';
 import { Plus, Trash2, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  fetchSchoolClasses,
-  fetchSections,
-  type SchoolClassItem,
-  type SectionItem,
-} from '@/lib/api/services/structure.service';
+import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
 import {
   fetchSlotClasses,
   type SlotClassItem,
 } from '@/lib/api/services/slot_classes.service';
 import type { SlotItem, DayOfWeek } from '@/lib/api/services/slots.service';
-import { AddSlotClassModal, type PrefillSection } from './AddSlotClassModal';
+import { AddSlotClassModal, type PrefillBucket } from './AddSlotClassModal';
 import { DeleteSlotClassModal } from './DeleteSlotClassModal';
 import { formatTime } from './SlotCard';
 
@@ -64,11 +59,11 @@ function capColor(count: number): string {
 // slotId → list of slot-class assignments for that slot
 type BySlot = Map<number, SlotClassItem[]>;
 
-// sectionId → slotId → assignment (for O(1) cell lookup)
-type BySection = Map<number, Map<number, SlotClassItem>>;
+// classSectionId (bucket) → slotId → assignment (for O(1) cell lookup)
+type ByBucket = Map<number, Map<number, SlotClassItem>>;
 
-function buildBySection(bySlot: BySlot): BySection {
-  const map: BySection = new Map();
+function buildByBucket(bySlot: BySlot): ByBucket {
+  const map: ByBucket = new Map();
   for (const [slotId, classes] of bySlot) {
     for (const scs of classes) {
       if (!map.has(scs.classSectionId)) map.set(scs.classSectionId, new Map());
@@ -106,33 +101,9 @@ function AssignedCell({
         '&:hover': { borderColor: '#38BDF8', bgcolor: '#E0F2FE' },
       }}
     >
-      {/* Row 1: subject pill + delete */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5 }}>
-        <Box
-          sx={{
-            px: 0.75,
-            py: 0.2,
-            borderRadius: '20px',
-            bgcolor: '#F0FDF4',
-            border: '1px solid #BBF7D0',
-            minWidth: 0,
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: '10px',
-              fontWeight: 700,
-              color: '#16A34A',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {scs.subjectName}
-          </Typography>
-        </Box>
-
-        {canModify && (
+      {/* Row 1: delete (only rendered when there's something to show) */}
+      {canModify && (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
           <IconButton
             size="small"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -145,8 +116,8 @@ function AssignedCell({
           >
             <Trash2 size={11} />
           </IconButton>
-        )}
-      </Box>
+        </Box>
+      )}
 
       {/* Volunteer rows — show first name only to keep cells compact */}
       {scs.volunteers.length === 0 ? (
@@ -343,17 +314,13 @@ function SlotColHeader({
   );
 }
 
-// ── SectionRowHeader ──────────────────────────────────────────────────────────
+// ── BucketRowHeader ───────────────────────────────────────────────────────────
+// Buckets are class-agnostic (M6 decision #1) — flat rows, no class grouping.
 
-function SectionRowHeader({
-  section,
-  className,
-}: {
-  section: SectionItem;
-  className: string;
-}) {
-  const count = section.activeChildrenCount;
+function BucketRowHeader({ bucket }: { bucket: BucketItem }) {
+  const count = bucket.activeChildrenCount;
   const color = capColor(count);
+  const name  = bucket.sectionDisplayName ?? bucket.sectionName;
 
   return (
     <Box
@@ -370,24 +337,11 @@ function SectionRowHeader({
         left: 0,
         zIndex: 1,
         minHeight: 80,
+        justifyContent: 'center',
       }}
     >
-      <Typography
-        sx={{
-          fontSize: '9px',
-          color: MUTED,
-          fontWeight: 500,
-          letterSpacing: '0.03em',
-          lineHeight: 1,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {className}
-      </Typography>
       <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', lineHeight: 1.3 }}>
-        {section.sectionName}
+        {name}
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <LinearProgress
@@ -431,10 +385,10 @@ export function SlotGridView({
   onEditSlot,
   onDeleteSlot,
 }: SlotGridViewProps) {
-  const [classes,       setClasses]       = useState<SchoolClassItem[]>([]);
+  const [buckets,       setBuckets]       = useState<BucketItem[]>([]);
   const [bySlot,        setBySlot]        = useState<BySlot>(new Map());
   const [loading,       setLoading]       = useState(true);
-  const [addModal,      setAddModal]      = useState<{ slot: SlotItem; section: PrefillSection } | null>(null);
+  const [addModal,      setAddModal]      = useState<{ slot: SlotItem; bucket: PrefillBucket } | null>(null);
   const [deleteTarget,  setDeleteTarget]  = useState<{ slot: SlotItem; scs: SlotClassItem } | null>(null);
 
   // Use a stable string key (sorted slot IDs) so `loadAll` only re-runs
@@ -447,22 +401,13 @@ export function SlotGridView({
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch classes + slot-class data in parallel.
-      // The class-list endpoint returns sections:[] — sections must be fetched per class.
-      const [schoolClasses, allSlotClasses] = await Promise.all([
-        fetchSchoolClasses(schoolId),
+      // Buckets are flat and class-agnostic (M6 decision #1) — fetch once, no per-class hydration.
+      const [bucketList, allSlotClasses] = await Promise.all([
+        fetchBuckets(schoolId),
         Promise.all(slots.map((s) => fetchSlotClasses(schoolId, s.slotId))),
       ]);
 
-      // Hydrate each class with its real sections (parallel).
-      const classesWithSections = await Promise.all(
-        schoolClasses.map(async (cls) => {
-          const sections = await fetchSections(schoolId, cls.schoolClassId);
-          return { ...cls, sections };
-        }),
-      );
-
-      setClasses(classesWithSections);
+      setBuckets(bucketList);
 
       const map: BySlot = new Map();
       slots.forEach((slot, i) => {
@@ -523,8 +468,8 @@ export function SlotGridView({
     );
   }
 
-  const bySection = buildBySection(bySlot);
-  const totalSections = classes.reduce((n, c) => n + c.sections.length, 0);
+  const byBucket = buildByBucket(bySlot);
+  const totalBuckets = buckets.length;
   const colTemplate = `180px repeat(${Math.max(slots.length, 1)}, minmax(150px, 1fr))`;
 
   return (
@@ -570,7 +515,7 @@ export function SlotGridView({
                 textTransform: 'uppercase',
               }}
             >
-              Section
+              Bucket
             </Typography>
           </Box>
 
@@ -603,9 +548,9 @@ export function SlotGridView({
             </Box>
           )}
 
-          {/* ── Section rows ────────────────────────────────────────────── */}
+          {/* ── Bucket rows — flat, no class grouping (M6 decision #1) ─────── */}
 
-          {totalSections === 0 ? (
+          {totalBuckets === 0 ? (
             <Box
               sx={{
                 gridColumn: '1 / -1',
@@ -615,106 +560,75 @@ export function SlotGridView({
               }}
             >
               <Typography sx={{ fontSize: '13px', color: MUTED }}>
-                No sections configured yet. Add classes and sections in the Structure tab first.
+                No buckets configured yet. Add buckets in the Buckets tab first.
               </Typography>
             </Box>
           ) : (
-            classes.map((cls) =>
-              cls.sections.length === 0 ? null : (
-                <React.Fragment key={cls.schoolClassId}>
-                  {/* Class group header — spans full width */}
+            buckets.map((bucket) => (
+              <React.Fragment key={bucket.classSectionId}>
+                <BucketRowHeader bucket={bucket} />
+
+                {slots.length > 0 ? (
+                  slots.map((slot) => {
+                    const scs = byBucket.get(bucket.classSectionId)?.get(slot.slotId);
+                    return (
+                      <Box
+                        key={slot.slotId}
+                        sx={{
+                          p: 0.875,
+                          borderBottom: `1px solid ${BORDER}`,
+                          borderLeft: `1px solid ${BORDER}`,
+                        }}
+                      >
+                        {scs ? (
+                          <AssignedCell
+                            scs={scs}
+                            canModify={canModify}
+                            onDelete={() => handleOpenDelete(slot, scs)}
+                          />
+                        ) : (
+                          <EmptyCell
+                            canModify={canModify}
+                            onClick={() =>
+                              setAddModal({
+                                slot,
+                                bucket: {
+                                  classSectionId:      bucket.classSectionId,
+                                  sectionDisplayName:  bucket.sectionDisplayName,
+                                  sectionName:         bucket.sectionName,
+                                  activeChildrenCount: bucket.activeChildrenCount,
+                                },
+                              })
+                            }
+                          />
+                        )}
+                      </Box>
+                    );
+                  })
+                ) : (
+                  /* No slots yet — single empty cell spanning slot area */
                   <Box
                     sx={{
-                      gridColumn: '1 / -1',
-                      px: 2,
-                      py: 0.75,
-                      bgcolor: '#F8FAFC',
-                      borderTop: `1px solid ${BORDER}`,
                       borderBottom: `1px solid ${BORDER}`,
+                      borderLeft: `1px solid ${BORDER}`,
+                      bgcolor: '#FAFAFA',
                     }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        color: '#64748B',
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {cls.className}
-                    </Typography>
-                  </Box>
-
-                  {/* One grid row per section */}
-                  {cls.sections.map((section) => (
-                    <React.Fragment key={section.classSectionId}>
-                      <SectionRowHeader section={section} className={cls.className} />
-
-                      {slots.length > 0 ? (
-                        slots.map((slot) => {
-                          const scs = bySection.get(section.classSectionId)?.get(slot.slotId);
-                          return (
-                            <Box
-                              key={slot.slotId}
-                              sx={{
-                                p: 0.875,
-                                borderBottom: `1px solid ${BORDER}`,
-                                borderLeft: `1px solid ${BORDER}`,
-                              }}
-                            >
-                              {scs ? (
-                                <AssignedCell
-                                  scs={scs}
-                                  canModify={canModify}
-                                  onDelete={() => handleOpenDelete(slot, scs)}
-                                />
-                              ) : (
-                                <EmptyCell
-                                  canModify={canModify}
-                                  onClick={() =>
-                                    setAddModal({
-                                      slot,
-                                      section: {
-                                        classSectionId:       section.classSectionId,
-                                        sectionName:          section.sectionName,
-                                        sectionCode:          section.sectionCode,
-                                        activeChildrenCount:  section.activeChildrenCount,
-                                      },
-                                    })
-                                  }
-                                />
-                              )}
-                            </Box>
-                          );
-                        })
-                      ) : (
-                        /* No slots yet — single empty cell spanning slot area */
-                        <Box
-                          sx={{
-                            borderBottom: `1px solid ${BORDER}`,
-                            borderLeft: `1px solid ${BORDER}`,
-                            bgcolor: '#FAFAFA',
-                          }}
-                        />
-                      )}
-                    </React.Fragment>
-                  ))}
-                </React.Fragment>
-              ),
-            )
+                  />
+                )}
+              </React.Fragment>
+            ))
           )}
         </Box>
       </Box>
 
-      {/* Add slot-class modal — pre-fills section from clicked cell */}
+      {/* Add slot-class modal — pre-fills bucket from clicked cell */}
       {addModal && (
         <AddSlotClassModal
           open
           schoolId={schoolId}
           slot={addModal.slot}
           existingSlotClasses={bySlot.get(addModal.slot.slotId) ?? []}
-          prefillSection={addModal.section}
+          prefillBucket={addModal.bucket}
           onClose={() => setAddModal(null)}
           onAdded={(scs) => {
             handleAdded(addModal.slot, scs);

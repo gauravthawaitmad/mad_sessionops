@@ -1,10 +1,25 @@
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 
 from sessionops.exceptions import ConflictError, NotFound
 from sessionops.models import ClassSection, ChildClassSection, SchoolClass, SlotClassSection
 from sessionops.models.class_section import SECTION_CODES
+from sessionops.services.sections.slug import normalize_section_slug, next_default_display_name
+
+
+def _with_active_children_count(class_section_id: int) -> ClassSection:
+    """Re-fetch a ClassSection with active_children_count annotated, for schema resolution."""
+    return (
+        ClassSection.objects
+        .annotate(
+            active_children_count=Count(
+                "childclasssection",
+                filter=Q(childclasssection__is_active=True, childclasssection__removed=False),
+            )
+        )
+        .get(class_section_id=class_section_id)
+    )
 
 
 def list_sections_for_class(school_class_id: int) -> QuerySet:
@@ -54,17 +69,7 @@ def add_section_to_class(
     except IntegrityError:
         raise ConflictError(f"Section {section_code} already exists for this class.")
 
-    # Re-fetch with annotation so the schema resolver finds active_children_count.
-    return (
-        ClassSection.objects
-        .annotate(
-            active_children_count=Count(
-                "childclasssection",
-                filter=Q(childclasssection__is_active=True, childclasssection__removed=False),
-            )
-        )
-        .get(class_section_id=section.class_section_id)
-    )
+    return _with_active_children_count(section.class_section_id)
 
 
 def count_active_children_in_section(class_section_id: int) -> int:
@@ -104,3 +109,75 @@ def soft_delete_section(class_section_id: int, school_id: int, user) -> None:
     cs.deleted_at = now
     cs.updated_by = user
     cs.save(update_fields=["is_active", "removed", "deleted_at", "updated_by", "updated_at"])
+
+
+# ── Buckets (F-M6-2) ─────────────────────────────────────────────────────────────
+#
+# A bucket is a ClassSection row with school_class_id=None, section_code=None —
+# class-agnostic per M6 decision #1. section_name holds a normalized slug;
+# section_display_name holds the CO's original free-text input.
+
+def create_bucket(school_id: int, display_name: str | None, user) -> ClassSection:
+    name = display_name or next_default_display_name(school_id)
+    slug = normalize_section_slug(name)
+
+    if ClassSection.objects.filter(
+        school_id=school_id, section_name=slug, removed=False
+    ).exists():
+        raise ConflictError(f'A bucket named "{name}" already exists in this school.')
+
+    try:
+        bucket = ClassSection.objects.create(
+            school_id=school_id,
+            section_name=slug,
+            section_display_name=name,
+            school_class_id=None,
+            section_code=None,
+            created_by=user,
+        )
+    except IntegrityError:
+        raise ConflictError(f'A bucket named "{name}" already exists in this school.')
+
+    return _with_active_children_count(bucket.class_section_id)
+
+
+@transaction.atomic
+def edit_bucket(class_section_id: int, school_id: int, display_name: str | None, user) -> ClassSection:
+    try:
+        bucket = ClassSection.objects.select_for_update().get(
+            class_section_id=class_section_id, school_id=school_id,
+            is_active=True, removed=False,
+        )
+    except ClassSection.DoesNotExist:
+        raise NotFound(f"Bucket {class_section_id} not found.")
+
+    if display_name and display_name != bucket.section_display_name:
+        slug = normalize_section_slug(display_name)
+        if ClassSection.objects.filter(
+            school_id=school_id, section_name=slug, removed=False
+        ).exclude(class_section_id=class_section_id).exists():
+            raise ConflictError(f'A bucket named "{display_name}" already exists in this school.')
+
+        try:
+            bucket.section_name = slug
+            bucket.section_display_name = display_name
+            bucket.updated_by = user
+            bucket.save(update_fields=["section_name", "section_display_name", "updated_by", "updated_at"])
+        except IntegrityError:
+            raise ConflictError(f'A bucket named "{display_name}" already exists in this school.')
+
+    return _with_active_children_count(bucket.class_section_id)
+
+
+def list_buckets_for_school(school_id: int) -> QuerySet:
+    return (
+        ClassSection.objects
+        .filter(school_id=school_id, is_active=True, removed=False)
+        .annotate(
+            active_children_count=Count(
+                "childclasssection",
+                filter=Q(childclasssection__is_active=True, childclasssection__removed=False),
+            )
+        )
+        .order_by("section_display_name", "section_name")
+    )

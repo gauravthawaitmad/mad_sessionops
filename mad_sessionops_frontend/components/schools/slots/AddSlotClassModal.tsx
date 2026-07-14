@@ -11,26 +11,16 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import LinearProgress from '@mui/material/LinearProgress';
-import Skeleton from '@mui/material/Skeleton';
 import Tooltip from '@mui/material/Tooltip';
-import { X, Check } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { X, Check, AlertTriangle } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  fetchSchoolClasses,
-  fetchSections,
-  type SchoolClassItem,
-  type SectionItem,
-} from '@/lib/api/services/structure.service';
+import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
 import { fetchVolunteers, type VolunteerCard } from '@/lib/api/services/volunteers.service';
-import {
-  fetchSubjects,
-  createSlotClass,
-  type SlotClassItem,
-  type SubjectItem,
-} from '@/lib/api/services/slot_classes.service';
+import { createSlotClass, type SlotClassItem } from '@/lib/api/services/slot_classes.service';
 import type { SlotItem } from '@/lib/api/services/slots.service';
+import { VolunteerMultiSelect } from './VolunteerMultiSelect';
 import toast from 'react-hot-toast';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -50,47 +40,33 @@ function initials(name: string): string {
   return name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
 }
 
-function badgeLetter(sectionName: string): string {
-  const parts = sectionName.trim().split(/\s+/);
-  return (parts[parts.length - 1].charAt(0) ?? 'S').toUpperCase();
-}
-
 // ── Schema ────────────────────────────────────────────────────────────────────
 
-const schema = z
-  .object({
-    class_section_id: z.number().min(1, 'Select a section'),
-    subject_id:       z.number().min(1, 'Select a subject'),
-    volunteer_1_id:   z.number().min(1, 'Select a volunteer'),
-    volunteer_2_id:   z.number(),
-  })
-  .refine(
-    (d) => d.volunteer_2_id === 0 || d.volunteer_1_id !== d.volunteer_2_id,
-    { message: 'Must differ from Volunteer 1', path: ['volunteer_2_id'] }
-  );
+const schema = z.object({
+  class_section_id: z.number().min(1, 'Select a bucket'),
+  volunteer_ids: z
+    .array(z.number().positive())
+    .min(1, 'At least 1 volunteer required')
+    .max(5, 'Maximum 5 volunteers'),
+}).refine((d) => new Set(d.volunteer_ids).size === d.volunteer_ids.length, {
+  message: 'Volunteers must be unique',
+  path: ['volunteer_ids'],
+});
 
-type FormValues = {
-  class_section_id: number;
-  subject_id: number;
-  volunteer_1_id: number;
-  volunteer_2_id: number;
-};
+type FormValues = z.infer<typeof schema>;
 
 // ── CompositionPreview ────────────────────────────────────────────────────────
 
 function CompositionPreview({
-  section,
-  subject,
-  vol1,
-  vol2,
+  bucket,
+  volunteers,
 }: {
-  section?: SectionItem;
-  subject?: SubjectItem;
-  vol1?: VolunteerCard;
-  vol2?: VolunteerCard;
+  bucket?: BucketItem;
+  volunteers: VolunteerCard[];
 }) {
-  const isComplete = !!section && !!subject && !!vol1;
-  const isEmpty    = !section && !subject && !vol1 && !vol2;
+  const bucketName = bucket ? (bucket.sectionDisplayName ?? bucket.sectionName) : undefined;
+  const isComplete = !!bucket && volunteers.length > 0;
+  const isEmpty    = !bucket && volunteers.length === 0;
 
   return (
     <Box
@@ -108,73 +84,52 @@ function CompositionPreview({
     >
       {isEmpty ? (
         <Typography sx={{ fontSize: '12px', color: '#CBD5E1', fontStyle: 'italic' }}>
-          Select a section, subject, and volunteer below — your assignment preview will appear here.
+          Select a bucket and volunteers below — your assignment preview will appear here.
         </Typography>
       ) : (
         <>
-          {/* Section badge */}
+          {/* Bucket badge */}
           <Box
             sx={{
               width: 32,
               height: 32,
               borderRadius: '8px',
-              bgcolor: section ? '#EFF6FF' : '#F1F5F9',
-              border: section ? 'none' : `2px dashed ${BORDER}`,
+              bgcolor: bucketName ? '#EFF6FF' : '#F1F5F9',
+              border: bucketName ? 'none' : `2px dashed ${BORDER}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
             }}
           >
-            {section && (
+            {bucketName && (
               <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#2563EB' }}>
-                {badgeLetter(section.sectionName)}
+                {bucketName.charAt(0).toUpperCase()}
               </Typography>
             )}
           </Box>
 
-          {/* Section + subject */}
+          {/* Bucket name */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              <Typography sx={{ fontSize: '13px', fontWeight: 700, color: section ? '#1E293B' : '#CBD5E1' }}>
-                {section ? section.sectionName : 'Section —'}
-              </Typography>
-              {subject && (
-                <Box sx={{ px: 1.25, py: 0.25, borderRadius: '20px', bgcolor: '#F0FDF4', border: '1px solid #BBF7D0' }}>
-                  <Typography sx={{ fontSize: '11px', fontWeight: 600, color: '#16A34A' }}>
-                    {subject.subjectName}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
+            <Typography sx={{ fontSize: '13px', fontWeight: 700, color: bucketName ? '#1E293B' : '#CBD5E1' }}>
+              {bucketName ?? 'Bucket —'}
+            </Typography>
           </Box>
 
           {/* Volunteer chips */}
-          <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            {vol1 && (
-              <Tooltip title={vol1.userDisplayName} placement="top" arrow>
+          <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '55%' }}>
+            {volunteers.map((v) => (
+              <Tooltip key={v.userId} title={v.userDisplayName} placement="top" arrow>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 0.875, py: 0.375, borderRadius: '20px', bgcolor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
                   <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
-                    {initials(vol1.userDisplayName)}
+                    {initials(v.userDisplayName)}
                   </Box>
                   <Typography sx={{ fontSize: '11px', fontWeight: 500, color: '#0369A1', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {vol1.userDisplayName}
+                    {v.userDisplayName}
                   </Typography>
                 </Box>
               </Tooltip>
-            )}
-            {vol2 && (
-              <Tooltip title={vol2.userDisplayName} placement="top" arrow>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 0.875, py: 0.375, borderRadius: '20px', bgcolor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
-                  <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: '#0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
-                    {initials(vol2.userDisplayName)}
-                  </Box>
-                  <Typography sx={{ fontSize: '11px', fontWeight: 500, color: '#0369A1', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {vol2.userDisplayName}
-                  </Typography>
-                </Box>
-              </Tooltip>
-            )}
+            ))}
           </Box>
 
           {/* Done checkmark */}
@@ -189,118 +144,64 @@ function CompositionPreview({
   );
 }
 
-// ── ClassPicker ───────────────────────────────────────────────────────────────
+// ── BucketPicker ──────────────────────────────────────────────────────────────
+// Class-agnostic: pulls from fetchBuckets(schoolId), no class scoping/cascade.
 
-function ClassPicker({
-  classes,
-  value,
-  onChange,
-  error,
-}: {
-  classes: SchoolClassItem[];
-  value: number | null;
-  onChange: (id: number) => void;
-  error?: boolean;
-}) {
-  if (classes.length === 0) {
-    return (
-      <Box sx={{ p: 1.5, borderRadius: '8px', border: `1px dashed ${BORDER}`, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: '12px', color: MUTED }}>No classes added to this school yet.</Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-        {classes.map((c) => {
-          const selected = value === c.schoolClassId;
-          return (
-            <Box
-              key={c.schoolClassId}
-              onClick={() => onChange(c.schoolClassId)}
-              sx={{
-                px: 1.75,
-                py: 1,
-                borderRadius: '8px',
-                border: `1.5px solid ${selected ? '#2563EB' : BORDER}`,
-                bgcolor: selected ? '#EFF6FF' : '#FAFAFA',
-                cursor: 'pointer',
-                userSelect: 'none',
-                transition: 'all 0.12s ease',
-                '&:hover': { borderColor: selected ? '#2563EB' : '#93C5FD', bgcolor: selected ? '#EFF6FF' : '#F0F9FF' },
-              }}
-            >
-              <Typography sx={{ fontSize: '13px', fontWeight: selected ? 700 : 500, color: selected ? '#1D4ED8' : '#374151', lineHeight: 1.3 }}>
-                {c.className}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
-      {error && (
-        <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>Select a class first</Typography>
-      )}
-    </Box>
-  );
-}
-
-// ── SectionPicker ─────────────────────────────────────────────────────────────
-
-function SectionPicker({
-  sections,
+function BucketPicker({
+  buckets,
   loading,
-  usedSectionNames,
+  usedBucketIds,
   value,
   onChange,
   error,
 }: {
-  sections: SectionItem[];
+  buckets: BucketItem[];
   loading: boolean;
-  usedSectionNames: Set<string>;
+  usedBucketIds: Set<number>;
   value: number;
   onChange: (id: number) => void;
   error?: boolean;
 }) {
   if (loading) {
     return (
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', gap: 0.75 }}>
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} variant="rounded" height={70} sx={{ borderRadius: '8px' }} />
-        ))}
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+        <CircularProgress size={20} />
       </Box>
     );
   }
 
-  if (sections.length === 0) {
+  if (buckets.length === 0) {
     return (
       <Box sx={{ p: 1.5, borderRadius: '8px', border: `1px dashed ${BORDER}`, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: '12px', color: MUTED }}>No sections in this class.</Typography>
+        <Typography sx={{ fontSize: '12px', color: MUTED }}>No buckets added to this school yet.</Typography>
       </Box>
     );
   }
 
   return (
     <Box>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(76px, 1fr))', gap: 0.75 }}>
-        {sections.map((s) => {
-          const inSlot   = usedSectionNames.has(s.sectionName);
-          const selected = value === s.classSectionId;
-          const count    = s.activeChildrenCount;
-          const full     = count >= MAX_CAP;
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 0.75 }}>
+        {buckets.map((b) => {
+          const inSlot   = usedBucketIds.has(b.classSectionId);
+          const selected = value === b.classSectionId;
+          const count    = b.activeChildrenCount;
           const pct      = Math.min((count / MAX_CAP) * 100, 100);
           const color    = capacityColor(count);
-          const disabled = inSlot || full;
+          // Only "already in this slot" disables a bucket here — a bucket at
+          // 5/5 children is exactly the one you'd most want to schedule
+          // volunteers for, so child-capacity must never disable scheduling.
+          const disabled = inSlot;
+          const name     = b.sectionDisplayName ?? b.sectionName;
 
           return (
             <Box
-              key={s.classSectionId}
-              onClick={() => { if (!disabled) onChange(s.classSectionId); }}
+              key={b.classSectionId}
+              onClick={() => { if (!disabled) onChange(b.classSectionId); }}
               sx={{
                 p: 1.1,
                 borderRadius: '8px',
-                border: `1.5px solid ${selected ? '#2563EB' : inSlot ? '#FCA5A5' : full ? '#FECACA' : BORDER}`,
-                bgcolor: selected ? '#EFF6FF' : inSlot || full ? '#FFF5F5' : '#FAFAFA',
+                border: `1.5px solid ${selected ? '#2563EB' : inSlot ? '#FCA5A5' : BORDER}`,
+                bgcolor: selected ? '#EFF6FF' : inSlot ? '#FFF5F5' : '#FAFAFA',
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 userSelect: 'none',
                 opacity: disabled ? 0.55 : 1,
@@ -308,13 +209,9 @@ function SectionPicker({
                 ...(!disabled && !selected && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
               }}
             >
-              {/* Letter */}
-              <Box sx={{ width: 26, height: 26, borderRadius: '6px', bgcolor: selected ? '#2563EB' : `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.625 }}>
-                <Typography sx={{ fontSize: '11px', fontWeight: 700, color: selected ? '#fff' : color }}>
-                  {s.sectionCode}
-                </Typography>
-              </Box>
-              {/* Capacity bar */}
+              <Typography sx={{ fontSize: '11px', fontWeight: selected ? 700 : 600, color: selected ? '#1D4ED8' : '#374151', mb: 0.625, lineHeight: 1.25, minHeight: '2.5em' }}>
+                {name}
+              </Typography>
               <LinearProgress
                 variant="determinate"
                 value={pct}
@@ -323,8 +220,8 @@ function SectionPicker({
               {inSlot ? (
                 <Typography sx={{ fontSize: '9px', fontWeight: 700, color: '#EF4444', lineHeight: 1.4 }}>In slot</Typography>
               ) : (
-                <Typography sx={{ fontSize: '9px', fontWeight: 700, color: selected ? '#1D4ED8' : full ? '#EF4444' : '#374151', lineHeight: 1.4 }}>
-                  {full ? 'Full' : `${count}/${MAX_CAP}`}
+                <Typography sx={{ fontSize: '9px', fontWeight: 700, color: selected ? '#1D4ED8' : '#374151', lineHeight: 1.4 }}>
+                  {count}/{MAX_CAP} children
                 </Typography>
               )}
             </Box>
@@ -332,195 +229,7 @@ function SectionPicker({
         })}
       </Box>
       {error && (
-        <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>Select a section</Typography>
-      )}
-    </Box>
-  );
-}
-
-// ── SubjectPicker ─────────────────────────────────────────────────────────────
-
-function SubjectPicker({
-  subjects,
-  value,
-  onChange,
-  error,
-}: {
-  subjects: SubjectItem[];
-  value: number;
-  onChange: (id: number) => void;
-  error?: boolean;
-}) {
-  if (subjects.length === 0) {
-    return (
-      <Box sx={{ p: 1.5, borderRadius: '8px', border: `1px dashed ${BORDER}`, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: '12px', color: MUTED }}>No subjects found. Ask an admin.</Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-        {subjects.map((s) => {
-          const selected = value === s.subjectId;
-          return (
-            <Box
-              key={s.subjectId}
-              onClick={() => onChange(s.subjectId)}
-              sx={{
-                px: 2,
-                py: 0.875,
-                borderRadius: '8px',
-                border: `1.5px solid ${selected ? '#2563EB' : BORDER}`,
-                bgcolor: selected ? '#EFF6FF' : '#FAFAFA',
-                cursor: 'pointer',
-                userSelect: 'none',
-                transition: 'all 0.12s ease',
-                '&:hover': { borderColor: selected ? '#2563EB' : '#93C5FD', bgcolor: selected ? '#EFF6FF' : '#F0F9FF' },
-              }}
-            >
-              <Typography sx={{ fontSize: '12px', fontWeight: selected ? 700 : 500, color: selected ? '#1D4ED8' : '#374151' }}>
-                {s.subjectName}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
-      {error && (
-        <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>Select a subject</Typography>
-      )}
-    </Box>
-  );
-}
-
-// ── CompactVolCard ────────────────────────────────────────────────────────────
-
-function CompactVolCard({
-  volunteer,
-  selected,
-  disabled,
-  disabledReason,
-  onClick,
-}: {
-  volunteer: VolunteerCard;
-  selected: boolean;
-  disabled: boolean;
-  disabledReason?: string;
-  onClick: () => void;
-}) {
-  const ini = initials(volunteer.userDisplayName);
-
-  return (
-    <Box
-      onClick={disabled ? undefined : onClick}
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 0.875,
-        px: 1,
-        py: 0.875,
-        borderRadius: '8px',
-        border: `1.5px solid ${selected ? '#2563EB' : BORDER}`,
-        bgcolor: selected ? '#EFF6FF' : '#FAFAFA',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        userSelect: 'none',
-        opacity: disabled ? 0.45 : 1,
-        transition: 'all 0.12s ease',
-        ...(!disabled && !selected && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
-      }}
-    >
-      <Box
-        sx={{
-          width: 28,
-          height: 28,
-          borderRadius: '50%',
-          bgcolor: selected ? '#2563EB' : '#E0F2FE',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          fontSize: '10px',
-          fontWeight: 700,
-          color: selected ? '#fff' : '#0284C7',
-        }}
-      >
-        {ini}
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          sx={{
-            fontSize: '12px',
-            fontWeight: selected ? 600 : 400,
-            color: selected ? '#1D4ED8' : '#1E293B',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            lineHeight: 1.3,
-          }}
-        >
-          {volunteer.userDisplayName}
-        </Typography>
-        {disabledReason && (
-          <Typography sx={{ fontSize: '10px', color: MUTED, lineHeight: 1.3 }}>
-            {disabledReason}
-          </Typography>
-        )}
-      </Box>
-      {selected && (
-        <Box sx={{ width: 18, height: 18, borderRadius: '50%', bgcolor: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Check size={10} color="#fff" strokeWidth={3} />
-        </Box>
-      )}
-    </Box>
-  );
-}
-
-// ── NoneCard ──────────────────────────────────────────────────────────────────
-
-function NoneCard({ selected, onClick }: { selected: boolean; onClick: () => void }) {
-  return (
-    <Box
-      onClick={onClick}
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 0.875,
-        px: 1,
-        py: 0.875,
-        borderRadius: '8px',
-        border: `1.5px solid ${selected ? '#2563EB' : BORDER}`,
-        bgcolor: selected ? '#EFF6FF' : '#FAFAFA',
-        cursor: 'pointer',
-        userSelect: 'none',
-        transition: 'all 0.12s ease',
-        ...(!selected && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
-      }}
-    >
-      <Box
-        sx={{
-          width: 28,
-          height: 28,
-          borderRadius: '50%',
-          bgcolor: selected ? '#2563EB' : '#F1F5F9',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          fontSize: '14px',
-          fontWeight: 700,
-          color: selected ? '#fff' : MUTED,
-        }}
-      >
-        —
-      </Box>
-      <Typography sx={{ fontSize: '12px', fontWeight: selected ? 600 : 400, color: selected ? '#1D4ED8' : '#64748B', flex: 1 }}>
-        None
-      </Typography>
-      {selected && (
-        <Box sx={{ width: 18, height: 18, borderRadius: '50%', bgcolor: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Check size={10} color="#fff" strokeWidth={3} />
-        </Box>
+        <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>Select a bucket</Typography>
       )}
     </Box>
   );
@@ -538,22 +247,12 @@ function ColumnLabel({ children, required, optional }: { children: React.ReactNo
   );
 }
 
-function SubLabel({ children, required, optional }: { children: React.ReactNode; required?: boolean; optional?: boolean }) {
-  return (
-    <Typography sx={{ fontSize: '11px', fontWeight: 600, color: LABEL, mb: 0.875 }}>
-      {children}
-      {required && <Typography component="span" sx={{ color: '#EF4444', ml: 0.25, fontSize: '11px' }}>*</Typography>}
-      {optional && <Typography component="span" sx={{ fontSize: '10px', color: MUTED, fontWeight: 400, ml: 0.5 }}>(optional)</Typography>}
-    </Typography>
-  );
-}
+// ── PrefillBucket ─────────────────────────────────────────────────────────────
 
-// ── PrefillSection ────────────────────────────────────────────────────────────
-
-export interface PrefillSection {
+export interface PrefillBucket {
   classSectionId: number;
+  sectionDisplayName: string | null;
   sectionName: string;
-  sectionCode: string;
   activeChildrenCount: number;
 }
 
@@ -564,7 +263,7 @@ interface AddSlotClassModalProps {
   schoolId: number;
   slot: SlotItem;
   existingSlotClasses: SlotClassItem[];
-  prefillSection?: PrefillSection;
+  prefillBucket?: PrefillBucket;
   onClose: () => void;
   onAdded: (scs: SlotClassItem) => void;
 }
@@ -576,94 +275,73 @@ export function AddSlotClassModal({
   schoolId,
   slot,
   existingSlotClasses,
-  prefillSection,
+  prefillBucket,
   onClose,
   onAdded,
 }: AddSlotClassModalProps) {
-  const [classes,         setClasses]         = useState<SchoolClassItem[]>([]);
-  const [subjects,        setSubjects]        = useState<SubjectItem[]>([]);
-  const [volunteers,      setVolunteers]      = useState<VolunteerCard[]>([]);
-  const [sections,        setSections]        = useState<SectionItem[]>([]);
-  const [dataLoading,     setDataLoading]     = useState(false);
-  const [sectionsLoading, setSectionsLoading] = useState(false);
-  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+  const [buckets, setBuckets]         = useState<BucketItem[]>([]);
+  const [volunteers, setVolunteers]   = useState<VolunteerCard[]>([]);
+  const [dataLoading, setDataLoading] = useState(false);
 
   const {
     handleSubmit,
     reset,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { class_section_id: 0, subject_id: 0, volunteer_1_id: 0, volunteer_2_id: 0 },
+    defaultValues: { class_section_id: 0, volunteer_ids: [] },
   });
 
-  const sectionId = watch('class_section_id');
-  const subjectId = watch('subject_id');
-  const vol1Id    = watch('volunteer_1_id');
-  const vol2Id    = watch('volunteer_2_id');
+  const sectionId    = watch('class_section_id');
+  const volunteerIds = watch('volunteer_ids');
 
-  // Assign button is only ready when all mandatory fields are filled:
-  // section + subject + vol1 (vol2 is optional)
-  const canSubmit = sectionId > 0 && subjectId > 0 && vol1Id > 0;
+  const selectedBucket: BucketItem | undefined = prefillBucket
+    ? { classSectionId: prefillBucket.classSectionId, sectionDisplayName: prefillBucket.sectionDisplayName, sectionName: prefillBucket.sectionName, activeChildrenCount: prefillBucket.activeChildrenCount }
+    : buckets.find((b) => b.classSectionId === sectionId);
+  const selectedVolunteers = volunteers.filter((v) => volunteerIds.includes(v.userId));
 
-  // Derive objects for the preview
-  const selectedSection: SectionItem | undefined = prefillSection
-    ? { classSectionId: prefillSection.classSectionId, sectionName: prefillSection.sectionName, sectionCode: prefillSection.sectionCode, activeChildrenCount: prefillSection.activeChildrenCount }
-    : sections.find((s) => s.classSectionId === sectionId);
-  const selectedSubject = subjects.find((s) => s.subjectId === subjectId);
-  const selectedVol1    = volunteers.find((v) => v.userId === vol1Id);
-  const selectedVol2    = vol2Id ? volunteers.find((v) => v.userId === vol2Id) : undefined;
-
-  function handleClassChange(classId: number) {
-    setSelectedClassId(classId);
-    setSections([]);
-    setValue('class_section_id', 0, { shouldValidate: false });
-    setSectionsLoading(true);
-    fetchSections(schoolId, classId)
-      .then(setSections)
-      .catch(() => toast.error('Failed to load sections.'))
-      .finally(() => setSectionsLoading(false));
-  }
+  const overCapacity = !!selectedBucket && volunteerIds.length > selectedBucket.activeChildrenCount;
+  const canSubmit = sectionId > 0 && volunteerIds.length > 0 && !overCapacity;
 
   useEffect(() => {
     if (!open) return;
     reset({
-      class_section_id: prefillSection?.classSectionId ?? 0,
-      subject_id: 0,
-      volunteer_1_id: 0,
-      volunteer_2_id: 0,
+      class_section_id: prefillBucket?.classSectionId ?? 0,
+      volunteer_ids: [],
     });
-    setSelectedClassId(null);
-    setSections([]);
     setDataLoading(true);
     Promise.all([
-      prefillSection ? Promise.resolve([]) : fetchSchoolClasses(schoolId),
-      fetchSubjects(),
+      fetchBuckets(schoolId),
       fetchVolunteers(schoolId),
     ])
-      .then(([cls, subs, volRes]) => {
-        setClasses(cls as SchoolClassItem[]);
-        setSubjects(subs);
+      .then(([bks, volRes]) => {
+        setBuckets(bks);
         setVolunteers(volRes.volunteers);
       })
       .catch(() => toast.error('Failed to load form data.'))
       .finally(() => setDataLoading(false));
-  }, [open, schoolId, reset, prefillSection]);
+  }, [open, schoolId, reset, prefillBucket]);
 
-  const usedSectionNames = new Set(existingSlotClasses.map((s) => s.sectionName));
-  const usedVolIds       = new Set(
+  const usedBucketIds = new Set(existingSlotClasses.map((s) => s.classSectionId));
+  const usedVolIds    = new Set(
     existingSlotClasses.flatMap((s) => s.volunteers.map((v) => v.userId))
   );
+
+  // R2 hard cap (5) is enforced by the picker itself via maxSelectable=MAX_CAP.
+  // R-bucket (volunteers <= bucket's active children) is enforced only via the
+  // live count + banner below and disabling submit — server-authoritative,
+  // this is a UX hint, not a re-implementation (consistent with the project's
+  // display-only business-rule pattern).
+  const maxAllowed = selectedBucket ? Math.min(selectedBucket.activeChildrenCount, MAX_CAP) : MAX_CAP;
 
   async function onSubmit(values: FormValues) {
     try {
       const result = await createSlotClass(schoolId, slot.slotId, {
         class_section_id: values.class_section_id,
-        subject_id:       values.subject_id,
-        volunteer_1_id:   values.volunteer_1_id,
-        volunteer_2_id:   values.volunteer_2_id || null,
+        volunteer_ids: values.volunteer_ids,
       });
       onAdded(result);
       onClose();
@@ -723,10 +401,8 @@ export function AddSlotClassModal({
           {/* Live composition preview */}
           <Box sx={{ px: 3, pt: 2, pb: 1.5, borderBottom: `1px solid ${BORDER}` }}>
             <CompositionPreview
-              section={selectedSection}
-              subject={selectedSubject}
-              vol1={selectedVol1}
-              vol2={selectedVol2}
+              bucket={selectedBucket}
+              volunteers={selectedVolunteers}
             />
           </Box>
 
@@ -737,7 +413,7 @@ export function AddSlotClassModal({
           ) : (
             <Box sx={{ display: 'flex', minHeight: 300 }}>
 
-              {/* ── Left column: Class + Section ─────────────────────────────── */}
+              {/* ── Left column: Bucket ──────────────────────────────────────── */}
               <Box
                 sx={{
                   width: '38%',
@@ -750,10 +426,10 @@ export function AddSlotClassModal({
                   gap: 2.5,
                 }}
               >
-                {prefillSection ? (
-                  /* Pre-selected from table cell — read-only */
+                {prefillBucket ? (
+                  /* Pre-selected from grid cell — read-only */
                   <Box>
-                    <ColumnLabel>Section</ColumnLabel>
+                    <ColumnLabel>Bucket</ColumnLabel>
                     <Box
                       sx={{
                         p: 1.5,
@@ -778,15 +454,15 @@ export function AddSlotClassModal({
                         }}
                       >
                         <Typography sx={{ fontSize: '13px', fontWeight: 800, color: '#fff' }}>
-                          {prefillSection.sectionCode}
+                          {(prefillBucket.sectionDisplayName ?? prefillBucket.sectionName).charAt(0).toUpperCase()}
                         </Typography>
                       </Box>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#1E40AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {prefillSection.sectionName}
+                          {prefillBucket.sectionDisplayName ?? prefillBucket.sectionName}
                         </Typography>
                         <Typography sx={{ fontSize: '11px', color: '#3B82F6' }}>
-                          {prefillSection.activeChildrenCount}/{MAX_CAP} children
+                          {prefillBucket.activeChildrenCount}/{MAX_CAP} children
                         </Typography>
                       </Box>
                       <Check size={14} color="#2563EB" strokeWidth={2.5} />
@@ -796,53 +472,17 @@ export function AddSlotClassModal({
                     </Typography>
                   </Box>
                 ) : (
-                  /* Normal class + section picker */
-                  <>
-                    <Box>
-                      <ColumnLabel required>Class</ColumnLabel>
-                      <ClassPicker
-                        classes={classes}
-                        value={selectedClassId}
-                        onChange={handleClassChange}
-                        error={Boolean(errors.class_section_id) && !selectedClassId}
-                      />
-                    </Box>
-
-                    {selectedClassId !== null && (
-                      <Box>
-                        <ColumnLabel required>Section</ColumnLabel>
-                        <SectionPicker
-                          sections={sections}
-                          loading={sectionsLoading}
-                          usedSectionNames={usedSectionNames}
-                          value={sectionId}
-                          onChange={(id) => setValue('class_section_id', id, { shouldValidate: true })}
-                          error={Boolean(errors.class_section_id) && !sectionsLoading}
-                        />
-                      </Box>
-                    )}
-
-                    {!selectedClassId && (
-                      <Box
-                        sx={{
-                          flex: 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 0.5,
-                          opacity: 0.4,
-                        }}
-                      >
-                        <Box sx={{ width: 32, height: 32, borderRadius: '8px', border: `2px dashed ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Typography sx={{ fontSize: '16px', color: MUTED }}>?</Typography>
-                        </Box>
-                        <Typography sx={{ fontSize: '11px', color: MUTED, textAlign: 'center' }}>
-                          Pick a class to see sections
-                        </Typography>
-                      </Box>
-                    )}
-                  </>
+                  <Box>
+                    <ColumnLabel required>Bucket</ColumnLabel>
+                    <BucketPicker
+                      buckets={buckets}
+                      loading={false}
+                      usedBucketIds={usedBucketIds}
+                      value={sectionId}
+                      onChange={(id) => setValue('class_section_id', id, { shouldValidate: true })}
+                      error={Boolean(errors.class_section_id)}
+                    />
+                  </Box>
                 )}
               </Box>
 
@@ -857,94 +497,64 @@ export function AddSlotClassModal({
                   overflowY: 'auto',
                 }}
               >
-                {/* Subject */}
+                {/* Subject — static, no longer user-editable (M6 decision #3) */}
                 <Box>
-                  <ColumnLabel required>Subject</ColumnLabel>
-                  <SubjectPicker
-                    subjects={subjects}
-                    value={subjectId}
-                    onChange={(id) => setValue('subject_id', id, { shouldValidate: true })}
-                    error={Boolean(errors.subject_id)}
+                  <ColumnLabel>Subject</ColumnLabel>
+                  <Typography sx={{ fontSize: '13px', fontWeight: 600, color: LABEL }}>
+                    Subject: Foundation
+                  </Typography>
+                </Box>
+
+                {/* Volunteers */}
+                <Box>
+                  <ColumnLabel required>Volunteers</ColumnLabel>
+                  <Controller
+                    name="volunteer_ids"
+                    control={control}
+                    render={({ field }) => (
+                      <VolunteerMultiSelect
+                        schoolId={schoolId}
+                        value={field.value}
+                        onChange={field.onChange}
+                        maxSelectable={MAX_CAP}
+                        busyVolunteerIds={usedVolIds}
+                      />
+                    )}
                   />
-                  {errors.subject_id && (
+                  {errors.volunteer_ids && (
                     <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>
-                      {errors.subject_id.message}
+                      {errors.volunteer_ids.message}
                     </Typography>
                   )}
-                </Box>
 
-                {/* Volunteers — side-by-side columns */}
-                <Box>
-                  <ColumnLabel>Volunteers</ColumnLabel>
-                  {volunteers.length === 0 ? (
-                    <Box sx={{ p: 2, borderRadius: '8px', border: `1px dashed ${BORDER}`, textAlign: 'center' }}>
-                      <Typography sx={{ fontSize: '12px', color: MUTED }}>No volunteers found for this school.</Typography>
-                    </Box>
-                  ) : (
-                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                      {/* Vol 1 */}
-                      <Box>
-                        <SubLabel required>Vol 1</SubLabel>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.625, maxHeight: 240, overflowY: 'auto', pr: 0.5 }}>
-                          {volunteers.map((v) => {
-                            const isVol2   = v.userId === vol2Id;
-                            const busy     = usedVolIds.has(v.userId);
-                            const disabled = busy || isVol2;
-                            const reason   = isVol2 ? 'Selected as Vol 2' : busy ? 'Already in slot' : undefined;
-                            return (
-                              <CompactVolCard
-                                key={v.userId}
-                                volunteer={v}
-                                selected={vol1Id === v.userId}
-                                disabled={disabled}
-                                disabledReason={reason}
-                                onClick={() => setValue('volunteer_1_id', v.userId, { shouldValidate: true })}
-                              />
-                            );
-                          })}
-                        </Box>
-                        {errors.volunteer_1_id && (
-                          <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>
-                            {errors.volunteer_1_id.message}
-                          </Typography>
-                        )}
-                      </Box>
+                  {/* Live count */}
+                  {selectedBucket && (
+                    <Typography sx={{ fontSize: '11px', color: overCapacity ? '#EF4444' : MUTED, mt: 1 }}>
+                      {volunteerIds.length} of {MAX_CAP} selected. Bucket has {selectedBucket.activeChildrenCount} children — max {maxAllowed} volunteer{maxAllowed !== 1 ? 's' : ''}.
+                    </Typography>
+                  )}
 
-                      {/* Vol 2 */}
-                      <Box>
-                        <SubLabel optional>Vol 2</SubLabel>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.625, maxHeight: 240, overflowY: 'auto', pr: 0.5 }}>
-                          <NoneCard
-                            selected={vol2Id === 0}
-                            onClick={() => setValue('volunteer_2_id', 0, { shouldValidate: true })}
-                          />
-                          {volunteers.map((v) => {
-                            const isVol1   = v.userId === vol1Id;
-                            const busy     = usedVolIds.has(v.userId);
-                            const disabled = isVol1 || busy;
-                            const reason   = isVol1 ? 'Selected as Vol 1' : busy ? 'Already in slot' : undefined;
-                            return (
-                              <CompactVolCard
-                                key={v.userId}
-                                volunteer={v}
-                                selected={vol2Id === v.userId}
-                                disabled={disabled}
-                                disabledReason={reason}
-                                onClick={() => setValue('volunteer_2_id', v.userId, { shouldValidate: true })}
-                              />
-                            );
-                          })}
-                        </Box>
-                        {errors.volunteer_2_id && (
-                          <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>
-                            {errors.volunteer_2_id.message}
-                          </Typography>
-                        )}
-                      </Box>
+                  {/* R-bucket banner */}
+                  {overCapacity && selectedBucket && (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        gap: 1,
+                        mt: 1.25,
+                        px: 1.5,
+                        py: 1,
+                        borderRadius: '8px',
+                        bgcolor: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                      }}
+                    >
+                      <AlertTriangle size={14} strokeWidth={1.75} color="#EF4444" style={{ flexShrink: 0, marginTop: 1 }} />
+                      <Typography sx={{ fontSize: '11px', color: '#B91C1C', lineHeight: 1.5 }}>
+                        Cannot assign {volunteerIds.length} volunteers — bucket has only {selectedBucket.activeChildrenCount} child(ren). Maximum {selectedBucket.activeChildrenCount} volunteer(s) allowed.
+                      </Typography>
                     </Box>
                   )}
                 </Box>
-
               </Box>
             </Box>
           )}

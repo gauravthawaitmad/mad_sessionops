@@ -1,5 +1,11 @@
 """
-F-M3-7 Chunk 2: Slot-class creation unit tests.
+F-M3-7 Chunk 2 / F-M6-5: Slot-class creation unit tests.
+
+F-M6-5 replaced volunteer_1_id/volunteer_2_id with volunteer_ids: list[int] (1-5)
+and dropped subject_id from client input (server always uses the seeded
+Foundation Subject). R-bucket (volunteer count <= active children in the
+bucket) is new; every test that assigns N volunteers must give the section
+at least N active children.
 """
 from datetime import time
 from types import SimpleNamespace
@@ -27,12 +33,22 @@ from sessionops.models import (
     User,
 )
 from sessionops.services.slot_classes.create import create_slot_class
+import sessionops.services.slot_classes.helpers as slot_class_helpers
+from sessionops.services.slot_classes.helpers import get_foundation_subject
 
 # ── Counters ───────────────────────────────────────────────────────────────────
 
 _UID = iter(range(9_000_000, 9_200_000))
 _SID = iter(range(70_000, 80_000))
 _WID = iter(range(100, 10_000))
+
+
+@pytest.fixture(autouse=True)
+def _reset_foundation_subject_cache():
+    """Module-level cache in helpers.py isn't rolled back by test transactions."""
+    slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
+    yield
+    slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -109,7 +125,30 @@ def _make_section(school_id: int, user: User, class_code: str = "5") -> ClassSec
     )
 
 
-def _make_subject(user: User, name: str = "Foundation Day 1") -> object:
+def _add_children(section: ClassSection, count: int, user: User) -> list[Child]:
+    """Add `count` active children to a section/bucket — needed for R-bucket capacity."""
+    children = []
+    for i in range(count):
+        child = Child.objects.create(
+            school_id=section.school_id,
+            first_name=f"Child{i}",
+            last_name="Test",
+            gender="male",
+            is_active=True,
+            created_by=user,
+        )
+        ChildClassSection.objects.create(
+            child_id=child,
+            class_section_id=section,
+            is_active=True,
+            created_by=user,
+        )
+        children.append(child)
+    return children
+
+
+def _make_legacy_subject(name: str = "Foundation Day 1") -> object:
+    """A pre-M6 subject row, to confirm new slot-classes never use it."""
     from sessionops.models import Subject
     program, _ = Program.objects.get_or_create(program_name="Foundation Program")
     subj, _ = Subject.objects.get_or_create(
@@ -162,12 +201,10 @@ def _make_slot(school_id: int, user: User) -> Slot:
     )
 
 
-def _payload(section, subject, vol1, vol2=None):
+def _payload(section, *volunteers):
     return SimpleNamespace(
         class_section_id=section.class_section_id,
-        subject_id=subject.subject_id,
-        volunteer_1_id=vol1.user_id,
-        volunteer_2_id=vol2.user_id if vol2 else None,
+        volunteer_ids=[v.user_id for v in volunteers],
     )
 
 
@@ -181,15 +218,15 @@ def test_create_slot_class_creates_all_rows():
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 1, co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     assert scs.slot_class_section_id is not None
     assert ClassSectionSubject.objects.filter(
-        class_section_id=section, subject_id=subject, is_active=True, removed=False
+        class_section_id=section, subject_id=get_foundation_subject(), is_active=True, removed=False
     ).exists()
     assert SlotClassSection.objects.filter(
         slot_id=slot, class_section_id=section, is_active=True, removed=False
@@ -200,6 +237,28 @@ def test_create_slot_class_creates_all_rows():
 
 
 @pytest.mark.django_db
+def test_create_slot_class_uses_foundation_subject_regardless_of_legacy_subjects():
+    """Legacy 'Foundation Day 1'/'Foundation Day 2' subjects existing in the DB must
+    never be picked up — every new slot-class uses the seeded Foundation row."""
+    admin = _make_admin()
+    co = _make_co(0)
+    school = _make_school(co)
+    sid = school.partner_id
+    _make_active_year(admin)
+    section = _make_section(sid, co)
+    _add_children(section, 1, co)
+    vol1 = _make_volunteer(sid, co)
+    slot = _make_slot(sid, co)
+    _make_legacy_subject("Foundation Day 1")
+    _make_legacy_subject("Foundation Day 2")
+
+    create_slot_class(slot.slot_id, _payload(section, vol1), co)
+
+    css = ClassSectionSubject.objects.get(class_section_id=section)
+    assert css.subject_id.subject_name == "Foundation"
+
+
+@pytest.mark.django_db
 def test_create_slot_class_creates_school_volunteer_for_new_volunteer():
     admin = _make_admin()
     co = _make_co(0)
@@ -207,7 +266,7 @@ def test_create_slot_class_creates_school_volunteer_for_new_volunteer():
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 1, co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
@@ -215,7 +274,7 @@ def test_create_slot_class_creates_school_volunteer_for_new_volunteer():
         school_id=sid, volunteer_id=vol1, is_active=True, removed=False
     ).exists()
 
-    create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     assert SchoolVolunteer.objects.filter(
         school_id=sid, volunteer_id=vol1, is_active=True, removed=False
@@ -233,7 +292,7 @@ def test_create_slot_class_skips_school_volunteer_creation_if_exists():
         school_id=sid, academic_year_id=year, defaults={"created_by": co}
     )
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 1, co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
@@ -246,7 +305,7 @@ def test_create_slot_class_skips_school_volunteer_creation_if_exists():
         created_by=co,
     )
 
-    create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     # Only one row should exist
     assert SchoolVolunteer.objects.filter(
@@ -262,47 +321,30 @@ def test_create_slot_class_creates_child_subject_for_each_active_child():
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 2, co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
-    # Create 2 children in the section
-    for i in range(2):
-        child = Child.objects.create(
-            school_id=sid,
-            first_name=f"Child{i}",
-            last_name="Test",
-            gender="M",
-            is_active=True,
-            created_by=co,
-        )
-        ChildClassSection.objects.create(
-            child_id=child,
-            class_section_id=section,
-            is_active=True,
-            created_by=co,
-        )
+    create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
-
-    css = ClassSectionSubject.objects.get(class_section_id=section, subject_id=subject)
+    css = ClassSectionSubject.objects.get(class_section_id=section, subject_id=get_foundation_subject())
     child_subjects = ChildSubject.objects.filter(class_section_subject_id=css)
     assert child_subjects.count() == 2
 
 
 @pytest.mark.django_db
-def test_create_slot_class_only_vol1_no_vol2_succeeds():
+def test_create_slot_class_single_volunteer_succeeds():
     admin = _make_admin()
     co = _make_co(0)
     school = _make_school(co)
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 1, co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1, vol2=None), co)
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     vols = SlotClassSectionVolunteer.objects.filter(
         slot_class_section_id=scs, is_active=True, removed=False
@@ -312,26 +354,42 @@ def test_create_slot_class_only_vol1_no_vol2_succeeds():
 
 
 @pytest.mark.django_db
-def test_create_slot_class_vol1_eq_vol2_returns_400():
+def test_create_slot_class_five_volunteers_boundary_succeeds():
+    """R2 relaxed to 1-5; bucket with exactly 5 children can take exactly 5 volunteers."""
     admin = _make_admin()
     co = _make_co(0)
     school = _make_school(co)
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
-    vol1 = _make_volunteer(sid, co)
+    _add_children(section, 5, co)
+    volunteers = [_make_volunteer(sid, co) for _ in range(5)]
     slot = _make_slot(sid, co)
 
-    payload = SimpleNamespace(
-        class_section_id=section.class_section_id,
-        subject_id=subject.subject_id,
-        volunteer_1_id=vol1.user_id,
-        volunteer_2_id=vol1.user_id,  # same as vol1
-    )
+    scs = create_slot_class(slot.slot_id, _payload(section, *volunteers), co)
 
-    with pytest.raises(ValidationError):
-        create_slot_class(slot.slot_id, payload, co)
+    assert SlotClassSectionVolunteer.objects.filter(
+        slot_class_section_id=scs, is_active=True, removed=False
+    ).count() == 5
+
+
+@pytest.mark.django_db
+def test_create_slot_class_r_bucket_violation_returns_400():
+    """Volunteer count exceeding active children in the bucket is rejected."""
+    admin = _make_admin()
+    co = _make_co(0)
+    school = _make_school(co)
+    sid = school.partner_id
+    _make_active_year(admin)
+    section = _make_section(sid, co)
+    _add_children(section, 1, co)  # only 1 child
+    volunteers = [_make_volunteer(sid, co) for _ in range(2)]  # 2 volunteers
+    slot = _make_slot(sid, co)
+
+    with pytest.raises(ValidationError) as exc_info:
+        create_slot_class(slot.slot_id, _payload(section, *volunteers), co)
+
+    assert "1 child" in exc_info.value.message or "1 children" in exc_info.value.message or "only 1" in exc_info.value.message
 
 
 @pytest.mark.django_db
@@ -342,15 +400,15 @@ def test_create_slot_class_section_already_in_slot_returns_409():
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 1, co)
     vol1 = _make_volunteer(sid, co)
     vol2 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
-    create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     with pytest.raises(ConflictError) as exc_info:
-        create_slot_class(slot.slot_id, _payload(section, subject, vol2), co)
+        create_slot_class(slot.slot_id, _payload(section, vol2), co)
 
     assert "already assigned" in exc_info.value.message.lower()
 
@@ -363,18 +421,19 @@ def test_create_slot_class_volunteer_already_in_slot_returns_409():
     school = _make_school(co)
     sid = school.partner_id
     _make_active_year(admin)
-    subject = _make_subject(co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
-    # Two separate sections
+    # Two separate sections, each with a child so R-bucket doesn't get in the way
     section_a = _make_section(sid, co, class_code="5")
     section_b = _make_section(sid, co, class_code="6")
+    _add_children(section_a, 1, co)
+    _add_children(section_b, 1, co)
 
-    create_slot_class(slot.slot_id, _payload(section_a, subject, vol1), co)
+    create_slot_class(slot.slot_id, _payload(section_a, vol1), co)
 
     with pytest.raises(ConflictError) as exc_info:
-        create_slot_class(slot.slot_id, _payload(section_b, subject, vol1), co)
+        create_slot_class(slot.slot_id, _payload(section_b, vol1), co)
 
     assert "already assigned" in exc_info.value.message.lower()
 
@@ -387,7 +446,7 @@ def test_create_slot_class_volunteer_not_in_worknode_list_returns_400():
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 1, co)
     slot = _make_slot(sid, co)
 
     # Volunteer without any PartnerWorknode link to this school
@@ -402,7 +461,7 @@ def test_create_slot_class_volunteer_not_in_worknode_list_returns_400():
     )
 
     with pytest.raises(ValidationError):
-        create_slot_class(slot.slot_id, _payload(section, subject, outsider), co)
+        create_slot_class(slot.slot_id, _payload(section, outsider), co)
 
 
 @pytest.mark.django_db
@@ -413,7 +472,6 @@ def test_create_slot_class_section_not_at_school_returns_400():
     other_school = _make_school(co)
     sid = school.partner_id
     _make_active_year(admin)
-    subject = _make_subject(co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
@@ -421,7 +479,7 @@ def test_create_slot_class_section_not_at_school_returns_400():
     other_section = _make_section(other_school.partner_id, co, class_code="7")
 
     with pytest.raises(ValidationError) as exc_info:
-        create_slot_class(slot.slot_id, _payload(other_section, subject, vol1), co)
+        create_slot_class(slot.slot_id, _payload(other_section, vol1), co)
 
     assert "does not belong" in exc_info.value.message.lower()
 
@@ -436,14 +494,14 @@ def test_create_slot_class_vol_at_different_school_returns_409_r4():
     _make_active_year(admin)
 
     section1 = _make_section(school1.partner_id, co1)
-    subject = _make_subject(co1)
+    _add_children(section1, 1, co1)
     slot1 = _make_slot(school1.partner_id, co1)
 
     # Volunteer linked to school1 only
     vol1 = _make_volunteer(school1.partner_id, co1)
 
     # Assign volunteer to school1's slot-class (creates SchoolVolunteer for school1)
-    create_slot_class(slot1.slot_id, _payload(section1, subject, vol1), co1)
+    create_slot_class(slot1.slot_id, _payload(section1, vol1), co1)
 
     # Now try to assign same volunteer to school2's slot-class
     # Note: vol1 is NOT linked to school2 via worknode, so we'd get a worknode error first.
@@ -457,10 +515,11 @@ def test_create_slot_class_vol_at_different_school_returns_409_r4():
     )
 
     section2 = _make_section(school2.partner_id, co2, class_code="8")
+    _add_children(section2, 1, co2)
     slot2 = _make_slot(school2.partner_id, co2)
 
     with pytest.raises(ConflictError) as exc_info:
-        create_slot_class(slot2.slot_id, _payload(section2, subject, vol1), co2)
+        create_slot_class(slot2.slot_id, _payload(section2, vol1), co2)
 
     assert exc_info.value.error_code == "CONFLICT"
 
@@ -475,11 +534,11 @@ def test_create_slot_class_vol_at_different_school_message_includes_school_name(
     _make_active_year(admin)
 
     section1 = _make_section(school1.partner_id, co1)
-    subject = _make_subject(co1)
+    _add_children(section1, 1, co1)
     slot1 = _make_slot(school1.partner_id, co1)
 
     vol1 = _make_volunteer(school1.partner_id, co1)
-    create_slot_class(slot1.slot_id, _payload(section1, subject, vol1), co1)
+    create_slot_class(slot1.slot_id, _payload(section1, vol1), co1)
 
     # Add worknode link to school2 for same volunteer
     wid2 = next(_WID)
@@ -491,10 +550,11 @@ def test_create_slot_class_vol_at_different_school_message_includes_school_name(
     )
 
     section2 = _make_section(school2.partner_id, co2, class_code="9")
+    _add_children(section2, 1, co2)
     slot2 = _make_slot(school2.partner_id, co2)
 
     with pytest.raises(ConflictError) as exc_info:
-        create_slot_class(slot2.slot_id, _payload(section2, subject, vol1), co2)
+        create_slot_class(slot2.slot_id, _payload(section2, vol1), co2)
 
     assert school1.partner_name in exc_info.value.message
 
@@ -505,14 +565,13 @@ def test_co_cannot_create_slot_class_in_other_school():
     co1 = _make_co(0)
     co2 = _make_co(0)
     school1 = _make_school(co1)
-    school2 = _make_school(co2)
+    _make_school(co2)
     _make_active_year(admin)
 
     section = _make_section(school1.partner_id, co1)
-    subject = _make_subject(co1)
     vol1 = _make_volunteer(school1.partner_id, co1)
     slot = _make_slot(school1.partner_id, co1)
 
     # co2 tries to create a slot-class in co1's school
     with pytest.raises(PermissionDenied):
-        create_slot_class(slot.slot_id, _payload(section, subject, vol1), co2)
+        create_slot_class(slot.slot_id, _payload(section, vol1), co2)
