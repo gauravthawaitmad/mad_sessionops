@@ -49,7 +49,8 @@ function SlotClassCard({
   canModify: boolean;
   onDelete: (id: number) => void;
 }) {
-  const badge = sectionBadge(scs.sectionName);
+  const bucketName = scs.sectionDisplayName ?? scs.sectionName;
+  const badge = sectionBadge(bucketName);
   const count = scs.activeChildrenCount;
   const pct   = Math.min((count / MAX_CAP) * 100, 100);
   const color = capacityColor(count);
@@ -102,7 +103,7 @@ function SlotClassCard({
               whiteSpace: 'nowrap',
             }}
           >
-            {scs.sectionName}
+            {bucketName}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.4 }}>
             <LinearProgress

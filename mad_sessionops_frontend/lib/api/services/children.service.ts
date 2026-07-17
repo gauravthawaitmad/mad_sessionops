@@ -2,6 +2,17 @@ import { api } from '../client';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
+export interface CurrentSection {
+  classSectionId: number;
+  sectionDisplayName: string | null;
+  sectionName: string;
+}
+
+export interface CurrentSchoolClass {
+  schoolClassId: number;
+  className: string;
+}
+
 export interface ChildItem {
   childId: number;
   firstName: string;
@@ -14,10 +25,8 @@ export interface ChildItem {
   dateOfEnrollment: string | null;
   madJoiningDate: string | null;
   isActive: boolean;
-  currentClassName: string;
-  currentSectionName: string;
-  currentSectionId: number | null;
-  currentClassId: number | null;
+  currentSection: CurrentSection | null;
+  currentSchoolClass: CurrentSchoolClass | null;
 }
 
 export interface EnrollChildInput {
@@ -25,7 +34,8 @@ export interface EnrollChildInput {
   last_name: string;
   gender: 'male' | 'female' | 'other';
   age: number;
-  class_section_id: number;
+  school_class_id: number;
+  class_section_id?: number;
   date_of_birth?: string;
   city?: string;
   mother_tongue?: string;
@@ -38,7 +48,8 @@ export interface EditChildInput {
   last_name?: string;
   gender?: 'male' | 'female' | 'other';
   age?: number;
-  class_section_id?: number;
+  school_class_id?: number;
+  class_section_id?: number | null;
   date_of_birth?: string;
   city?: string;
   mother_tongue?: string;
@@ -46,14 +57,31 @@ export interface EditChildInput {
   mad_joining_date?: string;
 }
 
+export interface ReactivateChildInput {
+  school_class_id: number;
+  class_section_id?: number;
+}
+
 export interface ListChildrenParams {
   status?: 'active' | 'inactive' | 'all';
   class_id?: number;
   section_id?: number;
+  unassigned?: boolean;
   search?: string;
 }
 
 // ── Raw backend shapes (snake_case) ────────────────────────────────────────────
+
+interface RawCurrentSection {
+  class_section_id: number;
+  section_display_name: string | null;
+  section_name: string;
+}
+
+interface RawCurrentSchoolClass {
+  school_class_id: number;
+  class_name: string;
+}
 
 interface RawChild {
   child_id: number;
@@ -67,10 +95,8 @@ interface RawChild {
   date_of_enrollment: string | null;
   mad_joining_date: string | null;
   is_active: boolean;
-  current_class_name: string;
-  current_section_name: string;
-  current_section_id: number | null;
-  current_class_id: number | null;
+  current_section: RawCurrentSection | null;
+  current_school_class: RawCurrentSchoolClass | null;
 }
 
 // ── Mapper ─────────────────────────────────────────────────────────────────────
@@ -88,10 +114,15 @@ function mapChild(raw: RawChild): ChildItem {
     dateOfEnrollment: raw.date_of_enrollment,
     madJoiningDate: raw.mad_joining_date,
     isActive: raw.is_active,
-    currentClassName: raw.current_class_name,
-    currentSectionName: raw.current_section_name,
-    currentSectionId: raw.current_section_id,
-    currentClassId: raw.current_class_id,
+    currentSection: raw.current_section && {
+      classSectionId: raw.current_section.class_section_id,
+      sectionDisplayName: raw.current_section.section_display_name,
+      sectionName: raw.current_section.section_name,
+    },
+    currentSchoolClass: raw.current_school_class && {
+      schoolClassId: raw.current_school_class.school_class_id,
+      className: raw.current_school_class.class_name,
+    },
   };
 }
 
@@ -105,6 +136,7 @@ export async function fetchChildren(
   if (params.status)     query.set('status', params.status);
   if (params.class_id)   query.set('class_id', String(params.class_id));
   if (params.section_id) query.set('section_id', String(params.section_id));
+  if (params.unassigned) query.set('unassigned', 'true');
   if (params.search)     query.set('search', params.search);
   const qs = query.toString();
   const raw = await api.get<RawChild[]>(
@@ -141,7 +173,7 @@ export async function deactivateChild(
 export async function reactivateChild(
   schoolId: number,
   childId: number,
-  data: { class_section_id: number }
+  data: ReactivateChildInput
 ): Promise<ChildItem> {
   const raw = await api.post<RawChild>(`/schools/${schoolId}/children/${childId}/reactivate/`, data);
   return mapChild(raw);

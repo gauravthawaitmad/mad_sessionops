@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -20,10 +20,9 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   fetchSchoolClasses,
-  fetchSections,
   type SchoolClassItem,
-  type SectionItem,
 } from '@/lib/api/services/structure.service';
+import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
 import {
   updateChild,
   type ChildItem,
@@ -39,7 +38,7 @@ const schema = z.object({
   gender:             z.enum(['male', 'female', 'other']),
   age:                z.number().int().min(3, 'Min 3').max(25, 'Max 25').optional(),
   school_class_id:    z.number().min(1, 'Select a class'),
-  class_section_id:   z.number().min(1, 'Select a section'),
+  class_section_id:   z.number().nullable().optional(),
   date_of_birth:      z.string().optional(),
   date_of_enrollment: z.string().optional(),
   mad_joining_date:   z.string().optional(),
@@ -189,32 +188,50 @@ function ClassPicker({ classes, value, onChange, error }: { classes: SchoolClass
   );
 }
 
-// ── SectionPicker ─────────────────────────────────────────────────────────────
+// ── BucketPicker ──────────────────────────────────────────────────────────────
+// Class-agnostic: pulls from fetchBuckets(schoolId), not scoped to the selected
+// class. Bucket assignment is optional — includes an "Unassigned" tile that
+// clears the selection (sends class_section_id: null on save).
 
-function SectionPicker({ sections, loading, value, onChange, error }: { sections: SectionItem[]; loading: boolean; value: number | undefined; onChange: (id: number) => void; error?: boolean }) {
+function BucketPicker({ buckets, loading, value, onChange }: { buckets: BucketItem[]; loading: boolean; value: number | null | undefined; onChange: (id: number | undefined) => void }) {
   return (
     <Box>
-      <FieldLabel required>Section</FieldLabel>
+      <FieldLabel>Bucket</FieldLabel>
       {loading ? (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
           {[1, 2, 3, 4].map((i) => <Skeleton key={i} variant="rounded" height={80} sx={{ borderRadius: '8px' }} />)}
         </Box>
-      ) : sections.length === 0 ? (
-        <Box sx={{ p: 2, borderRadius: '8px', border: `1px dashed ${BORDER}`, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '12px', color: MUTED }}>No sections in this class.</Typography>
-        </Box>
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 1 }}>
-          {sections.map((s) => {
-            const count    = s.activeChildrenCount;
+          {/* Unassigned tile */}
+          <Box
+            onClick={() => onChange(undefined)}
+            sx={{
+              p: 1.25, borderRadius: '8px',
+              border: `1.5px solid ${!value ? '#2563EB' : BORDER}`,
+              bgcolor: !value ? '#EFF6FF' : '#FAFAFA',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80,
+              transition: 'all 0.12s ease',
+              ...(value && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
+            }}
+          >
+            <Typography sx={{ fontSize: '11px', fontWeight: 600, color: !value ? '#1D4ED8' : MUTED, textAlign: 'center' }}>
+              Unassigned
+            </Typography>
+          </Box>
+
+          {buckets.map((b) => {
+            const count    = b.activeChildrenCount;
             const full     = count >= MAX_CAP;
             const pct      = Math.min((count / MAX_CAP) * 100, 100);
             const color    = capacityColor(count);
-            const selected = value === s.classSectionId;
+            const selected = value === b.classSectionId;
+            const name     = b.sectionDisplayName ?? b.sectionName;
             return (
               <Box
-                key={s.classSectionId}
-                onClick={() => !full && onChange(s.classSectionId)}
+                key={b.classSectionId}
+                onClick={() => !full && onChange(b.classSectionId)}
                 sx={{
                   p: 1.25, borderRadius: '8px',
                   border: `1.5px solid ${selected ? '#2563EB' : full ? '#FECACA' : BORDER}`,
@@ -225,9 +242,9 @@ function SectionPicker({ sections, loading, value, onChange, error }: { sections
                   ...(!full && !selected && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
                 }}
               >
-                <Box sx={{ width: 28, height: 28, borderRadius: '6px', bgcolor: selected ? '#2563EB' : `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.75 }}>
-                  <Typography sx={{ fontSize: '12px', fontWeight: 700, color: selected ? '#fff' : color }}>{s.sectionCode}</Typography>
-                </Box>
+                <Typography sx={{ fontSize: '12px', fontWeight: selected ? 700 : 600, color: selected ? '#1D4ED8' : '#374151', mb: 0.75, lineHeight: 1.2 }}>
+                  {name}
+                </Typography>
                 <LinearProgress
                   variant="determinate"
                   value={pct}
@@ -244,7 +261,6 @@ function SectionPicker({ sections, loading, value, onChange, error }: { sections
           })}
         </Box>
       )}
-      {error && <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>Select a section</Typography>}
     </Box>
   );
 }
@@ -253,13 +269,13 @@ function SectionPicker({ sections, loading, value, onChange, error }: { sections
 
 export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: EditChildDrawerProps) {
   const [classes, setClasses]               = useState<SchoolClassItem[]>([]);
-  const [sections, setSections]             = useState<SectionItem[]>([]);
+  const [buckets, setBuckets]               = useState<BucketItem[]>([]);
   const [classesLoading, setClassesLoading] = useState(false);
-  const [sectionsLoading, setSectionsLoading] = useState(false);
+  const [bucketsLoading, setBucketsLoading] = useState(false);
   const [submitting, setSubmitting]         = useState(false);
 
-  // Track first render to avoid clearing section on mount
-  const classChangedRef = useRef(false);
+  const originalClassId  = child.currentSchoolClass?.schoolClassId;
+  const originalSectionId = child.currentSection?.classSectionId;
 
   // Pre-fill defaultValues from child prop on mount.
   // Component is conditionally rendered {editChild && <EditChildDrawer>} so it
@@ -268,7 +284,6 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
     control,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -277,8 +292,8 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
       last_name:          child.lastName,
       gender:             child.gender,
       age:                child.age ?? undefined,
-      school_class_id:    child.currentClassId ?? undefined,
-      class_section_id:   child.currentSectionId ?? undefined,
+      school_class_id:    originalClassId ?? undefined,
+      class_section_id:   originalSectionId ?? undefined,
       date_of_birth:      child.dateOfBirth ?? '',
       date_of_enrollment: child.dateOfEnrollment ?? '',
       mad_joining_date:   child.madJoiningDate ?? '',
@@ -287,10 +302,8 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
     },
   });
 
-  const selectedClassId   = watch('school_class_id');
   const selectedSectionId = watch('class_section_id');
-  const sectionChanged    = selectedSectionId !== undefined
-    && selectedSectionId !== child.currentSectionId;
+  const bucketChanged      = (selectedSectionId ?? undefined) !== (originalSectionId ?? undefined);
 
   // Load classes once on mount
   useEffect(() => {
@@ -301,25 +314,14 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
       .finally(() => setClassesLoading(false));
   }, [schoolId]);
 
-  // Load sections whenever selected class changes
+  // Load buckets once on mount — independent of class selection (buckets are class-agnostic)
   useEffect(() => {
-    if (!selectedClassId) { setSections([]); return; }
-    setSectionsLoading(true);
-    fetchSections(schoolId, selectedClassId)
-      .then(setSections)
-      .catch(() => toast.error('Could not load sections'))
-      .finally(() => setSectionsLoading(false));
-  }, [selectedClassId, schoolId]);
-
-  // Clear section selection when user actively changes the class (skip on mount)
-  useEffect(() => {
-    if (!classChangedRef.current) {
-      classChangedRef.current = true;
-      return;
-    }
-    setValue('class_section_id', undefined as unknown as number);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClassId]);
+    setBucketsLoading(true);
+    fetchBuckets(schoolId)
+      .then(setBuckets)
+      .catch(() => toast.error('Could not load buckets'))
+      .finally(() => setBucketsLoading(false));
+  }, [schoolId]);
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
@@ -327,8 +329,13 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
       first_name:       values.first_name.trim(),
       last_name:        values.last_name.trim(),
       gender:           values.gender,
-      class_section_id: values.class_section_id,
     };
+    if (values.school_class_id !== originalClassId) {
+      payload.school_class_id = values.school_class_id;
+    }
+    if (bucketChanged) {
+      payload.class_section_id = values.class_section_id ?? null;
+    }
     if (values.age !== undefined)           payload.age              = values.age;
     if (values.date_of_birth?.trim())       payload.date_of_birth      = values.date_of_birth;
     if (values.date_of_enrollment?.trim())  payload.date_of_enrollment = values.date_of_enrollment;
@@ -538,17 +545,17 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                 </Box>
               </Box>
 
-              {/* ── Class & Section ── */}
+              {/* ── Class & Bucket ── */}
               <Box sx={{ pt: 2, borderTop: `1px solid ${BORDER}` }}>
-                <SectionHeading>Class &amp; Section</SectionHeading>
+                <SectionHeading>Class &amp; Bucket</SectionHeading>
 
-                {sectionChanged && (
+                {bucketChanged && (
                   <Alert
                     icon={<ArrowLeftRight size={14} />}
                     severity="info"
                     sx={{ mb: 2, fontSize: '12px', py: 0.5, '& .MuiAlert-icon': { alignItems: 'center' } }}
                   >
-                    Moving to a different section will preserve full assignment history.
+                    Moving to a different bucket will preserve full assignment history.
                   </Alert>
                 )}
 
@@ -567,21 +574,18 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                   />
                 </Box>
 
-                {selectedClassId && (
-                  <Controller
-                    name="class_section_id"
-                    control={control}
-                    render={({ field }) => (
-                      <SectionPicker
-                        sections={sections}
-                        loading={sectionsLoading}
-                        value={selectedSectionId}
-                        onChange={field.onChange}
-                        error={!!errors.class_section_id}
-                      />
-                    )}
-                  />
-                )}
+                <Controller
+                  name="class_section_id"
+                  control={control}
+                  render={({ field }) => (
+                    <BucketPicker
+                      buckets={buckets}
+                      loading={bucketsLoading}
+                      value={selectedSectionId}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
               </Box>
 
             </Box>

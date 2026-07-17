@@ -5,7 +5,7 @@ Tests for F-M2-4: Classes — catalog, add, list, remove.
 import pytest
 
 from sessionops.exceptions import ConflictError, NotFound, PermissionDenied
-from sessionops.models import AcademicYear, Class, ClassSection, Partner, Program, User
+from sessionops.models import AcademicYear, Child, ChildClass, Class, ClassSection, Partner, Program, User
 from sessionops.services.structure.queries import (
     add_class_to_school,
     list_classes_for_school,
@@ -188,14 +188,39 @@ class TestRemoveClass:
         assert sc.removed is True
         assert sc.deleted_at is not None
 
-    def test_soft_delete_class_with_active_sections_raises_conflict(self):
+    def test_soft_delete_class_with_active_children_raises_conflict(self):
+        """M6 decoupled classes from sections/buckets (buckets never set
+        school_class_id — see M6 decision #1), so class deletion must guard
+        against active children (via ChildClass), not sections."""
         admin = _make_user()
         _make_active_year(admin)
         cls = _get_or_create_class()
         school_id = 2031
 
         sc = add_class_to_school(school_id, cls.class_id, admin)
-        # Add a section manually
+        child = Child.objects.create(
+            school_id=school_id,
+            first_name="Test",
+            last_name="Child",
+            gender="male",
+            is_active=True,
+            created_by=admin,
+        )
+        ChildClass.objects.create(child_id=child, school_class_id=sc, created_by=admin)
+
+        with pytest.raises(ConflictError):
+            soft_delete_school_class(sc.school_class_id, school_id, admin)
+
+    def test_soft_delete_class_with_legacy_section_but_no_children_succeeds(self):
+        """Regression guard: a legacy ClassSection still pointing at this class
+        (grandfathered per M6 decision #10) must NOT block deletion on its own —
+        only active children do, since sections/buckets are class-agnostic now."""
+        admin = _make_user()
+        _make_active_year(admin)
+        cls = _get_or_create_class()
+        school_id = 2032
+
+        sc = add_class_to_school(school_id, cls.class_id, admin)
         ClassSection.objects.create(
             school_class_id=sc,
             school_id=school_id,
@@ -204,8 +229,11 @@ class TestRemoveClass:
             created_by=admin,
         )
 
-        with pytest.raises(ConflictError):
-            soft_delete_school_class(sc.school_class_id, school_id, admin)
+        soft_delete_school_class(sc.school_class_id, school_id, admin)
+
+        sc.refresh_from_db()
+        assert sc.is_active is False
+        assert sc.removed is True
 
     def test_soft_delete_nonexistent_raises_not_found(self):
         admin = _make_user()

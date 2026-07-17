@@ -10,6 +10,7 @@ class ScheduleVolunteerSchema(Schema):
 class ScheduleSlotClassSchema(Schema):
     slot_class_section_id: int
     section_name: str
+    section_display_name: str | None
     subject_name: str
     volunteers: list[ScheduleVolunteerSchema]
     active_children_count: int

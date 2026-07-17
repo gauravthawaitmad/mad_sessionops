@@ -11,6 +11,11 @@ from sessionops.models import Class
 from sessionops.models.class_section import SECTION_CODES
 from sessionops.schemas.structure import (
     AvailableCodesOut,
+    BucketAddIn,
+    BucketChildAddIn,
+    BucketChildOut,
+    BucketEditIn,
+    BucketOut,
     ClassAddIn,
     ClassCatalogItemOut,
     SchoolClassOut,
@@ -18,6 +23,7 @@ from sessionops.schemas.structure import (
     SectionOut,
 )
 from sessionops.services.rbac.scope import get_school_or_403
+from sessionops.services.structure.bucket_children import add_child_to_bucket, remove_child_from_bucket
 from sessionops.services.structure.queries import (
     add_class_to_school,
     list_classes_for_school,
@@ -26,6 +32,9 @@ from sessionops.services.structure.queries import (
 from sessionops.services.structure.sections import (
     add_section_to_class,
     available_section_codes,
+    create_bucket,
+    edit_bucket,
+    list_buckets_for_school,
     list_sections_for_class,
     soft_delete_section,
 )
@@ -97,4 +106,48 @@ def add_section(request, school_id: int, school_class_id: int, payload: SectionA
 def remove_section(request, school_id: int, class_section_id: int):
     get_school_or_403(request.auth, school_id)
     soft_delete_section(class_section_id, school_id, request.auth)
+    return 204, None
+
+
+# ── Buckets (F-M6-2) ─────────────────────────────────────────────────────────────
+# Class-agnostic containers, additive alongside the class-scoped section
+# endpoints above. Both operate on the same ClassSection table.
+
+@structure_router.get("/{school_id}/sections/", response=list[BucketOut])
+def list_buckets(request, school_id: int):
+    get_school_or_403(request.auth, school_id)
+    return list(list_buckets_for_school(school_id))
+
+
+@structure_router.post("/{school_id}/sections/", response={201: BucketOut})
+def add_bucket(request, school_id: int, payload: BucketAddIn):
+    get_school_or_403(request.auth, school_id)
+    return 201, create_bucket(school_id, payload.display_name, request.auth)
+
+
+@structure_router.patch("/{school_id}/sections/{class_section_id}/", response=BucketOut)
+def edit_bucket_view(request, school_id: int, class_section_id: int, payload: BucketEditIn):
+    get_school_or_403(request.auth, school_id)
+    return edit_bucket(class_section_id, school_id, payload.display_name, request.auth)
+
+
+# ── Bucket-children membership (F-M6-3) ─────────────────────────────────────────
+
+@structure_router.post(
+    "/{school_id}/sections/{section_id}/children/",
+    response={201: BucketChildOut},
+)
+def add_bucket_child(request, school_id: int, section_id: int, payload: BucketChildAddIn):
+    get_school_or_403(request.auth, school_id)
+    ccs = add_child_to_bucket(school_id, section_id, payload.child_id, request.auth)
+    return 201, ccs
+
+
+@structure_router.delete(
+    "/{school_id}/sections/{section_id}/children/{child_id}/",
+    response={204: None},
+)
+def remove_bucket_child(request, school_id: int, section_id: int, child_id: int):
+    get_school_or_403(request.auth, school_id)
+    remove_child_from_bucket(school_id, section_id, child_id, request.auth)
     return 204, None

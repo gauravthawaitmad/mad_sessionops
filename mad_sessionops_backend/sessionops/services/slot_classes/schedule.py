@@ -11,6 +11,7 @@ from sessionops.models import (
     User,
 )
 from sessionops.services.rbac.scope import can_view_school
+from sessionops.services.slot_classes.helpers import normalize_subject_display_name
 
 _DAY_ORDER = [
     "monday", "tuesday", "wednesday", "thursday",
@@ -85,7 +86,10 @@ def get_school_schedule(
             slot_classes.append({
                 "slot_class_section_id": scs.slot_class_section_id,
                 "section_name": scs.class_section_id.section_name,
-                "subject_name": scs.class_section_subject_id.subject_id.subject_name,
+                "section_display_name": scs.class_section_id.section_display_name,
+                "subject_name": normalize_subject_display_name(
+                    scs.class_section_subject_id.subject_id.subject_name
+                ),
                 "volunteers": [
                     {
                         "user_id": v.volunteer_id.user_id,

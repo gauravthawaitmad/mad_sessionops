@@ -10,14 +10,14 @@ from sessionops.models import (
     Slot,
     SlotClassSection,
     SlotClassSectionVolunteer,
-    Subject,
     User,
 )
 from sessionops.services.rbac.scope import can_modify_school, get_school_or_403
 from sessionops.services.slot_classes.helpers import (
     check_r4_volunteer,
-    check_r6_volunteer_in_slot,
+    check_r_bucket_capacity,
     ensure_school_volunteer,
+    get_foundation_subject,
     reconcile_school_volunteer,
     validate_volunteer_worknode_match,
 )
@@ -27,13 +27,14 @@ from sessionops.services.academic_year.queries import get_or_create_school_acade
 @transaction.atomic
 def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
     """
-    Three sub-flows depending on what changed:
+    Two sub-flows depending on what changed:
       - Volunteer swap: swap out old SCSV rows, reconcile SchoolVolunteer
-      - Section change: full cascade reset (soft-delete all child rows, re-insert)
-      - Subject change: soft-delete CSS + ChildSubject rows, re-insert
+      - Section change: full cascade reset (soft-delete all child rows, re-insert).
+        Subject can no longer change from client input — it's always the seeded
+        Foundation subject, so a section change always re-derives it via
+        get_foundation_subject() rather than trusting a payload field.
 
-    payload fields (all optional): volunteer_1_id, volunteer_2_id,
-                                   class_section_id, subject_id
+    payload fields (all optional): volunteer_ids, class_section_id
     """
     try:
         scs = (
@@ -55,53 +56,48 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
 
     # ── Determine what is changing ────────────────────────────────────────────
 
-    new_section_id = payload.class_section_id
-    new_subject_id = payload.subject_id
-    new_vol1_id    = payload.volunteer_1_id
-    new_vol2_id    = payload.volunteer_2_id  # may be None (remove vol2)
+    new_section_id     = payload.class_section_id
+    new_volunteer_ids  = payload.volunteer_ids  # None = no change
 
     section_changing = new_section_id is not None and new_section_id != scs.class_section_id_id
-    subject_changing = new_subject_id is not None and new_subject_id != scs.class_section_subject_id.subject_id_id
-    vols_changing    = new_vol1_id is not None or payload.volunteer_2_id is not None
+    vols_changing    = new_volunteer_ids is not None
 
-    if not any([section_changing, subject_changing, vols_changing]):
+    if not any([section_changing, vols_changing]):
         return scs  # nothing to do
 
     say = get_or_create_school_academic_year(school_id, user)
 
-    # ── Full cascade reset (section or subject change) ────────────────────────
+    # ── Full cascade reset (section change) ───────────────────────────────────
 
-    if section_changing or subject_changing:
-        # Resolve new section
-        if section_changing:
-            try:
-                new_section = ClassSection.objects.get(
-                    class_section_id=new_section_id,
-                    is_active=True,
-                    removed=False,
-                )
-            except ClassSection.DoesNotExist:
-                raise NotFound(f"Section {new_section_id} not found.")
-            if new_section.school_id != school_id:
-                raise ValidationError("Section does not belong to this school.")
-        else:
-            new_section = scs.class_section_id
+    if section_changing:
+        try:
+            new_section = ClassSection.objects.get(
+                class_section_id=new_section_id,
+                is_active=True,
+                removed=False,
+            )
+        except ClassSection.DoesNotExist:
+            raise NotFound(f"Section {new_section_id} not found.")
+        if new_section.school_id != school_id:
+            raise ValidationError("Section does not belong to this school.")
 
-        # Resolve new subject
-        if subject_changing:
-            try:
-                new_subject = Subject.objects.get(subject_id=new_subject_id)
-            except Subject.DoesNotExist:
-                raise NotFound(f"Subject {new_subject_id} not found.")
-        else:
-            new_subject = scs.class_section_subject_id.subject_id
+        # Subject can never come from client input — always Foundation.
+        new_subject = get_foundation_subject()
 
-        # Soft-delete old SCSV rows
         old_vol_ids = list(
             SlotClassSectionVolunteer.objects
             .filter(slot_class_section_id=scs, is_active=True, removed=False)
             .values_list("volunteer_id_id", flat=True)
         )
+
+        # R-bucket: check against whichever volunteer set will end up on the new
+        # section — the explicit new list if provided, else the carried-over old list.
+        check_r_bucket_capacity(
+            new_section.class_section_id,
+            len(new_volunteer_ids) if new_volunteer_ids is not None else len(old_vol_ids),
+        )
+
+        # Soft-delete old SCSV rows
         SlotClassSectionVolunteer.objects.filter(
             slot_class_section_id=scs, is_active=True, removed=False
         ).update(is_active=False, removed=True, deleted_at=now, updated_at=now)
@@ -147,12 +143,10 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
         for vol_id in old_vol_ids:
             reconcile_school_volunteer(school_id, vol_id)
 
-        # Re-create volunteers (reuse new ones if provided, else old list)
-        if new_vol1_id:
-            _replace_volunteers(scs, [new_vol1_id] + ([new_vol2_id] if new_vol2_id else []),
-                                 slot, school_id, say, user, now)
+        # Re-create volunteers (reuse new list if provided, else carry over the old list)
+        if new_volunteer_ids is not None:
+            _replace_volunteers(scs, new_volunteer_ids, slot, school_id, say, user, now)
         else:
-            # Re-add old volunteers to new slot-class
             for vol_id in old_vol_ids:
                 try:
                     vol = User.objects.get(user_id=vol_id, is_active=True)
@@ -170,7 +164,8 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
     # ── Volunteer-only swap ───────────────────────────────────────────────────
 
     if vols_changing:
-        vol_ids = [new_vol1_id] + ([new_vol2_id] if new_vol2_id else [])
+        check_r_bucket_capacity(scs.class_section_id_id, len(new_volunteer_ids))
+
         old_vol_ids = list(
             SlotClassSectionVolunteer.objects
             .filter(slot_class_section_id=scs, is_active=True, removed=False)
@@ -181,10 +176,10 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
             slot_class_section_id=scs, is_active=True, removed=False
         ).update(is_active=False, removed=True, deleted_at=now, updated_at=now)
 
-        _replace_volunteers(scs, vol_ids, slot, school_id, say, user, now)
+        _replace_volunteers(scs, new_volunteer_ids, slot, school_id, say, user, now)
 
         # Reconcile removed volunteers
-        staying = set(vol_ids)
+        staying = set(new_volunteer_ids)
         for vol_id in old_vol_ids:
             if vol_id not in staying:
                 reconcile_school_volunteer(school_id, vol_id)
@@ -198,10 +193,10 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
 def _replace_volunteers(scs: SlotClassSection, vol_ids: list[int],
                         slot: Slot, school_id: int, say,
                         user: User, now) -> None:
-    """Validate and create new SCSV rows + ensure SchoolVolunteer."""
-    if len(vol_ids) == 2 and vol_ids[0] == vol_ids[1]:
-        raise ValidationError("Vol1 and Vol2 cannot be the same volunteer.")
+    """Validate and create new SCSV rows + ensure SchoolVolunteer.
 
+    Uniqueness (R3) is enforced by the schema validator before this runs.
+    """
     volunteers = []
     for vid in vol_ids:
         try:

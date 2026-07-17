@@ -11,6 +11,7 @@ from sessionops.models import (
     ChildSubject,
     ClassSection,
     ClassSectionSubject,
+    SchoolClass,
     User,
 )
 from sessionops.schemas.children import ChildEditIn
@@ -49,7 +50,44 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
         child.updated_by = user
         child.save(update_fields=update_fields)
 
-        # Handle section / class change
+        # Handle explicit class change — independent of any bucket change (M6).
+        # No DB constraint backs the one-active-ChildClass invariant (decision #5);
+        # the select_for_update() on `child` above serialises concurrent calls.
+        if payload.school_class_id is not None:
+            current_active_count = ChildClass.objects.filter(
+                child_id=child, is_active=True, removed=False
+            ).count()
+            if current_active_count > 1:
+                raise ValidationError(
+                    "Data inconsistency: multiple active class assignments for this "
+                    "child. Contact an administrator."
+                )
+            current_cc = ChildClass.objects.filter(
+                child_id=child, is_active=True, removed=False
+            ).first()
+            if current_cc is None or current_cc.school_class_id_id != payload.school_class_id:
+                try:
+                    new_school_class = SchoolClass.objects.get(
+                        school_class_id=payload.school_class_id,
+                        school_id=child.school_id,
+                        is_active=True,
+                        removed=False,
+                    )
+                except SchoolClass.DoesNotExist:
+                    raise NotFound(f"School class {payload.school_class_id} not found.")
+                now = timezone.now()
+                if current_cc:
+                    current_cc.is_active = False
+                    current_cc.removed = True
+                    current_cc.deleted_at = now
+                    current_cc.updated_by = user
+                    current_cc.save()
+                ChildClass.objects.create(
+                    child_id=child, school_class_id=new_school_class, created_by=user,
+                )
+
+        # Handle bucket change — independent of class change (a bucket has no
+        # school_class_id to follow, unlike legacy M2/M3 sections).
         if payload.class_section_id is not None:
             try:
                 new_section = (
@@ -99,30 +137,10 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
                     created_by=user,
                 )
 
-                # M3 extension: sync ChildSubject rows on section change
-                # Soft-delete old ChildSubject rows (via old ClassSectionSubject rows)
-                if current_ccs:
-                    old_css_ids = list(
-                        ClassSectionSubject.objects.filter(
-                            class_section_id_id=current_ccs.class_section_id_id,
-                            removed=False,
-                        ).values_list("class_section_subject_id", flat=True)
-                    )
-                    if old_css_ids:
-                        ChildSubject.objects.filter(
-                            child_id=child,
-                            class_section_subject_id_id__in=old_css_ids,
-                            is_active=True,
-                            removed=False,
-                        ).update(
-                            is_active=False,
-                            removed=True,
-                            deleted_at=now,
-                            updated_by=user,
-                            updated_at=now,
-                        )
-
-                # Create ChildSubject rows for new section's active subjects
+                # Backfill ChildSubject for the new bucket's active subjects,
+                # idempotently. Old ChildSubject rows are intentionally left
+                # untouched (never soft-deleted) — Dots needs the full history
+                # of every subject a child was ever attached to (M6 decision #2).
                 new_active_css = list(
                     ClassSectionSubject.objects.filter(
                         class_section_id=new_section,
@@ -130,33 +148,11 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
                         removed=False,
                     )
                 )
-                if new_active_css:
-                    ChildSubject.objects.bulk_create([
-                        ChildSubject(
-                            child_id=child,
-                            class_section_subject_id=css,
-                            created_by=user,
-                        )
-                        for css in new_active_css
-                    ])
-
-                # Handle class change when section moves to a different SchoolClass
-                current_cc = ChildClass.objects.filter(
-                    child_id=child, is_active=True, removed=False
-                ).first()
-                new_school_class_id = new_section.school_class_id_id
-
-                if current_cc and current_cc.school_class_id_id != new_school_class_id:
-                    current_cc.is_active = False
-                    current_cc.removed = True
-                    current_cc.deleted_at = now
-                    current_cc.updated_by = user
-                    current_cc.save()
-
-                    ChildClass.objects.create(
+                for css in new_active_css:
+                    ChildSubject.objects.get_or_create(
                         child_id=child,
-                        school_class_id=new_section.school_class_id,
-                        created_by=user,
+                        class_section_subject_id=css,
+                        defaults={"created_by": user},
                     )
 
     # Re-fetch with annotations for serialization

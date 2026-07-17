@@ -59,6 +59,15 @@ from sessionops.models.slot_class_section_volunteer import SlotClassSectionVolun
 from sessionops.models.session_details import SchoolSessionDetails
 from sessionops.models.school_holiday import SchoolHoliday, HOLIDAY_REASONS
 
+# M8a models
+from sessionops.models.realtime_sync_log import (
+    RealtimeSyncLog,
+    SYNC_TYPES,
+    EVENT_TYPES,
+    SYNC_STATUSES,
+    ACTIONS_TAKEN,
+)
+
 # M2 models
 from sessionops.models.academic_year import AcademicYear, SchoolAcademicYear
 from sessionops.models.program import Program
@@ -106,4 +115,10 @@ __all__ = [
     "BatchChild",
     "ChildProgram",
     "ChildRemovalLog",
+    # M8a
+    "RealtimeSyncLog",
+    "SYNC_TYPES",
+    "EVENT_TYPES",
+    "SYNC_STATUSES",
+    "ACTIONS_TAKEN",
 ]

@@ -88,6 +88,7 @@ def _make_section(school_id: int, user: User, code: str = "A", class_code: str =
 def _enroll(school_id: int, section: ClassSection, user: User, **kwargs) -> Child:
     defaults = dict(
         first_name="Asha", last_name="Kumar", gender="female", age=10,
+        school_class_id=section.school_class_id_id,
         class_section_id=section.class_section_id,
     )
     defaults.update(kwargs)
@@ -113,7 +114,7 @@ class TestReactivateCreatesRows:
         child.refresh_from_db()
         assert child.is_active is False
 
-        reactivate_child(child.child_id, ReactivateIn(class_section_id=section.class_section_id), user)
+        reactivate_child(child.child_id, ReactivateIn(school_class_id=section.school_class_id_id, class_section_id=section.class_section_id), user)
 
         child.refresh_from_db()
         assert child.is_active is True
@@ -129,7 +130,7 @@ class TestReactivateCreatesRows:
         child = _enroll(501, section, user)
         _deactivate(child, user)
 
-        reactivate_child(child.child_id, ReactivateIn(class_section_id=section.class_section_id), user)
+        reactivate_child(child.child_id, ReactivateIn(school_class_id=section.school_class_id_id, class_section_id=section.class_section_id), user)
 
         # Two rows each: one deactivated (from deactivation), one new active
         assert ChildClass.objects.filter(child_id=child).count() == 2
@@ -147,7 +148,7 @@ class TestReactivateCreatesRows:
         # Removal log is active after deactivation
         assert ChildRemovalLog.objects.filter(child_id=child, is_active=True).exists()
 
-        reactivate_child(child.child_id, ReactivateIn(class_section_id=section.class_section_id), user)
+        reactivate_child(child.child_id, ReactivateIn(school_class_id=section.school_class_id_id, class_section_id=section.class_section_id), user)
 
         # Removal log is now inactive
         log = ChildRemovalLog.objects.get(child_id=child)
@@ -165,14 +166,14 @@ class TestReactivateValidation:
         child = _enroll(503, section, user)
 
         with pytest.raises(ValidationError, match="already active"):
-            reactivate_child(child.child_id, ReactivateIn(class_section_id=section.class_section_id), user)
+            reactivate_child(child.child_id, ReactivateIn(school_class_id=section.school_class_id_id, class_section_id=section.class_section_id), user)
 
     def test_reactivate_nonexistent_child_raises_not_found(self):
         user = _make_user("r5@t.com")
         _make_partner(504)
 
         with pytest.raises(NotFound):
-            reactivate_child(99999, ReactivateIn(class_section_id=1), user)
+            reactivate_child(99999, ReactivateIn(school_class_id=1, class_section_id=1), user)
 
     def test_reactivate_to_full_section_raises_conflict(self):
         user = _make_user("r6@t.com")
@@ -195,7 +196,7 @@ class TestReactivateValidation:
         _deactivate(child, user)
 
         with pytest.raises(ConflictError, match="full"):
-            reactivate_child(child.child_id, ReactivateIn(class_section_id=sec_b.class_section_id), user)
+            reactivate_child(child.child_id, ReactivateIn(school_class_id=sec_b.school_class_id_id, class_section_id=sec_b.class_section_id), user)
 
     def test_reactivate_school_at_confirmed_limit_raises_conflict(self):
         user = _make_user("r7@t.com")
@@ -207,7 +208,7 @@ class TestReactivateValidation:
 
         # Cap is 1; no active children now, so reactivation should SUCCEED
         # Re-read the logic: after deactivation, BatchChild is inactive (count=0), so cap not exceeded
-        result = reactivate_child(child.child_id, ReactivateIn(class_section_id=section.class_section_id), user)
+        result = reactivate_child(child.child_id, ReactivateIn(school_class_id=section.school_class_id_id, class_section_id=section.class_section_id), user)
         assert result.is_active is True
 
     def test_reactivate_at_cap_after_another_enrolled_raises_conflict(self):
@@ -222,7 +223,7 @@ class TestReactivateValidation:
 
         # child_a active (count=1, cap=1) → reactivating child_b should fail
         with pytest.raises(ConflictError, match="confirmed child limit"):
-            reactivate_child(child_b.child_id, ReactivateIn(class_section_id=section.class_section_id), user)
+            reactivate_child(child_b.child_id, ReactivateIn(school_class_id=section.school_class_id_id, class_section_id=section.class_section_id), user)
 
 
 @pytest.mark.django_db
@@ -242,7 +243,7 @@ class TestReactivateRBAC:
         _deactivate(child, admin)
 
         with pytest.raises(PermissionDenied):
-            reactivate_child(child.child_id, ReactivateIn(class_section_id=section.class_section_id), co)
+            reactivate_child(child.child_id, ReactivateIn(school_class_id=section.school_class_id_id, class_section_id=section.class_section_id), co)
 
     def test_admin_can_reactivate_any_child(self):
         admin = _make_user("admin_r2@t.com")
@@ -251,5 +252,5 @@ class TestReactivateRBAC:
         child = _enroll(510, section, admin)
         _deactivate(child, admin)
 
-        result = reactivate_child(child.child_id, ReactivateIn(class_section_id=section.class_section_id), admin)
+        result = reactivate_child(child.child_id, ReactivateIn(school_class_id=section.school_class_id_id, class_section_id=section.class_section_id), admin)
         assert result.is_active is True

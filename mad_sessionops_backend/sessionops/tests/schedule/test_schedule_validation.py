@@ -1,18 +1,25 @@
 """
-F-M3-8: Schedule validation integration tests.
+F-M3-8 / F-M6-5: Schedule validation integration tests.
 
-Verifies that business rules R3, R4, R5, R6, R7 are enforced with the correct
+Verifies that business rules R4, R5, R6, R7 are enforced with the correct
 error types and messages. Each test exercises the rule via the service layer
 against a real database.
+
+R3 (volunteer-ID uniqueness) moved to the schema layer in F-M6-5 — see
+tests/slot_classes/test_slot_class_schemas.py for its coverage. Every
+create_slot_class call here needs the section to have at least as many
+active children as volunteers assigned (R-bucket, new in F-M6-5).
 """
 from datetime import time
 from types import SimpleNamespace
 
 import pytest
 
-from sessionops.exceptions import ConflictError, ValidationError
+from sessionops.exceptions import ConflictError
 from sessionops.models import (
     AcademicYear,
+    Child,
+    ChildClassSection,
     Class,
     ClassSection,
     Partner,
@@ -26,12 +33,20 @@ from sessionops.models import (
 from sessionops.services.slot_classes.create import create_slot_class
 from sessionops.services.slots.create import create_slot
 from sessionops.services.slots.edit import edit_slot
+import sessionops.services.slot_classes.helpers as slot_class_helpers
 
 # ── Counters (ranges distinct from other test files) ──────────────────────────
 
 _UID = iter(range(8_000_000, 8_200_000))
 _SID = iter(range(60_000, 69_999))
 _WID = iter(range(50_000, 59_999))
+
+
+@pytest.fixture(autouse=True)
+def _reset_foundation_subject_cache():
+    slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
+    yield
+    slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -108,14 +123,25 @@ def _make_section(school_id: int, user: User, class_code: str = "5") -> ClassSec
     )
 
 
-def _make_subject(user: User, name: str = "Foundation Day 1"):
-    from sessionops.models import Subject
-    program, _ = Program.objects.get_or_create(program_name="Foundation Program")
-    subj, _ = Subject.objects.get_or_create(
-        subject_name=name,
-        defaults={"program_id": program},
-    )
-    return subj
+def _add_children(section: ClassSection, count: int, user: User) -> list[Child]:
+    children = []
+    for i in range(count):
+        child = Child.objects.create(
+            school_id=section.school_id,
+            first_name=f"Child{i}",
+            last_name="Test",
+            gender="male",
+            is_active=True,
+            created_by=user,
+        )
+        ChildClassSection.objects.create(
+            child_id=child,
+            class_section_id=section,
+            is_active=True,
+            created_by=user,
+        )
+        children.append(child)
+    return children
 
 
 def _make_volunteer(school_id: int, user: User) -> User:
@@ -162,41 +188,11 @@ def _make_slot(school_id: int, user: User,
     )
 
 
-def _payload(section, subject, vol1, vol2=None):
+def _payload(section, *volunteers):
     return SimpleNamespace(
         class_section_id=section.class_section_id,
-        subject_id=subject.subject_id,
-        volunteer_1_id=vol1.user_id,
-        volunteer_2_id=vol2.user_id if vol2 else None,
+        volunteer_ids=[v.user_id for v in volunteers],
     )
-
-
-# ── R3: Vol1 ≠ Vol2 ───────────────────────────────────────────────────────────
-
-@pytest.mark.django_db
-def test_r3_vol1_eq_vol2_blocked():
-    """R3: Same volunteer as both vol1 and vol2 must be rejected (400)."""
-    admin = _make_admin()
-    co = _make_co()
-    school = _make_school(co)
-    sid = school.partner_id
-    _make_active_year(admin)
-    section = _make_section(sid, co)
-    subject = _make_subject(co)
-    vol = _make_volunteer(sid, co)
-    slot = _make_slot(sid, co)
-
-    payload = SimpleNamespace(
-        class_section_id=section.class_section_id,
-        subject_id=subject.subject_id,
-        volunteer_1_id=vol.user_id,
-        volunteer_2_id=vol.user_id,
-    )
-
-    with pytest.raises(ValidationError) as exc_info:
-        create_slot_class(slot.slot_id, payload, co)
-
-    assert "Vol1 and Vol2 cannot be the same volunteer" in exc_info.value.message
 
 
 # ── R4: One volunteer per school ──────────────────────────────────────────────
@@ -214,10 +210,10 @@ def test_r4_volunteer_at_other_school_blocked_with_school_name_in_message():
 
     # Assign volunteer to school_A
     section_a = _make_section(school_a.partner_id, co1)
-    subject = _make_subject(co1)
+    _add_children(section_a, 1, co1)
     slot_a = _make_slot(school_a.partner_id, co1)
     vol = _make_volunteer(school_a.partner_id, co1)
-    create_slot_class(slot_a.slot_id, _payload(section_a, subject, vol), co1)
+    create_slot_class(slot_a.slot_id, _payload(section_a, vol), co1)
 
     # Link same volunteer to school_B via a second worknode entry
     wid_b = next(_WID)
@@ -230,10 +226,11 @@ def test_r4_volunteer_at_other_school_blocked_with_school_name_in_message():
 
     # Attempt to assign volunteer to school_B
     section_b = _make_section(school_b.partner_id, co2, class_code="6")
+    _add_children(section_b, 1, co2)
     slot_b = _make_slot(school_b.partner_id, co2)
 
     with pytest.raises(ConflictError) as exc_info:
-        create_slot_class(slot_b.slot_id, _payload(section_b, subject, vol), co2)
+        create_slot_class(slot_b.slot_id, _payload(section_b, vol), co2)
 
     assert school_a.partner_name in exc_info.value.message
     assert "Remove them from there first" in exc_info.value.message
@@ -251,17 +248,17 @@ def test_r5_duplicate_section_in_slot_blocked():
     sid = school.partner_id
     _make_active_year(admin)
     section = _make_section(sid, co)
-    subject = _make_subject(co)
+    _add_children(section, 1, co)
     vol1 = _make_volunteer(sid, co)
     vol2 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
     # First assignment succeeds
-    create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     # Second assignment with same section must fail
     with pytest.raises(ConflictError) as exc_info:
-        create_slot_class(slot.slot_id, _payload(section, subject, vol2), co)
+        create_slot_class(slot.slot_id, _payload(section, vol2), co)
 
     assert section.section_name in exc_info.value.message
 
@@ -277,19 +274,20 @@ def test_r6_volunteer_double_booked_in_slot_blocked():
     school = _make_school(co)
     sid = school.partner_id
     _make_active_year(admin)
-    subject = _make_subject(co)
     vol = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
     section_a = _make_section(sid, co, class_code="5")
     section_b = _make_section(sid, co, class_code="6")
+    _add_children(section_a, 1, co)
+    _add_children(section_b, 1, co)
 
     # First slot-class: vol in section_a
-    create_slot_class(slot.slot_id, _payload(section_a, subject, vol), co)
+    create_slot_class(slot.slot_id, _payload(section_a, vol), co)
 
     # Second slot-class: vol again in section_b — same slot
     with pytest.raises(ConflictError) as exc_info:
-        create_slot_class(slot.slot_id, _payload(section_b, subject, vol), co)
+        create_slot_class(slot.slot_id, _payload(section_b, vol), co)
 
     assert vol.user_display_name in exc_info.value.message
 

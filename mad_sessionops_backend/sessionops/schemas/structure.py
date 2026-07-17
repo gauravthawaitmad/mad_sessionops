@@ -87,3 +87,51 @@ class SectionAddIn(Schema):
 
 class AvailableCodesOut(Schema):
     codes: list[str]
+
+
+# ── Buckets (F-M6-2) ─────────────────────────────────────────────────────────────
+
+class BucketAddIn(Schema):
+    display_name: str | None = None
+
+
+class BucketEditIn(Schema):
+    display_name: str | None = None
+
+
+class BucketOut(Schema):
+    class_section_id: int
+    section_name: str
+    section_display_name: str | None
+    school_id: int
+    school_class_id: int | None  # legacy-row backward-compat only; never set by bucket writes
+    active_children_count: int
+    is_active: bool
+
+    @staticmethod
+    def resolve_school_class_id(obj) -> int | None:
+        return obj.school_class_id_id
+
+    @staticmethod
+    def resolve_active_children_count(obj) -> int:
+        return getattr(obj, "active_children_count", 0)
+
+
+# ── Bucket-children membership (F-M6-3) ─────────────────────────────────────────
+
+class BucketChildAddIn(Schema):
+    child_id: int
+
+
+class BucketChildOut(Schema):
+    child_class_section_id: int
+    child_id: int
+    class_section_id: int
+
+    @staticmethod
+    def resolve_child_id(obj) -> int:
+        return obj.child_id_id
+
+    @staticmethod
+    def resolve_class_section_id(obj) -> int:
+        return obj.class_section_id_id

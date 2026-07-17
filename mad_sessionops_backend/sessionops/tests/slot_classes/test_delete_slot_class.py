@@ -1,5 +1,9 @@
 """
-F-M3-7 Chunk 3: Slot-class edit/delete + slot-delete blocking tests.
+F-M3-7 Chunk 3 / F-M6-5: Slot-class edit/delete + slot-delete blocking tests.
+
+F-M6-5 replaced volunteer_1_id/volunteer_2_id with volunteer_ids: list[int] and
+dropped subject_id from client input. Every create_slot_class call here needs
+the section to have at least as many active children as volunteers (R-bucket).
 """
 from datetime import time
 from types import SimpleNamespace
@@ -29,12 +33,20 @@ from sessionops.services.slot_classes.create import create_slot_class
 from sessionops.services.slot_classes.delete import delete_slot_class
 from sessionops.services.slot_classes.edit import edit_slot_class
 from sessionops.services.slots.delete import soft_delete_slot
+import sessionops.services.slot_classes.helpers as slot_class_helpers
 
 # ── Counters ───────────────────────────────────────────────────────────────────
 
 _UID = iter(range(9_200_000, 9_400_000))
 _SID = iter(range(80_000, 90_000))
 _WID = iter(range(10_001, 20_000))
+
+
+@pytest.fixture(autouse=True)
+def _reset_foundation_subject_cache():
+    slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
+    yield
+    slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
 
 
 # ── Helpers (same pattern as test_create_slot_class.py) ───────────────────────
@@ -103,14 +115,25 @@ def _make_section(school_id: int, user: User, class_code: str = "5") -> ClassSec
     )
 
 
-def _make_subject(name: str = "Foundation Day 1"):
-    from sessionops.models import Subject
-    program, _ = Program.objects.get_or_create(program_name="Foundation Program")
-    subj, _ = Subject.objects.get_or_create(
-        subject_name=name,
-        defaults={"program_id": program},
-    )
-    return subj
+def _add_children(section: ClassSection, count: int, user: User) -> list[Child]:
+    children = []
+    for i in range(count):
+        child = Child.objects.create(
+            school_id=section.school_id,
+            first_name=f"Child{i}",
+            last_name="Test",
+            gender="male",
+            is_active=True,
+            created_by=user,
+        )
+        ChildClassSection.objects.create(
+            child_id=child,
+            class_section_id=section,
+            is_active=True,
+            created_by=user,
+        )
+        children.append(child)
+    return children
 
 
 def _make_volunteer(school_id: int, user: User) -> User:
@@ -154,34 +177,38 @@ def _make_slot(school_id: int, user: User) -> Slot:
     )
 
 
-def _payload(section, subject, vol1, vol2=None):
+def _payload(section, *volunteers):
     return SimpleNamespace(
         class_section_id=section.class_section_id,
-        subject_id=subject.subject_id,
-        volunteer_1_id=vol1.user_id,
-        volunteer_2_id=vol2.user_id if vol2 else None,
+        volunteer_ids=[v.user_id for v in volunteers],
+    )
+
+
+def _edit_payload(class_section_id=None, volunteers=None):
+    return SimpleNamespace(
+        class_section_id=class_section_id,
+        volunteer_ids=[v.user_id for v in volunteers] if volunteers is not None else None,
     )
 
 
 def _setup():
-    """Return (co, school, section, subject, vol1, slot)."""
-    admin = _make_admin()
+    """Return (co, school, section, vol1, slot) — section has 1 active child."""
     co = _make_co()
     school = _make_school(co)
     sid = school.partner_id
     section = _make_section(sid, co)
-    subject = _make_subject()
+    _add_children(section, 1, co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
-    return co, school, section, subject, vol1, slot
+    return co, school, section, vol1, slot
 
 
 # ── Delete tests ───────────────────────────────────────────────────────────────
 
 @pytest.mark.django_db
 def test_delete_slot_class_cascade_soft_deletes_all_rows():
-    co, school, section, subject, vol1, slot = _setup()
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    co, school, section, vol1, slot = _setup()
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     css_id = scs.class_section_subject_id_id
     delete_slot_class(scs.slot_class_section_id, co)
@@ -199,8 +226,8 @@ def test_delete_slot_class_cascade_soft_deletes_all_rows():
 
 @pytest.mark.django_db
 def test_delete_slot_class_reconciles_school_volunteer():
-    co, school, section, subject, vol1, slot = _setup()
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    co, school, section, vol1, slot = _setup()
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     assert SchoolVolunteer.objects.filter(
         school_id=school.partner_id, volunteer_id=vol1, is_active=True, removed=False
@@ -221,11 +248,12 @@ def test_delete_slot_class_keeps_school_volunteer_if_other_classes_remain():
     co = _make_co()
     school = _make_school(co)
     sid = school.partner_id
-    subject = _make_subject()
     vol1 = _make_volunteer(sid, co)
 
     section_a = _make_section(sid, co, class_code="5")
     section_b = _make_section(sid, co, class_code="6")
+    _add_children(section_a, 1, co)
+    _add_children(section_b, 1, co)
 
     slot_a = _make_slot(sid, co)
     year, _ = AcademicYear.objects.get_or_create(
@@ -247,8 +275,8 @@ def test_delete_slot_class_keeps_school_volunteer_if_other_classes_remain():
         created_by=co,
     )
 
-    scs_a = create_slot_class(slot_a.slot_id, _payload(section_a, subject, vol1), co)
-    scs_b = create_slot_class(slot_b.slot_id, _payload(section_b, subject, vol1), co)
+    scs_a = create_slot_class(slot_a.slot_id, _payload(section_a, vol1), co)
+    create_slot_class(slot_b.slot_id, _payload(section_b, vol1), co)
 
     delete_slot_class(scs_a.slot_class_section_id, co)
 
@@ -269,18 +297,12 @@ def test_delete_slot_class_not_found_raises_404():
 
 @pytest.mark.django_db
 def test_edit_slot_class_volunteer_same_school_replaces_row():
-    co, school, section, subject, vol1, slot = _setup()
+    co, school, section, vol1, slot = _setup()
     vol2 = _make_volunteer(school.partner_id, co)
 
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
-    edit_payload = SimpleNamespace(
-        volunteer_1_id=vol2.user_id,
-        volunteer_2_id=None,
-        class_section_id=None,
-        subject_id=None,
-    )
-    edit_slot_class(scs.slot_class_section_id, edit_payload, co)
+    edit_slot_class(scs.slot_class_section_id, _edit_payload(volunteers=[vol2]), co)
 
     # vol2 is now in the slot-class
     assert SlotClassSectionVolunteer.objects.filter(
@@ -294,17 +316,11 @@ def test_edit_slot_class_volunteer_same_school_replaces_row():
 
 @pytest.mark.django_db
 def test_edit_slot_class_volunteer_removes_school_volunteer_when_last():
-    co, school, section, subject, vol1, slot = _setup()
+    co, school, section, vol1, slot = _setup()
     vol2 = _make_volunteer(school.partner_id, co)
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
-    edit_payload = SimpleNamespace(
-        volunteer_1_id=vol2.user_id,
-        volunteer_2_id=None,
-        class_section_id=None,
-        subject_id=None,
-    )
-    edit_slot_class(scs.slot_class_section_id, edit_payload, co)
+    edit_slot_class(scs.slot_class_section_id, _edit_payload(volunteers=[vol2]), co)
 
     # vol1 has no remaining slot-classes → SchoolVolunteer removed
     assert not SchoolVolunteer.objects.filter(
@@ -317,28 +333,67 @@ def test_edit_slot_class_volunteer_removes_school_volunteer_when_last():
 
 
 @pytest.mark.django_db
-def test_edit_slot_class_section_full_cascade_reset():
-    admin = _make_admin()
+def test_edit_slot_class_multiple_volunteers_replaces_all():
+    """R2 relaxed to 1-5: edit can grow/shrink the volunteer list, not just swap 1-for-1."""
     co = _make_co()
     school = _make_school(co)
     sid = school.partner_id
-    subject = _make_subject()
+    section = _make_section(sid, co)
+    _add_children(section, 3, co)
+    vol1 = _make_volunteer(sid, co)
+    slot = _make_slot(sid, co)
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
+
+    vol2 = _make_volunteer(sid, co)
+    vol3 = _make_volunteer(sid, co)
+    edit_slot_class(scs.slot_class_section_id, _edit_payload(volunteers=[vol1, vol2, vol3]), co)
+
+    active_vol_ids = set(
+        SlotClassSectionVolunteer.objects.filter(
+            slot_class_section_id=scs, is_active=True, removed=False
+        ).values_list("volunteer_id_id", flat=True)
+    )
+    assert active_vol_ids == {vol1.user_id, vol2.user_id, vol3.user_id}
+
+
+@pytest.mark.django_db
+def test_edit_slot_class_r_bucket_violation_returns_400():
+    co = _make_co()
+    school = _make_school(co)
+    sid = school.partner_id
+    section = _make_section(sid, co)
+    _add_children(section, 1, co)  # only 1 child
+    vol1 = _make_volunteer(sid, co)
+    slot = _make_slot(sid, co)
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
+
+    vol2 = _make_volunteer(sid, co)
+    from sessionops.exceptions import ValidationError
+    with pytest.raises(ValidationError):
+        edit_slot_class(scs.slot_class_section_id, _edit_payload(volunteers=[vol1, vol2]), co)
+
+
+@pytest.mark.django_db
+def test_edit_slot_class_section_full_cascade_reset():
+    co = _make_co()
+    school = _make_school(co)
+    sid = school.partner_id
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
     section_a = _make_section(sid, co, class_code="5")
     section_b = _make_section(sid, co, class_code="6")
+    _add_children(section_a, 1, co)
+    _add_children(section_b, 1, co)
 
-    scs = create_slot_class(slot.slot_id, _payload(section_a, subject, vol1), co)
+    scs = create_slot_class(slot.slot_id, _payload(section_a, vol1), co)
     old_css_id = scs.class_section_subject_id_id
 
-    edit_payload = SimpleNamespace(
-        class_section_id=section_b.class_section_id,
-        subject_id=None,
-        volunteer_1_id=None,
-        volunteer_2_id=None,
+    edit_slot_class(
+        scs.slot_class_section_id,
+        _edit_payload(class_section_id=section_b.class_section_id),
+        co,
     )
-    edit_slot_class(scs.slot_class_section_id, edit_payload, co)
 
     scs.refresh_from_db()
     assert scs.class_section_id_id == section_b.class_section_id
@@ -347,18 +402,17 @@ def test_edit_slot_class_section_full_cascade_reset():
     assert not ClassSectionSubject.objects.filter(
         class_section_subject_id=old_css_id, is_active=True, removed=False
     ).exists()
-    # New CSS created for section_b
-    assert ClassSectionSubject.objects.filter(
-        class_section_id=section_b, is_active=True, removed=False
-    ).exists()
+    # New CSS created for section_b, always with the Foundation subject
+    new_css = ClassSectionSubject.objects.get(class_section_id=section_b, is_active=True, removed=False)
+    assert new_css.subject_id.subject_name == "Foundation"
 
 
 # ── Slot-delete blocking tests (deferred from F-M3-6) ─────────────────────────
 
 @pytest.mark.django_db
 def test_delete_slot_with_active_slot_classes_returns_409():
-    co, school, section, subject, vol1, slot = _setup()
-    create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    co, school, section, vol1, slot = _setup()
+    create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     with pytest.raises(ConflictError) as exc_info:
         soft_delete_slot(slot.slot_id, co)
@@ -369,8 +423,8 @@ def test_delete_slot_with_active_slot_classes_returns_409():
 
 @pytest.mark.django_db
 def test_delete_slot_with_only_removed_slot_classes_succeeds():
-    co, school, section, subject, vol1, slot = _setup()
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    co, school, section, vol1, slot = _setup()
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     # Remove the slot-class first
     delete_slot_class(scs.slot_class_section_id, co)
@@ -383,8 +437,8 @@ def test_delete_slot_with_only_removed_slot_classes_succeeds():
 @pytest.mark.django_db
 def test_delete_slot_does_not_cascade():
     """Deleting a slot that has only removed slot-classes doesn't affect CSS/SCSV rows."""
-    co, school, section, subject, vol1, slot = _setup()
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), co)
+    co, school, section, vol1, slot = _setup()
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
     css_id = scs.class_section_subject_id_id
 
     delete_slot_class(scs.slot_class_section_id, co)
@@ -398,20 +452,20 @@ def test_delete_slot_does_not_cascade():
 
 @pytest.mark.django_db
 def test_delete_slot_error_message_includes_active_count():
-    admin = _make_admin()
     co = _make_co()
     school = _make_school(co)
     sid = school.partner_id
-    subject = _make_subject()
     vol1 = _make_volunteer(sid, co)
     vol2 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
     section_a = _make_section(sid, co, class_code="5")
     section_b = _make_section(sid, co, class_code="6")
+    _add_children(section_a, 1, co)
+    _add_children(section_b, 1, co)
 
-    create_slot_class(slot.slot_id, _payload(section_a, subject, vol1), co)
-    create_slot_class(slot.slot_id, _payload(section_b, subject, vol2), co)
+    create_slot_class(slot.slot_id, _payload(section_a, vol1), co)
+    create_slot_class(slot.slot_id, _payload(section_b, vol2), co)
 
     with pytest.raises(ConflictError) as exc_info:
         soft_delete_slot(slot.slot_id, co)
@@ -422,7 +476,6 @@ def test_delete_slot_error_message_includes_active_count():
 @pytest.mark.django_db
 def test_cho_can_create_slot_class_within_scope():
     """CHO with valid worknode mapping can create a slot-class in their school."""
-    admin = _make_admin()
     co = _make_co()
     school = _make_school(co)
     sid = school.partner_id
@@ -432,7 +485,7 @@ def test_cho_can_create_slot_class_within_scope():
     cho = User.objects.create(
         user_login=f"cho{next(_UID)}@test.com",
         user_display_name="CHO User",
-        email=f"cho@test.com",
+        email="cho@test.com",
         user_role="CHO",
         is_active=True,
         worknode_id=cho_wid,
@@ -440,18 +493,17 @@ def test_cho_can_create_slot_class_within_scope():
     PartnerWorknode.objects.create(partner_id=str(sid), worknode_id=cho_wid)
 
     section = _make_section(sid, co)
-    subject = _make_subject()
+    _add_children(section, 1, co)
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
-    scs = create_slot_class(slot.slot_id, _payload(section, subject, vol1), cho)
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), cho)
     assert scs.slot_class_section_id is not None
 
 
 @pytest.mark.django_db
 def test_cho_cannot_create_slot_class_outside_scope_returns_403():
     """CHO without worknode mapping to the school is denied."""
-    admin = _make_admin()
     co = _make_co()
     school = _make_school(co)
     sid = school.partner_id
@@ -460,16 +512,15 @@ def test_cho_cannot_create_slot_class_outside_scope_returns_403():
     cho = User.objects.create(
         user_login=f"cho_out{next(_UID)}@test.com",
         user_display_name="Out-of-scope CHO",
-        email=f"cho_out@test.com",
+        email="cho_out@test.com",
         user_role="CHO",
         is_active=True,
         worknode_id=next(_WID),
     )
 
     section = _make_section(sid, co)
-    subject = _make_subject()
     vol1 = _make_volunteer(sid, co)
     slot = _make_slot(sid, co)
 
     with pytest.raises(PermissionDenied):
-        create_slot_class(slot.slot_id, _payload(section, subject, vol1), cho)
+        create_slot_class(slot.slot_id, _payload(section, vol1), cho)

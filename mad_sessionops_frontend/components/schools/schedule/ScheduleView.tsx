@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
+import Tooltip from '@mui/material/Tooltip';
 import { Calendar, Clock, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fetchSchedule, type SchoolSchedule, type ScheduleDay, type ScheduleSlot } from '@/lib/api/services/schedule.service';
@@ -27,6 +28,10 @@ function formatTime(t: string): string {
   return `${h12}:${mStr} ${ampm}`;
 }
 
+function firstName(name: string): string {
+  return name.split(' ')[0] ?? name;
+}
+
 // ── SlotClassRow ──────────────────────────────────────────────────────────────
 
 function SlotClassRow({ sc }: { sc: SchoolSchedule['days'][0]['slots'][0]['slotClasses'][0] }) {
@@ -43,34 +48,33 @@ function SlotClassRow({ sc }: { sc: SchoolSchedule['days'][0]['slots'][0]['slotC
         border: `1px solid ${BORDER}`,
       }}
     >
-      {/* Section + subject */}
+      {/* Bucket display name */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>
-          {sc.sectionName}
-        </Typography>
-        <Typography sx={{ fontSize: '11px', color: '#64748B', mt: 0.25 }}>
-          {sc.subjectName}
+          {sc.sectionDisplayName ?? sc.sectionName}
         </Typography>
       </Box>
 
-      {/* Volunteers */}
+      {/* Volunteers — first names only, full name on hover */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'flex-end', flex: 1 }}>
         {sc.volunteers.length === 0 ? (
           <Typography sx={{ fontSize: '11px', color: '#94A3B8', fontStyle: 'italic' }}>No volunteers</Typography>
         ) : sc.volunteers.map((v) => (
-          <Chip
-            key={v.userId}
-            label={v.userDisplayName}
-            size="small"
-            sx={{
-              fontSize: '11px',
-              height: 22,
-              bgcolor: '#EFF6FF',
-              color: '#1E40AF',
-              border: '1px solid #BFDBFE',
-              '& .MuiChip-label': { px: 1 },
-            }}
-          />
+          <Tooltip key={v.userId} title={v.userDisplayName} placement="top" arrow>
+            <Chip
+              label={firstName(v.userDisplayName)}
+              size="small"
+              sx={{
+                fontSize: '13px',
+                fontWeight: 500,
+                height: 26,
+                bgcolor: '#EFF6FF',
+                color: '#1E40AF',
+                border: '1px solid #BFDBFE',
+                '& .MuiChip-label': { px: 1.25 },
+              }}
+            />
+          </Tooltip>
         ))}
       </Box>
 

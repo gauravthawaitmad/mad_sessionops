@@ -19,10 +19,9 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   fetchSchoolClasses,
-  fetchSections,
   type SchoolClassItem,
-  type SectionItem,
 } from '@/lib/api/services/structure.service';
+import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
 import { enrollChild, type EnrollChildInput } from '@/lib/api/services/children.service';
 import toast from 'react-hot-toast';
 
@@ -34,7 +33,7 @@ const schema = z.object({
   gender:            z.enum(['male', 'female', 'other']),
   age:               z.number().int().min(3, 'Min 3').max(25, 'Max 25'),
   school_class_id:   z.number().min(1, 'Select a class'),
-  class_section_id:  z.number().min(1, 'Select a section'),
+  class_section_id:  z.number().nullable().optional(),
   date_of_birth:     z.string().optional(),
   date_of_enrollment:z.string().optional(),
   mad_joining_date:  z.string().optional(),
@@ -223,24 +222,25 @@ function ClassPicker({
   );
 }
 
-// ── SectionPicker ─────────────────────────────────────────────────────────────
+// ── BucketPicker ──────────────────────────────────────────────────────────────
+// Class-agnostic: pulls from fetchBuckets(schoolId), not scoped to the selected
+// class. Bucket assignment is optional (M6 decision #9) — includes an
+// "Unassigned" tile that clears the selection.
 
-function SectionPicker({
-  sections,
+function BucketPicker({
+  buckets,
   loading,
   value,
   onChange,
-  error,
 }: {
-  sections: SectionItem[];
+  buckets: BucketItem[];
   loading: boolean;
-  value: number | undefined;
-  onChange: (id: number) => void;
-  error?: boolean;
+  value: number | null | undefined;
+  onChange: (id: number | undefined) => void;
 }) {
   return (
     <Box>
-      <FieldLabel required>Section</FieldLabel>
+      <FieldLabel>Bucket</FieldLabel>
 
       {loading ? (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
@@ -248,23 +248,42 @@ function SectionPicker({
             <Skeleton key={i} variant="rounded" height={80} sx={{ borderRadius: '8px' }} />
           ))}
         </Box>
-      ) : sections.length === 0 ? (
-        <Box sx={{ p: 2, borderRadius: '8px', border: `1px dashed ${BORDER}`, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '12px', color: MUTED }}>No sections in this class.</Typography>
-        </Box>
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 1 }}>
-          {sections.map((s) => {
-            const count    = s.activeChildrenCount;
+          {/* Unassigned tile */}
+          <Box
+            onClick={() => onChange(undefined)}
+            sx={{
+              p: 1.25,
+              borderRadius: '8px',
+              border: `1.5px solid ${!value ? '#2563EB' : BORDER}`,
+              bgcolor: !value ? '#EFF6FF' : '#FAFAFA',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 80,
+              transition: 'all 0.12s ease',
+              ...(value && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
+            }}
+          >
+            <Typography sx={{ fontSize: '11px', fontWeight: 600, color: !value ? '#1D4ED8' : MUTED, textAlign: 'center' }}>
+              Unassigned
+            </Typography>
+          </Box>
+
+          {buckets.map((b) => {
+            const count    = b.activeChildrenCount;
             const full     = count >= MAX_CAP;
             const pct      = Math.min((count / MAX_CAP) * 100, 100);
             const color    = capacityColor(count);
-            const selected = value === s.classSectionId;
+            const selected = value === b.classSectionId;
+            const name     = b.sectionDisplayName ?? b.sectionName;
 
             return (
               <Box
-                key={s.classSectionId}
-                onClick={() => !full && onChange(s.classSectionId)}
+                key={b.classSectionId}
+                onClick={() => !full && onChange(b.classSectionId)}
                 sx={{
                   p: 1.25,
                   borderRadius: '8px',
@@ -276,23 +295,9 @@ function SectionPicker({
                   ...(!full && !selected && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
                 }}
               >
-                {/* Letter badge */}
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '6px',
-                    bgcolor: selected ? '#2563EB' : `${color}22`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 0.75,
-                  }}
-                >
-                  <Typography sx={{ fontSize: '12px', fontWeight: 700, color: selected ? '#fff' : color }}>
-                    {s.sectionCode}
-                  </Typography>
-                </Box>
+                <Typography sx={{ fontSize: '12px', fontWeight: selected ? 700 : 600, color: selected ? '#1D4ED8' : '#374151', mb: 0.75, lineHeight: 1.2 }}>
+                  {name}
+                </Typography>
 
                 {/* Capacity bar */}
                 <LinearProgress
@@ -317,10 +322,6 @@ function SectionPicker({
             );
           })}
         </Box>
-      )}
-
-      {error && (
-        <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>Select a section</Typography>
       )}
     </Box>
   );
@@ -349,16 +350,15 @@ function SectionHeading({ children }: { children: string }) {
 
 export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollChildModalProps) {
   const [classes, setClasses]               = useState<SchoolClassItem[]>([]);
-  const [sections, setSections]             = useState<SectionItem[]>([]);
+  const [buckets, setBuckets]               = useState<BucketItem[]>([]);
   const [classesLoading, setClassesLoading] = useState(false);
-  const [sectionsLoading, setSectionsLoading] = useState(false);
+  const [bucketsLoading, setBucketsLoading] = useState(false);
   const [submitting, setSubmitting]         = useState(false);
 
   const {
     control,
     handleSubmit,
     watch,
-    setValue,
     reset,
     formState: { errors },
   } = useForm<FormValues>({
@@ -370,7 +370,6 @@ export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollC
     },
   });
 
-  const selectedClassId   = watch('school_class_id');
   const selectedSectionId = watch('class_section_id');
 
   // Load classes on open
@@ -383,23 +382,18 @@ export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollC
       .finally(() => setClassesLoading(false));
   }, [open, schoolId]);
 
-  // Fetch sections whenever class selection changes
+  // Load buckets on open — independent of class selection (buckets are class-agnostic)
   useEffect(() => {
-    if (!selectedClassId) {
-      setSections([]);
-      return;
-    }
-    setValue('class_section_id', undefined as unknown as number);
-    setSectionsLoading(true);
-    fetchSections(schoolId, selectedClassId)
-      .then(setSections)
-      .catch(() => toast.error('Could not load sections'))
-      .finally(() => setSectionsLoading(false));
-  }, [selectedClassId, schoolId, setValue]);
+    if (!open) return;
+    setBucketsLoading(true);
+    fetchBuckets(schoolId)
+      .then(setBuckets)
+      .catch(() => toast.error('Could not load buckets'))
+      .finally(() => setBucketsLoading(false));
+  }, [open, schoolId]);
 
   function handleClose() {
     reset();
-    setSections([]);
     onClose();
   }
 
@@ -410,8 +404,9 @@ export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollC
       last_name:        values.last_name.trim(),
       gender:           values.gender,
       age:              values.age,
-      class_section_id: values.class_section_id,
+      school_class_id:  values.school_class_id,
     };
+    if (values.class_section_id)          payload.class_section_id  = values.class_section_id;
     if (values.date_of_birth?.trim())     payload.date_of_birth      = values.date_of_birth;
     if (values.date_of_enrollment?.trim())payload.date_of_enrollment = values.date_of_enrollment;
     if (values.mad_joining_date?.trim())  payload.mad_joining_date   = values.mad_joining_date;
@@ -657,11 +652,11 @@ export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollC
                 </Box>
               </Box>
 
-              {/* ── Class & Section ── */}
+              {/* ── Class & Bucket ── */}
               <Box sx={{ pt: 2, borderTop: `1px solid ${BORDER}` }}>
-                <SectionHeading>Class &amp; Section</SectionHeading>
+                <SectionHeading>Class &amp; Bucket</SectionHeading>
 
-                {/* Class chips */}
+                {/* Class chips — required */}
                 <Box sx={{ mb: 2 }}>
                   <Controller
                     name="school_class_id"
@@ -677,22 +672,19 @@ export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollC
                   />
                 </Box>
 
-                {/* Section cards — shown after class is picked */}
-                {selectedClassId && (
-                  <Controller
-                    name="class_section_id"
-                    control={control}
-                    render={({ field }) => (
-                      <SectionPicker
-                        sections={sections}
-                        loading={sectionsLoading}
-                        value={selectedSectionId}
-                        onChange={field.onChange}
-                        error={!!errors.class_section_id}
-                      />
-                    )}
-                  />
-                )}
+                {/* Bucket cards — independent of class, optional */}
+                <Controller
+                  name="class_section_id"
+                  control={control}
+                  render={({ field }) => (
+                    <BucketPicker
+                      buckets={buckets}
+                      loading={bucketsLoading}
+                      value={selectedSectionId}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
               </Box>
 
             </Box>

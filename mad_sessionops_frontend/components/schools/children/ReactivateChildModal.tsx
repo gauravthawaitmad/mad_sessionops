@@ -15,10 +15,9 @@ import IconButton from '@mui/material/IconButton';
 import { X } from 'lucide-react';
 import {
   fetchSchoolClasses,
-  fetchSections,
   type SchoolClassItem,
-  type SectionItem,
 } from '@/lib/api/services/structure.service';
+import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
 import { reactivateChild, type ChildItem } from '@/lib/api/services/children.service';
 import toast from 'react-hot-toast';
 
@@ -97,44 +96,60 @@ function ClassPicker({
   );
 }
 
-// ── SectionPicker ─────────────────────────────────────────────────────────────
+// ── BucketPicker ──────────────────────────────────────────────────────────────
+// Class-agnostic and optional — includes an "Unassigned" tile.
 
-function SectionPicker({
-  sections,
+function BucketPicker({
+  buckets,
   loading,
   value,
   onChange,
 }: {
-  sections: SectionItem[];
+  buckets: BucketItem[];
   loading: boolean;
   value: number | undefined;
-  onChange: (id: number) => void;
+  onChange: (id: number | undefined) => void;
 }) {
   return (
     <Box>
-      <FieldLabel>Section</FieldLabel>
+      <FieldLabel>Bucket</FieldLabel>
       {loading ? (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} variant="rounded" height={80} sx={{ borderRadius: '8px' }} />
           ))}
         </Box>
-      ) : sections.length === 0 ? (
-        <Box sx={{ p: 2, borderRadius: '8px', border: `1px dashed ${BORDER}`, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '12px', color: MUTED }}>No sections in this class.</Typography>
-        </Box>
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 1 }}>
-          {sections.map((s) => {
-            const count    = s.activeChildrenCount;
+          {/* Unassigned tile */}
+          <Box
+            onClick={() => onChange(undefined)}
+            sx={{
+              p: 1.25, borderRadius: '8px',
+              border: `1.5px solid ${!value ? '#16A34A' : BORDER}`,
+              bgcolor: !value ? '#F0FDF4' : '#FAFAFA',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80,
+              transition: 'all 0.12s ease',
+              ...(value && { '&:hover': { borderColor: '#86EFAC', bgcolor: '#F0FDF4' } }),
+            }}
+          >
+            <Typography sx={{ fontSize: '11px', fontWeight: 600, color: !value ? '#15803D' : MUTED, textAlign: 'center' }}>
+              Unassigned
+            </Typography>
+          </Box>
+
+          {buckets.map((b) => {
+            const count    = b.activeChildrenCount;
             const full     = count >= MAX_CAP;
             const pct      = Math.min((count / MAX_CAP) * 100, 100);
             const color    = capacityColor(count);
-            const selected = value === s.classSectionId;
+            const selected = value === b.classSectionId;
+            const name     = b.sectionDisplayName ?? b.sectionName;
             return (
               <Box
-                key={s.classSectionId}
-                onClick={() => !full && onChange(s.classSectionId)}
+                key={b.classSectionId}
+                onClick={() => !full && onChange(b.classSectionId)}
                 sx={{
                   p: 1.25,
                   borderRadius: '8px',
@@ -146,11 +161,9 @@ function SectionPicker({
                   ...(!full && !selected && { '&:hover': { borderColor: '#86EFAC', bgcolor: '#F0FDF4' } }),
                 }}
               >
-                <Box sx={{ width: 28, height: 28, borderRadius: '6px', bgcolor: selected ? '#16A34A' : `${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.75 }}>
-                  <Typography sx={{ fontSize: '12px', fontWeight: 700, color: selected ? '#fff' : color }}>
-                    {s.sectionCode}
-                  </Typography>
-                </Box>
+                <Typography sx={{ fontSize: '12px', fontWeight: selected ? 700 : 600, color: selected ? '#15803D' : '#374151', mb: 0.75, lineHeight: 1.2 }}>
+                  {name}
+                </Typography>
                 <LinearProgress
                   variant="determinate"
                   value={pct}
@@ -191,9 +204,9 @@ export function ReactivateChildModal({
   onSuccess,
 }: ReactivateChildModalProps) {
   const [classes, setClasses]               = useState<SchoolClassItem[]>([]);
-  const [sections, setSections]             = useState<SectionItem[]>([]);
+  const [buckets, setBuckets]               = useState<BucketItem[]>([]);
   const [classesLoading, setClassesLoading] = useState(false);
-  const [sectionsLoading, setSectionsLoading] = useState(false);
+  const [bucketsLoading, setBucketsLoading] = useState(false);
   const [selectedClassId, setSelectedClassId]   = useState<number | undefined>();
   const [selectedSectionId, setSelectedSectionId] = useState<number | undefined>();
   const [submitError, setSubmitError]       = useState<string | null>(null);
@@ -209,31 +222,32 @@ export function ReactivateChildModal({
       .finally(() => setClassesLoading(false));
   }, [open, schoolId]);
 
-  // Load sections when class selected
+  // Load buckets on open — independent of class selection (buckets are class-agnostic)
   useEffect(() => {
-    if (!selectedClassId) { setSections([]); return; }
-    setSelectedSectionId(undefined);
-    setSectionsLoading(true);
-    fetchSections(schoolId, selectedClassId)
-      .then(setSections)
-      .catch(() => toast.error('Could not load sections'))
-      .finally(() => setSectionsLoading(false));
-  }, [selectedClassId, schoolId]);
+    if (!open) return;
+    setBucketsLoading(true);
+    fetchBuckets(schoolId)
+      .then(setBuckets)
+      .catch(() => toast.error('Could not load buckets'))
+      .finally(() => setBucketsLoading(false));
+  }, [open, schoolId]);
 
   function handleClose() {
     setSelectedClassId(undefined);
     setSelectedSectionId(undefined);
-    setSections([]);
     setSubmitError(null);
     onClose();
   }
 
   async function handleSubmit() {
-    if (!selectedSectionId) return;
+    if (!selectedClassId) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await reactivateChild(schoolId, child.childId, { class_section_id: selectedSectionId });
+      await reactivateChild(schoolId, child.childId, {
+        school_class_id: selectedClassId,
+        ...(selectedSectionId ? { class_section_id: selectedSectionId } : {}),
+      });
       toast.success(`${child.firstName} ${child.lastName} reactivated`);
       handleClose();
       onSuccess();
@@ -245,7 +259,7 @@ export function ReactivateChildModal({
     }
   }
 
-  const canSubmit = !!selectedSectionId && !submitting;
+  const canSubmit = !!selectedClassId && !submitting;
 
   return (
     <Dialog
@@ -278,7 +292,7 @@ export function ReactivateChildModal({
             Reactivate child
           </Typography>
           <Typography sx={{ fontSize: '12px', color: MUTED, mt: 0.25 }}>
-            {child.firstName} {child.lastName} — select a class and section
+            {child.firstName} {child.lastName} — select a class (bucket optional)
           </Typography>
         </Box>
         <IconButton
@@ -302,14 +316,12 @@ export function ReactivateChildModal({
               value={selectedClassId}
               onChange={setSelectedClassId}
             />
-            {selectedClassId && (
-              <SectionPicker
-                sections={sections}
-                loading={sectionsLoading}
-                value={selectedSectionId}
-                onChange={setSelectedSectionId}
-              />
-            )}
+            <BucketPicker
+              buckets={buckets}
+              loading={bucketsLoading}
+              value={selectedSectionId}
+              onChange={setSelectedSectionId}
+            />
             {submitError && (
               <Typography sx={{ fontSize: '12px', color: '#EF4444' }}>
                 {submitError}

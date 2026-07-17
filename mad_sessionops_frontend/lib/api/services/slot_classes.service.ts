@@ -12,6 +12,7 @@ export interface SlotClassItem {
   slotClassSectionId: number;
   classSectionId: number;
   sectionName: string;
+  sectionDisplayName: string | null;
   subjectName: string;
   volunteers: VolunteerInSlotClass[];
   activeChildrenCount: number;
@@ -19,26 +20,17 @@ export interface SlotClassItem {
 
 export interface CreateSlotClassInput {
   class_section_id: number;
-  subject_id: number;
-  volunteer_1_id: number;
-  volunteer_2_id?: number | null;
+  volunteer_ids: number[];
 }
 
 export interface UpdateSlotClassInput {
-  volunteer_1_id?: number | null;
-  volunteer_2_id?: number | null;
-  class_section_id?: number | null;
-  subject_id?: number | null;
+  class_section_id?: number;
+  volunteer_ids?: number[];
 }
 
 export interface DeleteSlotClassResponse {
   slotClassSectionId: number;
   deleted: boolean;
-}
-
-export interface SubjectItem {
-  subjectId: number;
-  subjectName: string;
 }
 
 // ── Raw backend shapes (snake_case) ───────────────────────────────────────────
@@ -53,6 +45,7 @@ interface RawSlotClass {
   slot_class_section_id: number;
   class_section_id: number;
   section_name: string;
+  section_display_name: string | null;
   subject_name: string;
   volunteers: RawVolunteer[];
   active_children_count: number;
@@ -73,6 +66,7 @@ function mapSlotClass(raw: RawSlotClass): SlotClassItem {
     slotClassSectionId: raw.slot_class_section_id,
     classSectionId: raw.class_section_id,
     sectionName: raw.section_name,
+    sectionDisplayName: raw.section_display_name,
     subjectName: raw.subject_name,
     volunteers: raw.volunteers.map(mapVolunteer),
     activeChildrenCount: raw.active_children_count,
@@ -125,11 +119,4 @@ export async function deleteSlotClass(
     `/schools/${schoolId}/slots/${slotId}/slot-classes/${scsId}/`
   );
   return { slotClassSectionId: raw.slot_class_section_id, deleted: raw.deleted };
-}
-
-export async function fetchSubjects(): Promise<SubjectItem[]> {
-  const raw = await api.get<{ subject_id: number; subject_name: string }[]>(
-    '/schools/subjects/'
-  );
-  return raw.map((r) => ({ subjectId: r.subject_id, subjectName: r.subject_name }));
 }

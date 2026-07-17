@@ -14,6 +14,7 @@ from sessionops.schemas.slot_classes import (
 from sessionops.services.slot_classes.create import create_slot_class, list_slot_classes
 from sessionops.services.slot_classes.delete import delete_slot_class
 from sessionops.services.slot_classes.edit import edit_slot_class
+from sessionops.services.slot_classes.helpers import normalize_subject_display_name
 
 
 class SubjectReadSchema(Schema):
@@ -43,7 +44,8 @@ def _scs_to_schema(scs) -> SlotClassReadSchema:
         slot_class_section_id=scs.slot_class_section_id,
         class_section_id=scs.class_section_id_id,
         section_name=scs.class_section_id.section_name,
-        subject_name=scs.class_section_subject_id.subject_id.subject_name,
+        section_display_name=scs.class_section_id.section_display_name,
+        subject_name=normalize_subject_display_name(scs.class_section_subject_id.subject_id.subject_name),
         volunteers=[
             VolunteerInSlotClassSchema(
                 user_id=v.volunteer_id_id,

@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { Database } from 'lucide-react';
+import { Activity, Database } from 'lucide-react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { DataSyncTab } from './DataSyncTab';
+import { RealtimeEventsTab } from './RealtimeEventsTab';
 
 const SIDEBAR_W      = 200;
 const SIDEBAR_BG     = '#FFFFFF';
@@ -19,7 +20,8 @@ const TEXT_MUTED     = '#94A3B8';
 const TEXT_DEFAULT   = '#64748B';
 
 const TABS = [
-  { key: 'data-sync', label: 'Data Sync', icon: Database },
+  { key: 'data-sync',        label: 'Data Sync',        icon: Database },
+  { key: 'realtime-events',  label: 'Realtime Events',  icon: Activity },
 ] as const;
 
 type TabKey = typeof TABS[number]['key'];
@@ -138,7 +140,8 @@ export function AdminPage() {
           </Typography>
         </Box>
 
-        {activeTab === 'data-sync' && <DataSyncTab />}
+        {activeTab === 'data-sync'       && <DataSyncTab />}
+        {activeTab === 'realtime-events' && <RealtimeEventsTab />}
       </Box>
     </Box>
   );

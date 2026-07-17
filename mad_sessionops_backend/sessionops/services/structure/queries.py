@@ -3,7 +3,7 @@ from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 
 from sessionops.exceptions import ConflictError, NotFound
-from sessionops.models import Class, ClassSection, SchoolClass
+from sessionops.models import Class, ChildClass, SchoolClass
 
 
 # ── Classes ────────────────────────────────────────────────────────────────────
@@ -64,12 +64,16 @@ def soft_delete_school_class(school_class_id: int, school_id: int, user) -> None
     except SchoolClass.DoesNotExist:
         raise NotFound(f"School class {school_class_id} not found.")
 
-    active_sections = ClassSection.objects.filter(
+    # M6 decoupled classes from sections/buckets (buckets never set school_class_id —
+    # see M6 decision #1), so class deletion must guard against active *children*
+    # directly assigned via ChildClass, not against sections/buckets anymore.
+    active_children = ChildClass.objects.filter(
         school_class_id=sc, is_active=True, removed=False
     ).count()
-    if active_sections > 0:
+    if active_children > 0:
         raise ConflictError(
-            f"Cannot remove class: {active_sections} active section(s) exist. Remove sections first."
+            f"Cannot remove class: {active_children} active child(ren) enrolled. "
+            f"Remove or reassign them first."
         )
 
     now = timezone.now()

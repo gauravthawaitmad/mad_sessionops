@@ -14,6 +14,7 @@ from sessionops.models import (
     ClassSectionSubject,
     Partner,
     SchoolAcademicYear,
+    SchoolClass,
     User,
 )
 from sessionops.schemas.children import ChildEnrollIn
@@ -24,30 +25,41 @@ MAX_CHILDREN_PER_SECTION = 5
 
 def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
     with transaction.atomic():
-        # 1. Lock section row to prevent concurrent capacity violations
+        # 1. Validate school_class_id belongs to this school (class is now mandatory
+        # and independent of any bucket — was previously derived from the section).
         try:
-            section = (
-                ClassSection.objects
-                .select_for_update()
-                .get(
+            school_class = SchoolClass.objects.select_related("class_id").get(
+                school_class_id=payload.school_class_id,
+                school_id=school_id,
+                is_active=True,
+                removed=False,
+            )
+        except SchoolClass.DoesNotExist:
+            raise NotFound(f"School class {payload.school_class_id} not found.")
+
+        # 2. If a bucket is given, lock + validate + capacity check (R1). Bucket
+        # assignment is optional at enrollment (M6 decision #9).
+        bucket = None
+        if payload.class_section_id is not None:
+            try:
+                bucket = ClassSection.objects.select_for_update().get(
                     class_section_id=payload.class_section_id,
                     is_active=True,
                     removed=False,
                 )
-            )
-        except ClassSection.DoesNotExist:
-            raise NotFound(f"Section {payload.class_section_id} not found.")
-
-        # 2. Section capacity check (R1: max 5 children per section)
-        occupied = ChildClassSection.objects.filter(
-            class_section_id=section,
-            is_active=True,
-            removed=False,
-        ).count()
-        if occupied >= MAX_CHILDREN_PER_SECTION:
-            raise ConflictError(
-                f"Section is full ({MAX_CHILDREN_PER_SECTION}/{MAX_CHILDREN_PER_SECTION})."
-            )
+            except ClassSection.DoesNotExist:
+                raise NotFound(f"Bucket {payload.class_section_id} not found.")
+            if bucket.school_id != school_id:
+                raise ValidationError("Bucket does not belong to this school.")
+            occupied = ChildClassSection.objects.filter(
+                class_section_id=bucket,
+                is_active=True,
+                removed=False,
+            ).count()
+            if occupied >= MAX_CHILDREN_PER_SECTION:
+                raise ConflictError(
+                    f"Bucket is full ({MAX_CHILDREN_PER_SECTION}/{MAX_CHILDREN_PER_SECTION})."
+                )
 
         # 3. School confirmed-child-count cap
         try:
@@ -64,11 +76,7 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
             if active_batch >= partner.confirmed_child_count:
                 raise ConflictError("School has reached its confirmed child limit.")
 
-        # 4. Cross-school section validation
-        if section.school_id != school_id:
-            raise ValidationError("Section does not belong to this school.")
-
-        # 5. Resolve SchoolAcademicYear (must exist; guaranteed if section exists)
+        # 4. Resolve SchoolAcademicYear
         try:
             say = SchoolAcademicYear.objects.get(
                 school_id=school_id,
@@ -78,7 +86,7 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
         except SchoolAcademicYear.DoesNotExist:
             raise ConflictError("No active academic year binding found for this school.")
 
-        # 6. Create Child
+        # 5. Create Child
         child = Child.objects.create(
             school_id=school_id,
             first_name=payload.first_name,
@@ -92,49 +100,45 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
             mad_joining_date=payload.mad_joining_date,
             created_by=user,
         )
-        # 7. Link to SchoolClass via ChildClass
+        # 6. Always link to SchoolClass via ChildClass (from payload, not derived)
         ChildClass.objects.create(
             child_id=child,
-            school_class_id_id=section.school_class_id_id,
+            school_class_id=school_class,
             created_by=user,
         )
-        # 8. Link to ClassSection via ChildClassSection
-        ChildClassSection.objects.create(
-            child_id=child,
-            class_section_id=section,
-            created_by=user,
-        )
-        # 9. Link to school's academic year batch
+        # 7. If a bucket was given, link it + backfill ChildSubject idempotently
+        if bucket:
+            ChildClassSection.objects.create(
+                child_id=child,
+                class_section_id=bucket,
+                created_by=user,
+            )
+            active_css = list(
+                ClassSectionSubject.objects.filter(
+                    class_section_id=bucket,
+                    is_active=True,
+                    removed=False,
+                )
+            )
+            for css in active_css:
+                ChildSubject.objects.get_or_create(
+                    child_id=child,
+                    class_section_subject_id=css,
+                    defaults={"created_by": user},
+                )
+        # 8. Link to school's academic year batch
         BatchChild.objects.create(
             school_academic_year_id=say,
             child_id=child,
             school_id=school_id,
             created_by=user,
         )
-        # 10. Auto-assign Foundation Program
+        # 9. Auto-assign Foundation Program
         ChildProgram.objects.create(
             program_id_id=FOUNDATION_PROGRAM_ID,
             child_id=child,
             created_by=user,
         )
-
-        # 11. M3 extension: create ChildSubject for any active subjects on this section
-        active_css = list(
-            ClassSectionSubject.objects.filter(
-                class_section_id=section,
-                is_active=True,
-                removed=False,
-            )
-        )
-        if active_css:
-            ChildSubject.objects.bulk_create([
-                ChildSubject(
-                    child_id=child,
-                    class_section_subject_id=css,
-                    created_by=user,
-                )
-                for css in active_css
-            ])
 
     # Re-fetch with annotations for response serialization
     from sessionops.services.children.queries import list_children

@@ -97,7 +97,7 @@ export function DeleteSlotClassModal({
 
           <Box>
             <Typography sx={{ fontSize: '14px', fontWeight: 600, color: '#1E293B', mb: 0.5 }}>
-              Remove &ldquo;{slotClass?.sectionName}&rdquo;?
+              Remove &ldquo;{slotClass?.sectionDisplayName ?? slotClass?.sectionName}&rdquo;?
             </Typography>
             <Typography sx={{ fontSize: '13px', color: '#64748B', lineHeight: 1.6 }}>
               This will remove the <strong>{slotClass?.subjectName}</strong> class assignment

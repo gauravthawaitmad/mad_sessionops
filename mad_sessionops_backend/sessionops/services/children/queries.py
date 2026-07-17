@@ -12,6 +12,7 @@ def list_children(
     class_id: int | None = None,
     status: str = "active",
     search: str | None = None,
+    unassigned: bool = False,
 ) -> QuerySet:
     qs = Child.objects.filter(school_id=school_id)
 
@@ -28,6 +29,11 @@ def list_children(
             ChildClassSection.objects
             .filter(child_id=OuterRef("pk"), is_active=True, removed=False)
             .values("class_section_id__section_name")[:1]
+        ),
+        current_section_display_name=Subquery(
+            ChildClassSection.objects
+            .filter(child_id=OuterRef("pk"), is_active=True, removed=False)
+            .values("class_section_id__section_display_name")[:1]
         ),
         current_class_name=Subquery(
             ChildClass.objects
@@ -47,7 +53,9 @@ def list_children(
         ),
     )
 
-    if section_id:
+    if unassigned:
+        qs = qs.filter(_current_section_id__isnull=True)
+    elif section_id:
         qs = qs.filter(_current_section_id=section_id)
     if class_id:
         qs = qs.filter(_current_school_class_id=class_id)
