@@ -118,7 +118,7 @@ Two layers of enforcement, both required:
 
 - `admin`, `functional_lead`, `project_associate` → all schools
 - `co_full_time`, `co_part_time` → schools where `partner.co_id == user.id`
-- `cho` → schools where an active `SchoolVolunteer` record exists for this user
+- `cho` → schools where `user.worknode_id` matches a `PartnerWorknode.worknode_id` row with a non-null/non-empty `partner_id`
 
 This filtering lives in service layer query helpers, not in raw views. See `docs/RBAC.md` (Sprint 2) for the helper contract.
 

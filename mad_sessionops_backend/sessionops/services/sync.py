@@ -8,15 +8,15 @@ from django.db import IntegrityError, OperationalError, transaction
 from django.db import close_old_connections
 from django.utils import timezone as dj_timezone
 
-from sessionops.models import Partner, SyncRun, User
-from sessionops.services.hasura.client import fetch_partners, fetch_users
+from sessionops.models import Partner, PartnerWorknode, SyncRun, User
+from sessionops.services.hasura.client import fetch_chapter_mapping, fetch_partners, fetch_users
 
 logger = logging.getLogger(__name__)
 
 _BATCH_SIZE = 500
 _PROGRESS_INTERVAL = _BATCH_SIZE  # one progress line per batch
 
-_USER_UPDATE_FIELDS = ["user_login", "user_display_name", "email", "user_role", "synced_at"]
+_USER_UPDATE_FIELDS = ["user_login", "user_display_name", "email", "user_role", "worknode_id", "synced_at"]
 
 _PARTNER_UPDATE_FIELDS = [
     "partner_name", "co_id", "co_name",
@@ -87,6 +87,7 @@ def _build_user_obj(row: dict, now: datetime) -> User | None:
         user_display_name=_str(row.get("user_display_name")) or "",
         email=(row.get("email") or "").lower().strip(),
         user_role=_str(row.get("user_role")) or "",
+        worknode_id=_int(row.get("worknode_id")),
         synced_at=now,
     )
 
@@ -146,6 +147,7 @@ def _upsert_user_single(row: dict, now: datetime) -> bool:
         "user_display_name": _str(row.get("user_display_name")) or "",
         "email": (row.get("email") or "").lower().strip(),
         "user_role": _str(row.get("user_role")) or "",
+        "worknode_id": _int(row.get("worknode_id")),
         "synced_at": now,
     }
     for attempt in range(2):
@@ -306,6 +308,56 @@ def _run_partners_phase(sync_run: SyncRun, now: datetime, progress: Callable[[st
 
 
 # ---------------------------------------------------------------------------
+# Partner-Worknode phase
+# ---------------------------------------------------------------------------
+
+def _run_partner_worknode_phase(sync_run: SyncRun, now: datetime, progress: Callable[[str], None]) -> None:
+    """Upsert PartnerWorknode from Hasura chapter_mapping.
+
+    Hasura field 'chapter_id' maps to our 'partner_id' (the upsert key).
+    Rows no longer in Hasura are hard-deleted (sync mirror — no soft-delete).
+    """
+    progress("Fetching chapter_mapping from Hasura...")
+    rows = fetch_chapter_mapping()
+    total = len(rows)
+    progress(f"  Fetched {total} chapter_mapping rows. Upserting...")
+
+    incoming_partner_ids: set[str] = set()
+    upserted = 0
+    for row in rows:
+        chapter_id = row.get("chapter_id")
+        worknode_id = row.get("worknode_id")
+        if chapter_id is None or worknode_id is None:
+            continue
+        partner_id = str(chapter_id)
+        incoming_partner_ids.add(partner_id)
+        PartnerWorknode.objects.update_or_create(
+            partner_id=partner_id,
+            defaults={
+                "worknode_id":            _int(worknode_id) or worknode_id,
+                "city_name":              _str(row.get("city_name")),
+                "state":                  _str(row.get("state")),
+                "co_name":                _str(row.get("co_name")),
+                "chapter_name":           _str(row.get("chapter_name")),
+                "engine":                 _str(row.get("engine")),
+                "chapter_status":         _str(row.get("chapter_status")),
+                "sourcing_campaign_code": _str(row.get("sourcing_campaign_code")),
+                "campaign_name":          _str(row.get("campaign_name")),
+                "fundraiser_id":          _str(row.get("fundraiser_id")),
+                "fundraiser_name":        _str(row.get("fundraiser_name")),
+            },
+        )
+        upserted += 1
+
+    deleted_count, _ = PartnerWorknode.objects.exclude(partner_id__in=incoming_partner_ids).delete()
+    progress(f"  partner_worknode: upserted={upserted} deleted={deleted_count}")
+    logger.info(
+        "Hasura sync: partner_worknode done — fetched=%d upserted=%d deleted=%d",
+        total, upserted, deleted_count,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Public sync entry points
 # ---------------------------------------------------------------------------
 
@@ -347,6 +399,15 @@ def run_partner_sync(progress: Callable[[str], None] | None = None) -> SyncRun:
     return _execute_sync(SyncRun.SYNC_TYPE_PARTNERS, [_run_partners_phase], progress)
 
 
+def run_partner_worknode_sync(progress: Callable[[str], None] | None = None) -> SyncRun:
+    """Sync only partner_worknode mappings from Hasura. Creates one SyncRun(sync_type='partner_worknode')."""
+    return _execute_sync(SyncRun.SYNC_TYPE_PARTNER_WORKNODE, [_run_partner_worknode_phase], progress)
+
+
 def run_sync(progress: Callable[[str], None] | None = None) -> SyncRun:
-    """Sync both users and partners. Creates one SyncRun(sync_type='all')."""
-    return _execute_sync(SyncRun.SYNC_TYPE_ALL, [_run_users_phase, _run_partners_phase], progress)
+    """Sync users, partners, and partner_worknode. Creates one SyncRun(sync_type='all')."""
+    return _execute_sync(
+        SyncRun.SYNC_TYPE_ALL,
+        [_run_users_phase, _run_partners_phase, _run_partner_worknode_phase],
+        progress,
+    )

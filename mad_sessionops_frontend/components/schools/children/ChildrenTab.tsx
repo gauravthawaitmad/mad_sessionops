@@ -32,6 +32,7 @@ import toast from 'react-hot-toast';
 interface ChildrenTabProps {
   schoolId: number;
   activeYear: string;
+  canModify?: boolean;
 }
 
 type StatusFilter = 'active' | 'inactive' | 'all';
@@ -137,7 +138,7 @@ function StatusTabs({ value, counts, onChange }: StatusTabsProps) {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-function EmptyState({ onEnroll }: { onEnroll: () => void }) {
+function EmptyState({ onEnroll }: { onEnroll?: () => void }) {
   return (
     <Box sx={{ mt: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
       <Box
@@ -158,17 +159,19 @@ function EmptyState({ onEnroll }: { onEnroll: () => void }) {
         No children enrolled yet.
       </Typography>
       <Typography sx={{ fontSize: '13px', color: MUTED, textAlign: 'center', maxWidth: 280 }}>
-        Click &apos;Enroll Child&apos; to get started.
+        {onEnroll ? "Click 'Enroll Child' to get started." : 'No children have been enrolled in this school.'}
       </Typography>
-      <Button
-        variant="contained"
-        size="small"
-        startIcon={<Plus size={14} />}
-        onClick={onEnroll}
-        sx={{ mt: 1, bgcolor: '#2563EB', '&:hover': { bgcolor: '#1D4ED8' }, fontSize: '13px', fontWeight: 600 }}
-      >
-        Enroll Child
-      </Button>
+      {onEnroll && (
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<Plus size={14} />}
+          onClick={onEnroll}
+          sx={{ mt: 1, bgcolor: '#2563EB', '&:hover': { bgcolor: '#1D4ED8' }, fontSize: '13px', fontWeight: 600 }}
+        >
+          Enroll Child
+        </Button>
+      )}
     </Box>
   );
 }
@@ -344,7 +347,7 @@ function ChildRow({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function ChildrenTab({ schoolId, activeYear }: ChildrenTabProps) {
+export function ChildrenTab({ schoolId, activeYear, canModify = true }: ChildrenTabProps) {
   const [allChildren, setAllChildren]   = useState<ChildItem[]>([]);
   const [allActive, setAllActive]       = useState<number | null>(null);
   const [allInactive, setAllInactive]   = useState<number | null>(null);
@@ -450,21 +453,23 @@ export function ChildrenTab({ schoolId, activeYear }: ChildrenTabProps) {
               </Typography>
             )}
           </Box>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<Plus size={14} />}
-            onClick={() => setEnrollOpen(true)}
-            sx={{
-              bgcolor: '#2563EB',
-              '&:hover': { bgcolor: '#1D4ED8' },
-              fontSize: '13px',
-              fontWeight: 600,
-              boxShadow: 'none',
-            }}
-          >
-            Enroll Child
-          </Button>
+          {canModify && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<Plus size={14} />}
+              onClick={() => setEnrollOpen(true)}
+              sx={{
+                bgcolor: '#2563EB',
+                '&:hover': { bgcolor: '#1D4ED8' },
+                fontSize: '13px',
+                fontWeight: 600,
+                boxShadow: 'none',
+              }}
+            >
+              Enroll Child
+            </Button>
+          )}
         </Box>
 
         {/* ── Toolbar: search + class/section + status ── */}
@@ -601,7 +606,7 @@ export function ChildrenTab({ schoolId, activeYear }: ChildrenTabProps) {
         )}
 
         {/* ── States ── */}
-        {isEmpty && <EmptyState onEnroll={() => setEnrollOpen(true)} />}
+        {isEmpty && <EmptyState onEnroll={canModify ? () => setEnrollOpen(true) : undefined} />}
         {noResults && <NoResults onClear={() => { setSearch(''); handleClassChange(null); }} />}
 
         {/* ── Table ── */}

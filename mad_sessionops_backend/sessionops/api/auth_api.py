@@ -46,6 +46,7 @@ from sessionops.schemas import (
     LoginSchema,
     LogoutSchema,
     MessageResponseSchema,
+    PermissionsResponseSchema,
     RefreshTokenSchema,
     RegisterSchema,
     ResetPasswordSchema,
@@ -651,3 +652,39 @@ def set_password(request, data: SetPasswordSchema):
         return MessageResponseSchema(message="Password set successfully.", success=True)
     except AuthenticationError as e:
         handle_auth_error(e)
+
+
+# =============================================================================
+# PERMISSIONS CHECK — scoped per-school, used by frontend to gate CRUD buttons
+# =============================================================================
+
+
+@auth_router.get(
+    "/me/permissions/",
+    auth=jwt_auth,
+    response={200: PermissionsResponseSchema, 401: ErrorResponseSchema, 404: ErrorResponseSchema},
+    summary="Get caller's permissions for a school",
+    description="Returns can_view and can_modify booleans for the given school_id.",
+)
+def get_my_permissions(request, school_id: int):
+    from sessionops.exceptions import NotFound
+    from sessionops.models import Partner, User
+    from sessionops.services.rbac.scope import can_modify_school, can_view_school
+
+    user_id = getattr(request, "user", None)
+    if not user_id or not hasattr(user_id, "email"):
+        raise HttpError(401, "User not found")
+    try:
+        caller = User.objects.get(email=user_id.email)
+    except User.DoesNotExist:
+        raise HttpError(401, "User not found")
+
+    try:
+        partner = Partner.objects.get(partner_id=school_id)
+    except Partner.DoesNotExist:
+        raise NotFound(f"School {school_id} not found.")
+
+    return PermissionsResponseSchema(
+        can_view=can_view_school(caller, partner),
+        can_modify=can_modify_school(caller, partner),
+    )

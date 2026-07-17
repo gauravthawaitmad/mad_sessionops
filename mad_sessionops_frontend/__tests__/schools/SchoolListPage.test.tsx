@@ -1,7 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { SchoolListPage } from '@/components/schools/SchoolListPage';
+import authReducer from '@/lib/redux/features/auth/authSlice';
+
+function makeStore(preloadedState?: object) {
+  return configureStore({ reducer: { auth: authReducer }, preloadedState });
+}
+
+function renderWithProvider(ui: React.ReactElement, preloadedState?: object) {
+  const store = makeStore(preloadedState);
+  return render(<Provider store={store}>{ui}</Provider>);
+}
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -80,7 +92,7 @@ describe('SchoolListPage — F-M1-4', () => {
   it('test_schools_page_renders_table_with_data', async () => {
     vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
 
-    render(<SchoolListPage userName="Ipshita Das" />);
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 
     await waitFor(() => {
       expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
@@ -100,7 +112,7 @@ describe('SchoolListPage — F-M1-4', () => {
       summary: { ...MOCK_SUMMARY, totalSchools: 0 },
     });
 
-    render(<SchoolListPage userName="Test CHO" />);
+    renderWithProvider(<SchoolListPage userName="Test CHO" />);
 
     await waitFor(() => {
       expect(screen.getByText('No schools assigned yet')).toBeInTheDocument();
@@ -113,7 +125,7 @@ describe('SchoolListPage — F-M1-4', () => {
   it('test_schools_page_search_debounces_calls', async () => {
     vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
 
-    render(<SchoolListPage userName="Ipshita Das" />);
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 
     await waitFor(() => {
       expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
@@ -136,7 +148,7 @@ describe('SchoolListPage — F-M1-4', () => {
   it('test_schools_page_row_click_navigates_to_detail', async () => {
     vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
 
-    render(<SchoolListPage userName="Ipshita Das" />);
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 
     await waitFor(() => {
       expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();

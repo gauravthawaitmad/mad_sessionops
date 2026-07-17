@@ -182,3 +182,68 @@ class TestSoftDeleteSection:
         with pytest.raises(ConflictError) as exc_info:
             soft_delete_section(section.class_section_id, 41, user)
         assert "1 active child" in str(exc_info.value)
+
+
+# ── F-M3-7 extension: section delete blocked by slot-class assignments ────────
+
+@pytest.mark.django_db
+def test_section_delete_blocked_when_slot_classes_exist():
+    """M3 extension: soft_delete_section raises ConflictError if active SlotClassSection rows exist."""
+    from datetime import time
+    from sessionops.models import (
+        AcademicYear, Partner, PartnerWorknode, SchoolAcademicYear, Slot,
+        SlotClassSection, ClassSectionSubject, Subject,
+    )
+
+    user = _make_user("u_scs@t.com")
+    school_id = 42_001
+    Partner.objects.create(
+        partner_id=school_id,
+        partner_name=f"School {school_id}",
+        co_id=user.user_id,
+        converted=True,
+        is_active=True,
+    )
+    sc = _make_school_class(school_id=school_id, user=user)
+    section = add_section_to_class(sc.school_class_id, school_id, "A", user)
+
+    year, _ = AcademicYear.objects.get_or_create(
+        label="2026-2027", defaults={"is_active": True, "created_by": user}
+    )
+    say, _ = SchoolAcademicYear.objects.get_or_create(
+        school_id=school_id, academic_year_id=year, defaults={"created_by": user}
+    )
+    slot = Slot.objects.create(
+        school_id=school_id,
+        school_academic_year_id=say,
+        slot_name="Monday 09:00",
+        day_of_week="monday",
+        start_time=time(9, 0),
+        end_time=time(10, 0),
+        recurring=True,
+        is_active=True,
+        created_by=user,
+    )
+
+    from sessionops.models import Program as _Prog
+    prog, _ = _Prog.objects.get_or_create(program_name="Foundation Program")
+    subj, _ = Subject.objects.get_or_create(
+        subject_name="Foundation Day 1", defaults={"program_id": prog}
+    )
+    css = ClassSectionSubject.objects.create(
+        class_section_id=section,
+        subject_id=subj,
+        created_by=user,
+    )
+    SlotClassSection.objects.create(
+        slot_id=slot,
+        class_section_id=section,
+        class_section_subject_id=css,
+        is_active=True,
+        created_by=user,
+    )
+
+    with pytest.raises(ConflictError) as exc_info:
+        soft_delete_section(section.class_section_id, school_id, user)
+
+    assert "assignment" in exc_info.value.message.lower()

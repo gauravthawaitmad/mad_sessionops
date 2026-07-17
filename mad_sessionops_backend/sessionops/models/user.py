@@ -164,6 +164,14 @@ class User(models.Model):
         help_text="When this row was last refreshed from Hasura.",
     )
 
+    worknode_id = models.IntegerField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name="Worknode ID",
+        help_text="Worknode platform ID synced from Hasura. Links this user to a school via PartnerWorknode.",
+    )
+
     # =========================================================================
     # SOFT-DELETE FIELDS  (implements SoftDeleteBaseModel pattern directly;
     #                       User can't inherit because deleted_by is self-ref)

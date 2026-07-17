@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Skeleton from '@mui/material/Skeleton';
@@ -11,6 +12,7 @@ import { SchoolTable } from './SchoolTable';
 import { SchoolEmptyState } from './SchoolEmptyState';
 import { fetchSchools } from '@/lib/api/services/schools.service';
 import type { SchoolListItem, SchoolSummary, SortOption } from '@/lib/api/services/schools.service';
+import { selectScopeWarning } from '@/lib/redux/features/auth/authSlice';
 
 interface SchoolListPageProps {
   userName: string;
@@ -99,6 +101,7 @@ function sortSchools(schools: SchoolListItem[], sort: SortOption): SchoolListIte
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function SchoolListPage({ userName }: SchoolListPageProps) {
+  const scopeWarning = useSelector(selectScopeWarning);
   const [allSchools, setAllSchools] = useState<SchoolListItem[]>([]);
   const [summary, setSummary] = useState<SchoolSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,7 +210,19 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
       {/* ── Table — fills remaining height ────────────────────────────────────── */}
       {isEmpty ? (
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <SchoolEmptyState />
+          {scopeWarning ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, px: 4, textAlign: 'center' }}>
+              <BookOpen size={32} color={colors.gray[400]} strokeWidth={1.5} />
+              <Typography sx={{ mt: 2, mb: 1, fontWeight: 600, color: colors.gray[900], fontSize: '18px' }}>
+                No schools assigned
+              </Typography>
+              <Typography sx={{ color: colors.gray[500], maxWidth: 380, lineHeight: 1.6 }}>
+                {scopeWarning.message}
+              </Typography>
+            </Box>
+          ) : (
+            <SchoolEmptyState />
+          )}
         </Box>
       ) : (
         <Box sx={{ flex: 1, overflow: 'hidden', px: 4, pb: 3, minHeight: 0 }}>

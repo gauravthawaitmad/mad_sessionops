@@ -24,6 +24,10 @@ import { fetchSchool, type SchoolDetail } from '@/lib/api/services/schools.servi
 import { fetchActiveYear } from '@/lib/api/services/structure.service';
 import { StructureTab } from '@/components/schools/structure/StructureTab';
 import { ChildrenTab } from '@/components/schools/children/ChildrenTab';
+import { VolunteerListTab } from '@/components/schools/volunteers/VolunteerListTab';
+import { SlotListTab } from '@/components/schools/slots/SlotListTab';
+import { ScheduleView } from '@/components/schools/schedule/ScheduleView';
+import { useUserCan } from '@/lib/hooks/useUserCan';
 import { colors } from '@/config/design-tokens';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -45,8 +49,9 @@ const TABS = [
   { key: 'overview',   label: 'Overview',    icon: LayoutDashboard, enabled: true  },
   { key: 'structure',  label: 'Structure',   icon: BookOpen,        enabled: true  },
   { key: 'children',   label: 'Children',    icon: Users,           enabled: true  },
-  { key: 'volunteers', label: 'Volunteers',  icon: UserCheck,       enabled: false },
-  { key: 'slots',      label: 'Slots',       icon: Clock,           enabled: false },
+  { key: 'volunteers', label: 'Volunteers',  icon: UserCheck,       enabled: true  },
+  { key: 'slots',      label: 'Slots',       icon: Clock,           enabled: true  },
+  { key: 'schedule',   label: 'Schedule',    icon: Calendar,        enabled: true  },
   { key: 'calendar',   label: 'Calendar',    icon: Calendar,        enabled: false },
 ];
 
@@ -516,6 +521,7 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [activeYear, setActiveYear] = useState('');
+  const { canModify } = useUserCan(partnerId);
 
   useEffect(() => {
     let cancelled = false;
@@ -711,9 +717,12 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
           <ContentSkeleton />
         ) : school && (
           <>
-            {activeTab === 'overview'   && <OverviewContent school={school} />}
-            {activeTab === 'structure'  && <StructureTab schoolId={partnerId} activeYear={activeYear} />}
-            {activeTab === 'children'   && <ChildrenTab schoolId={partnerId} activeYear={activeYear} />}
+            {activeTab === 'overview'    && <OverviewContent school={school} />}
+            {activeTab === 'structure'   && <StructureTab schoolId={partnerId} activeYear={activeYear} canModify={canModify} />}
+            {activeTab === 'children'    && <ChildrenTab schoolId={partnerId} activeYear={activeYear} canModify={canModify} />}
+            {activeTab === 'volunteers'  && <VolunteerListTab schoolId={partnerId} />}
+            {activeTab === 'slots'       && <SlotListTab schoolId={partnerId} canModify={canModify} />}
+            {activeTab === 'schedule'    && <ScheduleView schoolId={partnerId} />}
           </>
         )}
 

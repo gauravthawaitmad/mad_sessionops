@@ -113,9 +113,9 @@ describe('SchoolDetailPage — F-M2-1 (Structure tab activation)', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 
-    // Only Volunteers, Slots, Calendar are disabled (3 tabs) — Structure + Children are enabled
+    // Only Calendar is disabled (1 tab) — Structure + Children + Volunteers + Slots enabled in M3
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(3);
+    expect(tooltips.length).toBe(1);
   });
 });
 
@@ -188,9 +188,9 @@ describe('SchoolDetailPage — F-M2-2 (Children tab activation)', () => {
       expect(screen.getByText('Overview')).toBeInTheDocument();
     });
 
-    // Only Volunteers, Slots, Calendar are disabled — Structure + Children are enabled
+    // Only Calendar is disabled — Structure + Children + Volunteers + Slots enabled in M3
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(3);
+    expect(tooltips.length).toBe(1);
   });
 });
 
@@ -237,7 +237,7 @@ describe('SchoolDetailPage — F-M1-5', () => {
 
     // All non-overview tab labels are present in DOM
     // MUI Tooltip clones elements internally, so multiple matches are expected
-    const disabledLabels = ['Structure', 'Volunteers', 'Slots', 'Calendar'];
+    const disabledLabels = ['Structure', 'Volunteers', 'Slots', 'Calendar', 'Children'];
     for (const label of disabledLabels) {
       const elements = screen.getAllByText(label);
       expect(elements.length).toBeGreaterThan(0);
@@ -249,7 +249,7 @@ describe('SchoolDetailPage — F-M1-5', () => {
 
     // Disabled tabs are wrapped in Tooltip with "Coming in a future milestone"
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
-    expect(tooltips.length).toBe(3); // Volunteers, Slots, Calendar (Structure + Children enabled by M2)
+    expect(tooltips.length).toBe(1); // Calendar only (Structure + Children + Volunteers + Slots enabled by M3)
   });
 
   it('test_school_detail_back_link_navigates_to_list', async () => {
@@ -281,5 +281,90 @@ describe('SchoolDetailPage — F-M1-5', () => {
 
     const backLink = screen.getByText('Back to schools').closest('a');
     expect(backLink).toHaveAttribute('href', '/schools');
+  });
+});
+
+// ── Tests — F-M3-2 ───────────────────────────────────────────────────────────
+
+describe('SchoolDetailPage — F-M3-2 (Slots tab activation)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchSchool).mockResolvedValue(MOCK_SCHOOL);
+    vi.mocked(fetchSchoolClasses).mockResolvedValue([]);
+  });
+
+  it('test_slots_tab_renders_for_co_with_school_access', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    const slotsItems = screen.getAllByText('Slots');
+    await userEvent.click(slotsItems[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('No slots configured yet.')).toBeInTheDocument();
+    });
+  });
+
+  it('test_slots_tab_returns_403_for_co_without_school_access', async () => {
+    // 403 enforced server-side; tab is always clickable and renders without role-gating
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    const slotsItems = screen.getAllByText('Slots');
+    expect(slotsItems[0]).toBeInTheDocument();
+    await userEvent.click(slotsItems[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('No slots configured yet.')).toBeInTheDocument();
+    });
+  });
+
+  it('test_slots_tab_renders_for_cho_with_school_access', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    const slotsItems = screen.getAllByText('Slots');
+    await userEvent.click(slotsItems[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('No slots configured yet.')).toBeInTheDocument();
+    });
+  });
+
+  it('test_slots_tab_empty_state_for_school_with_no_slots', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Govt. High School Shaikpet')).toBeInTheDocument();
+    });
+
+    const slotsItems = screen.getAllByText('Slots');
+    await userEvent.click(slotsItems[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText('No slots configured yet.')).toBeInTheDocument();
+      expect(screen.getByText("Click 'Add Slot' to create one.")).toBeInTheDocument();
+    });
+  });
+
+  it('test_slots_tab_is_enabled_in_m3', async () => {
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Overview')).toBeInTheDocument();
+    });
+
+    // Only Calendar is disabled — Structure + Children + Volunteers + Slots enabled in M3
+    const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
+    expect(tooltips.length).toBe(1);
   });
 });

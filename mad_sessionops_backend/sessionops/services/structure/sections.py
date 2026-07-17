@@ -3,7 +3,7 @@ from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 
 from sessionops.exceptions import ConflictError, NotFound
-from sessionops.models import ClassSection, ChildClassSection, SchoolClass
+from sessionops.models import ClassSection, ChildClassSection, SchoolClass, SlotClassSection
 from sessionops.models.class_section import SECTION_CODES
 
 
@@ -81,6 +81,18 @@ def soft_delete_section(class_section_id: int, school_id: int, user) -> None:
         )
     except ClassSection.DoesNotExist:
         raise NotFound(f"Section {class_section_id} not found.")
+
+    # M3 extension: block if active slot-class assignments reference this section
+    active_scs_count = SlotClassSection.objects.filter(
+        class_section_id=cs,
+        is_active=True,
+        removed=False,
+    ).count()
+    if active_scs_count > 0:
+        raise ConflictError(
+            f"Cannot delete this section. Remove the {active_scs_count} class "
+            f"assignment{'s' if active_scs_count != 1 else ''} from the schedule first."
+        )
 
     count = count_active_children_in_section(class_section_id)
     if count > 0:

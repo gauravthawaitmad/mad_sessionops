@@ -56,6 +56,7 @@ from sessionops.schemas import (
     ChangePasswordSchema,
     LoginSchema,
     RegisterSchema,
+    ScopeWarningSchema,
     TokenResponseSchema,
     user_to_response,
 )
@@ -186,10 +187,7 @@ class AuthService:
         # Generate JWT tokens
         tokens = AuthService._generate_tokens(user)
 
-        return AuthResponseSchema(
-            user=user_to_response(user),
-            tokens=tokens,
-        )
+        return AuthService._build_auth_response(user, tokens)
 
     # =========================================================================
     # PASSWORD LOGIN
@@ -262,10 +260,7 @@ class AuthService:
         # Generate JWT tokens
         tokens = AuthService._generate_tokens(user)
 
-        return AuthResponseSchema(
-            user=user_to_response(user),
-            tokens=tokens,
-        )
+        return AuthService._build_auth_response(user, tokens)
 
     # =========================================================================
     # GOOGLE OAUTH LOGIN
@@ -347,20 +342,11 @@ class AuthService:
             user = existing_auth.user
             logger.info(f"Existing Google user logged in: {user.user_id}")
             tokens = AuthService._generate_tokens(user)
-            logger.info(f"Scenario 1 - Tokens generated, creating AuthResponseSchema")
-            user_response = user_to_response(user)
-            logger.info(f"User response created: {user_response}")
-            response = AuthResponseSchema(
-                user=user_response,
-                tokens=tokens,
-            )
-            logger.info(f"AuthResponseSchema created - user: {response.user.email}, tokens.access_token: {response.tokens.access_token[:50]}...")
-            return response
+            return AuthService._build_auth_response(user, tokens)
 
         # Scenario 2: Find existing user by email (maybe has password auth)
         try:
             user = User.objects.get(email=email)
-            # Link Google to existing account
             logger.info(f"Scenario 2 - Linking Google to existing user: {user.user_id}")
             UserAuth.create_google_auth(
                 user=user,
@@ -370,15 +356,7 @@ class AuthService:
             )
             logger.info(f"Google linked to existing user: {user.user_id}")
             tokens = AuthService._generate_tokens(user)
-            logger.info(f"Scenario 2 - Tokens generated, creating AuthResponseSchema")
-            user_response = user_to_response(user)
-            logger.info(f"User response created: {user_response}")
-            response = AuthResponseSchema(
-                user=user_response,
-                tokens=tokens,
-            )
-            logger.info(f"AuthResponseSchema created - user: {response.user.email}, tokens.access_token: {response.tokens.access_token[:50]}...")
-            return response
+            return AuthService._build_auth_response(user, tokens)
         except User.DoesNotExist:
             logger.info(f"User with email {email} does not exist, creating new user")
 
@@ -400,15 +378,7 @@ class AuthService:
         logger.info(f"New user created via Google: {user.user_id}")
 
         tokens = AuthService._generate_tokens(user)
-        logger.info(f"Scenario 3 - Tokens generated, creating AuthResponseSchema")
-        user_response = user_to_response(user)
-        logger.info(f"User response created: {user_response}")
-        response = AuthResponseSchema(
-            user=user_response,
-            tokens=tokens,
-        )
-        logger.info(f"AuthResponseSchema created - user: {response.user.email}, tokens.access_token: {response.tokens.access_token[:50]}...")
-        return response
+        return AuthService._build_auth_response(user, tokens)
 
     # =========================================================================
     # LINK GOOGLE TO EXISTING ACCOUNT
@@ -845,6 +815,26 @@ class AuthService:
     # =========================================================================
     # HELPER METHODS
     # =========================================================================
+
+    @staticmethod
+    def _build_auth_response(user: User, tokens: TokenResponseSchema) -> "AuthResponseSchema":
+        """Build AuthResponseSchema, attaching scope_warning if user has no visible schools."""
+        from sessionops.services.rbac.scope import schools_visible_to
+
+        scope_warning = None
+        if not schools_visible_to(user).exists():
+            scope_warning = ScopeWarningSchema(
+                code="no_worknode_mapping",
+                message=(
+                    "You are not assigned to any schools or partner. "
+                    "Please contact your community organizer or admin."
+                ),
+            )
+        return AuthResponseSchema(
+            user=user_to_response(user),
+            tokens=tokens,
+            scope_warning=scope_warning,
+        )
 
     @staticmethod
     def _generate_tokens(user: User) -> TokenResponseSchema:

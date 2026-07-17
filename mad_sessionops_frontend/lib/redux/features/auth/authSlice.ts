@@ -300,6 +300,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
         state.refreshToken = action.payload.refreshToken;
+        state.scopeWarning = action.payload.scopeWarning ?? null;
         state.lastActivity = Date.now();
         state.error = null;
       })
@@ -370,6 +371,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken;
         state.refreshToken = action.payload.refreshToken;
+        state.scopeWarning = action.payload.scopeWarning ?? null;
         state.lastActivity = Date.now();
         state.error = null;
       })
@@ -403,5 +405,6 @@ export const selectError = (state: RootState) => state.auth.error;
 export const selectIsInitialized = (state: RootState) => state.auth.isInitialized;
 export const selectUserRole = (state: RootState) => state.auth.user?.role;
 export const selectAccessToken = (state: RootState) => state.auth.accessToken;
+export const selectScopeWarning = (state: RootState) => state.auth.scopeWarning;
 
 export default authSlice.reducer;

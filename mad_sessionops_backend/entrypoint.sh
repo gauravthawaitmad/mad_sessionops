@@ -43,6 +43,9 @@ PYEOF
 
         echo ">>> [$ENV] Syncing partners from Hasura..."
         python manage.py sync_partners
+
+        echo ">>> [$ENV] Syncing partner-worknode mappings from Hasura..."
+        python manage.py sync_partner_worknode
     else
         echo ">>> [development] Skipping Hasura sync."
     fi

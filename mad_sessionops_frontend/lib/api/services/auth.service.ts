@@ -3,6 +3,7 @@ import type {
   LoginCredentials,
   RegisterData,
   AuthResponse,
+  ScopeWarning,
   VerifyTokenResponse,
   RefreshTokenResponse,
   PasswordResetRequest,
@@ -50,9 +51,15 @@ interface BackendTokens {
   expires_in: number;
 }
 
+interface BackendScopeWarning {
+  code: string;
+  message: string;
+}
+
 interface BackendAuthResponse {
   user: BackendUser;
   tokens: BackendTokens;
+  scope_warning?: BackendScopeWarning | null;
 }
 
 /**
@@ -91,11 +98,15 @@ function mapBackendUser(backendUser: BackendUser): User {
  * Map backend auth response to frontend AuthResponse type
  */
 function mapAuthResponse(backendResponse: BackendAuthResponse): AuthResponse {
+  const scopeWarning: ScopeWarning | null = backendResponse.scope_warning
+    ? { code: backendResponse.scope_warning.code, message: backendResponse.scope_warning.message }
+    : null;
   return {
     user: mapBackendUser(backendResponse.user),
     accessToken: backendResponse.tokens.access_token,
     refreshToken: backendResponse.tokens.refresh_token,
     expiresIn: backendResponse.tokens.expires_in,
+    scopeWarning,
   };
 }
 

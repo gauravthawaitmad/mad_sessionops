@@ -15,7 +15,7 @@ Terms that matter in Session-Ops. When Claude Code uses the wrong word, bugs fol
 **Allowed roles** (any one grants Session-Ops login):
 - **CO Full Time** — Full-time Community Organizer. Manages assigned schools.
 - **CO Part Time** — Part-time Community organizer. Same Session-Ops permissions as Full Time. The distinction is HR-internal.
-- **CHO** — Chapter Organizer. Sees schools where they have an active volunteer assignment.
+- **CHO** — Chapter Organizer. Sees schools resolved from `PartnerWorknode`: `user.worknode_id` → matching `partner_worknode` rows → `partner_id` → Partner. If the user has no `worknode_id` or no matching `partner_worknode` rows, they see an empty schools list.
 - **CXO** — CXO-level access. Treated as standard Session-Ops user (not admin).
 - **Function Lead** — Grants admin scope. Sees all schools.
 - **Project Associate** — Grants admin scope. Sees all schools.
@@ -44,7 +44,7 @@ Terms that matter in Session-Ops. When Claude Code uses the wrong word, bugs fol
 
 **Volunteer** — An external person (not MAD staff) who teaches sections. Assigned to exactly one school. Has contact info and an onboarding record.
 
-**School Volunteer** (`SchoolVolunteer`) — The join record between Volunteer and School. This is what "activates" a volunteer at a school. CHO access is computed from active SchoolVolunteer rows.
+**School Volunteer** (`SchoolVolunteer`) — The history/de-dup record linking a User to a School as a volunteer. Managed implicitly: inserted when a volunteer is first added to a slot-class at that school, soft-deleted when their last slot-class there is removed. Used for R4 enforcement (one volunteer per school) at slot-class creation. CHO access is NOT derived from this table — it comes from `PartnerWorknode` matching.
 
 **Academic Year** — A MAD academic year. Exactly one is globally active at a time. Year progression is the annual operation that rolls everything forward.
 

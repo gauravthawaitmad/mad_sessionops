@@ -8,7 +8,9 @@ from sessionops.models import (
     Child,
     ChildClass,
     ChildClassSection,
+    ChildSubject,
     ClassSection,
+    ClassSectionSubject,
     User,
 )
 from sessionops.schemas.children import ChildEditIn
@@ -96,6 +98,47 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
                     class_section_id=new_section,
                     created_by=user,
                 )
+
+                # M3 extension: sync ChildSubject rows on section change
+                # Soft-delete old ChildSubject rows (via old ClassSectionSubject rows)
+                if current_ccs:
+                    old_css_ids = list(
+                        ClassSectionSubject.objects.filter(
+                            class_section_id_id=current_ccs.class_section_id_id,
+                            removed=False,
+                        ).values_list("class_section_subject_id", flat=True)
+                    )
+                    if old_css_ids:
+                        ChildSubject.objects.filter(
+                            child_id=child,
+                            class_section_subject_id_id__in=old_css_ids,
+                            is_active=True,
+                            removed=False,
+                        ).update(
+                            is_active=False,
+                            removed=True,
+                            deleted_at=now,
+                            updated_by=user,
+                            updated_at=now,
+                        )
+
+                # Create ChildSubject rows for new section's active subjects
+                new_active_css = list(
+                    ClassSectionSubject.objects.filter(
+                        class_section_id=new_section,
+                        is_active=True,
+                        removed=False,
+                    )
+                )
+                if new_active_css:
+                    ChildSubject.objects.bulk_create([
+                        ChildSubject(
+                            child_id=child,
+                            class_section_subject_id=css,
+                            created_by=user,
+                        )
+                        for css in new_active_css
+                    ])
 
                 # Handle class change when section moves to a different SchoolClass
                 current_cc = ChildClass.objects.filter(

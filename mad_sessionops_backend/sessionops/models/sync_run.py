@@ -19,21 +19,23 @@ class SyncRun(models.Model):
         (STATUS_FAILED, "Failed"),
     ]
 
-    SYNC_TYPE_USERS = "users"
-    SYNC_TYPE_PARTNERS = "partners"
-    SYNC_TYPE_ALL = "all"
+    SYNC_TYPE_USERS             = "users"
+    SYNC_TYPE_PARTNERS          = "partners"
+    SYNC_TYPE_PARTNER_WORKNODE  = "partner_worknode"
+    SYNC_TYPE_ALL               = "all"
 
     SYNC_TYPE_CHOICES = [
-        (SYNC_TYPE_USERS, "Users"),
-        (SYNC_TYPE_PARTNERS, "Partners"),
-        (SYNC_TYPE_ALL, "All"),
+        (SYNC_TYPE_USERS,            "Users"),
+        (SYNC_TYPE_PARTNERS,         "Partners"),
+        (SYNC_TYPE_PARTNER_WORKNODE, "Partner Worknode"),
+        (SYNC_TYPE_ALL,              "All"),
     ]
 
     id = models.BigAutoField(primary_key=True)
     started_at = models.DateTimeField(auto_now_add=True, db_index=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_RUNNING)
-    sync_type = models.CharField(max_length=16, choices=SYNC_TYPE_CHOICES, default=SYNC_TYPE_ALL)
+    sync_type = models.CharField(max_length=20, choices=SYNC_TYPE_CHOICES, default=SYNC_TYPE_ALL)
 
     users_fetched = models.IntegerField(default=0)
     users_created = models.IntegerField(default=0)
