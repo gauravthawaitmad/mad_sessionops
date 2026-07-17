@@ -16,11 +16,13 @@ import {
   LogOut,
   ChevronDown,
   Settings,
+  ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { colors } from '@/config/design-tokens';
 import { useAuth } from '@/hooks/useAuth';
+import { NotificationBell } from './NotificationBell';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -134,6 +136,13 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 
 // ── AppShell ──────────────────────────────────────────────────────────────────
 
+const ADMIN_ROLES = ['Function Lead', 'Project Associate', 'Project Lead'];
+
+function isAdminRole(roleStr: string): boolean {
+  const roles = roleStr.split(',').map((r) => r.trim());
+  return ADMIN_ROLES.some((ar) => roles.includes(ar));
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
@@ -141,6 +150,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const displayName = user?.name ?? 'User';
   const role = user?.role ?? '';
+  const isAdmin = isAdminRole(role);
 
   // School detail pages use their own layout (workspace sidebar) — bypass AppShell
   const isDetailPage = /^\/schools\/[^/]+/.test(pathname);
@@ -222,7 +232,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Box>
       </Box>
 
-      {/* ── Bottom: user ───────────────────────────────────────────────────── */}
+      {/* ── Bottom: notification bell (admin-only) + user ──────────────────── */}
+      {isAdmin && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 1.5, pb: 0.5 }}>
+          <NotificationBell />
+        </Box>
+      )}
       <Box
         sx={{
           borderTop: `1px solid ${SIDEBAR_BORDER}`,
@@ -292,6 +307,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </Box>
         <Divider />
+        {isAdmin && (
+          <MenuItem
+            component={Link}
+            href="/admin"
+            onClick={() => setMenuAnchor(null)}
+            sx={{ fontSize: '13px', color: colors.gray[700], py: 1, gap: 1 }}
+          >
+            <ListItemIcon sx={{ minWidth: 'auto' }}>
+              <ShieldCheck size={15} color="#0284C7" strokeWidth={1.5} />
+            </ListItemIcon>
+            Admin
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => setMenuAnchor(null)}
           sx={{ fontSize: '13px', color: colors.gray[700], py: 1, gap: 1 }}

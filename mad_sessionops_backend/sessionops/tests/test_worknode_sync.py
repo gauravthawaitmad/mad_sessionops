@@ -17,7 +17,7 @@ def _now():
 
 def _make_sync_run():
     from sessionops.models import SyncRun
-    return SyncRun.objects.create(status=SyncRun.STATUS_RUNNING, sync_type=SyncRun.SYNC_TYPE_ALL)
+    return SyncRun.objects.create(status=SyncRun.STATUS_RUNNING, entity_sync_type=SyncRun.ENTITY_SYNC_TYPE_ALL)
 
 
 def _noop(msg: str) -> None:

@@ -27,6 +27,7 @@ from pydantic import ValidationError as PydanticValidationError
 
 from sessionops import auth
 from sessionops.api.academic_years_api import academic_years_router
+from sessionops.api.admin_sync_api import admin_sync_router
 from sessionops.api.auth_api import auth_router
 from sessionops.api.children_api import children_router
 from sessionops.api.schools_api import schools_router
@@ -36,6 +37,8 @@ from sessionops.api.volunteers_api import volunteers_router
 from sessionops.api.slots_api import slots_router
 from sessionops.api.slot_classes_api import slot_classes_router
 from sessionops.api.schedule_api import schedule_router
+from sessionops.api.sessions_api import sessions_router
+from sessionops.api.holidays_api import holidays_router
 from sessionops.exceptions import (
     AuthenticationError,
     ConflictError,
@@ -221,6 +224,15 @@ api.add_router("/api/schools/", slot_classes_router)
 
 # Schedule view (school-scoped: read-only weekly schedule)
 api.add_router("/api/schools/", schedule_router)
+
+# Sessions (school-scoped: configure academic session window)
+api.add_router("/api/schools/", sessions_router)
+
+# Holidays (school-scoped: CRUD within session window)
+api.add_router("/api/schools/", holidays_router)
+
+# Admin sync dashboard (admin-only read endpoints)
+api.add_router("/api/admin/", admin_sync_router)
 
 
 # =============================================================================
