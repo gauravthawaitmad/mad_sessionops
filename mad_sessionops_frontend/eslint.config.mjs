@@ -1,21 +1,9 @@
-import { FlatCompat } from "@eslint/eslintrc";
-import js from "@eslint/js";
-import path from "path";
-import { clearScreenDown } from "readline";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-});
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
 const eslintConfig = [
-  ...compat.config({
-    extends: ["next/core-web-vitals", "next/typescript"],
-  }),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   {
     rules: {
       "no-console": ["warn", { allow: ["warn", "error"] }],
@@ -38,4 +26,3 @@ const eslintConfig = [
 ];
 
 export default eslintConfig;
-clearScreenDown;
