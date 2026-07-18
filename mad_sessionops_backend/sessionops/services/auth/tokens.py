@@ -22,7 +22,7 @@ def refresh_access_token(refresh_token_str: str) -> str:
     the user is inactive, or the user has lost all allowed roles.
     """
     try:
-        token = RefreshToken(refresh_token_str)
+        token = RefreshToken(refresh_token_str)  # type: ignore[arg-type]  # simplejwt's stub mistypes the raw-JWT-string constructor arg
     except TokenError as exc:
         raise AuthenticationError(
             "Refresh token is invalid or expired.",
@@ -69,7 +69,7 @@ def logout(refresh_token_str: str) -> None:
     Blacklist a refresh token. Idempotent — already-blacklisted tokens are silently ignored.
     """
     try:
-        token = RefreshToken(refresh_token_str)
+        token = RefreshToken(refresh_token_str)  # type: ignore[arg-type]  # simplejwt's stub mistypes the raw-JWT-string constructor arg
         token.blacklist()
     except TokenError:
         # Token already blacklisted or invalid — treat as successful logout.

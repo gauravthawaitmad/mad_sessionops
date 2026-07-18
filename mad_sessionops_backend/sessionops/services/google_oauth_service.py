@@ -56,17 +56,18 @@ Response:
 =============================================================================
 """
 
-from typing import Optional
+from typing import Optional, cast
+
+from django.conf import settings
 
 import requests
-from django.conf import settings
 
 from sessionops.utils.custom_logger import get_logger
 
 logger = get_logger(__name__)
 
 # Google OAuth endpoints
-GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
+GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"  # nosec B105 — URL, not a password
 
 # Try to import Google auth libraries
 # If not installed, service will work but verification will fail
@@ -78,8 +79,7 @@ try:
 except ImportError:
     GOOGLE_AUTH_AVAILABLE = False
     logger.warning(
-        "google-auth library not installed. "
-        "Run: pip install google-auth google-auth-oauthlib"
+        "google-auth library not installed. " "Run: pip install google-auth google-auth-oauthlib"
     )
 
 
@@ -183,7 +183,9 @@ class GoogleOAuthService:
             # Check for errors
             if not response.ok:
                 error_data = response.json()
-                error_msg = error_data.get("error_description", error_data.get("error", "Unknown error"))
+                error_msg = error_data.get(
+                    "error_description", error_data.get("error", "Unknown error")
+                )
                 logger.error(f"Google token exchange failed: {error_msg}")
                 logger.error(f"Full error response: {error_data}")
                 raise GoogleOAuthError(f"Token exchange failed: {error_msg}")
@@ -191,7 +193,7 @@ class GoogleOAuthService:
             tokens = response.json()
             logger.info("Successfully exchanged code for tokens")
 
-            return tokens
+            return cast(dict, tokens)
 
         except requests.RequestException as e:
             logger.error(f"Network error during token exchange: {str(e)}")
@@ -279,7 +281,7 @@ class GoogleOAuthService:
 
             logger.info(f"Google token verified for: {id_info.get('email')}")
 
-            return id_info
+            return cast(dict, id_info)
 
         except ValueError as e:
             # Token is invalid (wrong format, expired, wrong audience, etc.)

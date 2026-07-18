@@ -22,13 +22,12 @@ from sessionops.models import (
     SchoolClass,
     User,
 )
-from sessionops.schemas.children import DeactivateIn
+from sessionops.schemas.children import ChildEnrollIn, DeactivateIn
 from sessionops.services.children.deactivate import deactivate_child
 from sessionops.services.children.enroll import enroll_child
-from sessionops.schemas.children import ChildEnrollIn
-
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> User:
     return User.objects.create(
@@ -48,12 +47,15 @@ def _make_partner(partner_id: int) -> Partner:
     )
 
 
-def _make_section(school_id: int, user: User, code: str = "A", class_code: str = "5") -> ClassSection:
+def _make_section(
+    school_id: int, user: User, code: str = "A", class_code: str = "5"
+) -> ClassSection:
     program, _ = Program.objects.get_or_create(
         program_id=1,
         defaults={"program_name": "Foundation Program", "is_active": True},
     )
     from sessionops.models import Class
+
     cls, _ = Class.objects.get_or_create(
         class_code=class_code,
         defaults={
@@ -88,7 +90,10 @@ def _make_section(school_id: int, user: User, code: str = "A", class_code: str =
 
 def _enroll(school_id: int, section: ClassSection, user: User, **kwargs) -> Child:
     defaults = dict(
-        first_name="Asha", last_name="Kumar", gender="female", age=10,
+        first_name="Asha",
+        last_name="Kumar",
+        gender="female",
+        age=10,
         school_class_id=section.school_class_id_id,
         class_section_id=section.class_section_id,
     )
@@ -97,6 +102,7 @@ def _enroll(school_id: int, section: ClassSection, user: User, **kwargs) -> Chil
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestDeactivateChildHistoryRows:

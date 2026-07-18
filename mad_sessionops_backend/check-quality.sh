@@ -26,29 +26,29 @@ FAILED=0
 
 # 1. Black - Code Formatting
 echo "${YELLOW}1/8 Checking code formatting with Black...${NC}"
-if black --check madui/; then
+if black --check sessionops/; then
     echo "${GREEN}✓ Black check passed${NC}"
 else
     echo "${RED}✗ Black check failed${NC}"
-    echo "Run 'black madui/' to fix"
+    echo "Run 'black sessionops/' to fix"
     FAILED=1
 fi
 echo ""
 
 # 2. isort - Import Sorting
 echo "${YELLOW}2/8 Checking import sorting with isort...${NC}"
-if isort --check-only madui/; then
+if isort --check-only sessionops/; then
     echo "${GREEN}✓ isort check passed${NC}"
 else
     echo "${RED}✗ isort check failed${NC}"
-    echo "Run 'isort madui/' to fix"
+    echo "Run 'isort sessionops/' to fix"
     FAILED=1
 fi
 echo ""
 
 # 3. Flake8 - Style Guide
 echo "${YELLOW}3/8 Checking style guide with Flake8...${NC}"
-if flake8 madui/; then
+if flake8 sessionops/; then
     echo "${GREEN}✓ Flake8 check passed${NC}"
 else
     echo "${RED}✗ Flake8 check failed${NC}"
@@ -58,7 +58,7 @@ echo ""
 
 # 4. Pylint - Code Quality
 echo "${YELLOW}4/8 Checking code quality with Pylint...${NC}"
-if pylint madui/ --rcfile=.pylintrc; then
+if pylint sessionops/ --rcfile=.pylintrc; then
     echo "${GREEN}✓ Pylint check passed${NC}"
 else
     echo "${RED}✗ Pylint check failed (or score below threshold)${NC}"
@@ -68,7 +68,7 @@ echo ""
 
 # 5. MyPy - Type Checking
 echo "${YELLOW}5/8 Checking types with MyPy...${NC}"
-if mypy madui/ --config-file=mypy.ini; then
+if mypy sessionops/ --config-file=mypy.ini; then
     echo "${GREEN}✓ MyPy check passed${NC}"
 else
     echo "${RED}✗ MyPy check failed${NC}"
@@ -78,7 +78,7 @@ echo ""
 
 # 6. Bandit - Security Scan
 echo "${YELLOW}6/8 Running security scan with Bandit...${NC}"
-if bandit -r madui/ -c .bandit; then
+if bandit -r sessionops/ -c .bandit; then
     echo "${GREEN}✓ Bandit security scan passed${NC}"
 else
     echo "${RED}✗ Bandit found security issues${NC}"
@@ -99,10 +99,10 @@ echo ""
 # 8. Radon - Code Complexity
 echo "${YELLOW}8/8 Checking code complexity with Radon...${NC}"
 echo "Cyclomatic Complexity:"
-radon cc madui/ -a -nb
+radon cc sessionops/ -a -nb
 echo ""
 echo "Maintainability Index:"
-radon mi madui/ -nb
+radon mi sessionops/ -nb
 echo ""
 
 # Summary
@@ -114,8 +114,8 @@ else
     echo "${RED}❌ Some code quality checks failed!${NC}"
     echo ""
     echo "To fix formatting issues automatically, run:"
-    echo "  black madui/"
-    echo "  isort madui/"
+    echo "  black sessionops/"
+    echo "  isort sessionops/"
     exit 1
 fi
 

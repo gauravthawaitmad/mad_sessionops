@@ -26,8 +26,7 @@ class Command(BaseCommand):
             return
 
         system_user = (
-            User.objects.filter(user_login="system@makeadiff.in").first()
-            or User.objects.first()
+            User.objects.filter(user_login="system@makeadiff.in").first() or User.objects.first()
         )
         if system_user is None:
             self.stderr.write("No users in DB — cannot seed academic year. Run user setup first.")
@@ -41,7 +40,7 @@ class Command(BaseCommand):
         self.stdout.write("  Created AcademicYear 2026-2027 (active).")
 
     def _seed_program_and_classes(self):
-        from sessionops.models import Program, Class
+        from sessionops.models import Class, Program
 
         program, created = Program.objects.get_or_create(
             program_name="Foundation Program",

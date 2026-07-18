@@ -16,7 +16,6 @@ from sessionops.services.rbac.scope import (
     schools_visible_to,
 )
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 _UID = iter(range(9_000_000, 9_100_000))
@@ -55,6 +54,7 @@ def _make_pw(school: Partner, worknode_id: int) -> PartnerWorknode:
 
 # ── TC-M3-4-01  CHO with worknode_id mapping sees their school ─────────────────
 
+
 @pytest.mark.django_db
 def test_cho_with_worknode_id_mapping_sees_partner():
     cho = _make_cho(worknode_id=200)
@@ -68,6 +68,7 @@ def test_cho_with_worknode_id_mapping_sees_partner():
 
 # ── TC-M3-4-02  CHO with no worknode_id sees empty list ───────────────────────
 
+
 @pytest.mark.django_db
 def test_cho_without_worknode_id_sees_empty_list():
     _make_school()
@@ -79,6 +80,7 @@ def test_cho_without_worknode_id_sees_empty_list():
 
 
 # ── TC-M3-4-03  CHO with unmapped worknode_id sees empty list ─────────────────
+
 
 @pytest.mark.django_db
 def test_cho_with_unmapped_worknode_id_sees_empty_list():
@@ -93,6 +95,7 @@ def test_cho_with_unmapped_worknode_id_sees_empty_list():
 
 # ── TC-M3-4-04  PartnerWorknode with empty partner_id is excluded ──────────────
 
+
 @pytest.mark.django_db
 def test_cho_with_worknode_id_mapping_to_empty_partner_id_sees_nothing():
     cho = _make_cho(worknode_id=300)
@@ -105,6 +108,7 @@ def test_cho_with_worknode_id_mapping_to_empty_partner_id_sees_nothing():
 
 # ── TC-M3-4-05  can_view_school returns True for CHO in scope ─────────────────
 
+
 @pytest.mark.django_db
 def test_cho_can_view_school_within_scope():
     cho = _make_cho(worknode_id=400)
@@ -115,6 +119,7 @@ def test_cho_can_view_school_within_scope():
 
 
 # ── TC-M3-4-06  can_view_school returns False for CHO outside scope ───────────
+
 
 @pytest.mark.django_db
 def test_cho_cannot_view_school_outside_scope():
@@ -127,6 +132,7 @@ def test_cho_cannot_view_school_outside_scope():
 
 # ── TC-M3-4-07  can_modify_school True for CHO within scope ───────────────────
 
+
 @pytest.mark.django_db
 def test_cho_can_modify_school_within_scope():
     cho = _make_cho(worknode_id=600)
@@ -138,6 +144,7 @@ def test_cho_can_modify_school_within_scope():
 
 # ── TC-M3-4-08  can_modify_school False for CHO outside scope ─────────────────
 
+
 @pytest.mark.django_db
 def test_cho_cannot_modify_school_outside_scope():
     cho = _make_cho(worknode_id=700)
@@ -147,6 +154,7 @@ def test_cho_cannot_modify_school_outside_scope():
 
 
 # ── TC-M3-4-09  get_school_or_403 succeeds for CHO within scope ───────────────
+
 
 @pytest.mark.django_db
 def test_cho_get_school_or_403_within_scope():
@@ -161,6 +169,7 @@ def test_cho_get_school_or_403_within_scope():
 
 # ── TC-M3-4-10  get_school_or_403 raises PermissionDenied outside scope ───────
 
+
 @pytest.mark.django_db
 def test_cho_get_school_or_403_outside_scope_raises():
     cho = _make_cho(worknode_id=900)
@@ -171,6 +180,7 @@ def test_cho_get_school_or_403_outside_scope_raises():
 
 
 # ── TC-M3-4-11  CHO access is independent of school_volunteer ─────────────────
+
 
 @pytest.mark.django_db
 def test_cho_access_independent_of_school_volunteer():
@@ -184,6 +194,7 @@ def test_cho_access_independent_of_school_volunteer():
 
 
 # ── TC-M3-4-12  CHO with multiple partner_worknode rows sees all schools ───────
+
 
 @pytest.mark.django_db
 def test_cho_with_multiple_partner_worknode_rows_sees_all_mapped_schools():
@@ -201,6 +212,7 @@ def test_cho_with_multiple_partner_worknode_rows_sees_all_mapped_schools():
 
 # ── TC-M3-4-13  CHO does not see inactive schools ─────────────────────────────
 
+
 @pytest.mark.django_db
 def test_cho_does_not_see_inactive_schools():
     cho = _make_cho(worknode_id=1200)
@@ -216,6 +228,7 @@ def test_cho_does_not_see_inactive_schools():
 
 
 # ── TC-M3-4-14  Existing M1 tests still hold: CHO without worknode → 'none' ───
+
 
 @pytest.mark.django_db
 def test_cho_without_worknode_id_cannot_view_any_school():

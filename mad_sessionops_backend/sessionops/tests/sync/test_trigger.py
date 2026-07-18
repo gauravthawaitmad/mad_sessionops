@@ -92,7 +92,9 @@ def test_trigger_creates_3_running_sync_runs_before_thread_starts():
         trigger_manual_sync(triggered_by=admin)
 
     # Thread was started, but we want to check the DB state BEFORE it runs
-    runs = list(SyncRun.objects.filter(run_type=SyncRun.RUN_TYPE_MANUAL, status=SyncRun.STATUS_RUNNING))
+    runs = list(
+        SyncRun.objects.filter(run_type=SyncRun.RUN_TYPE_MANUAL, status=SyncRun.STATUS_RUNNING)
+    )
     assert len(runs) == 3
     entity_types = {r.entity_type for r in runs}
     assert entity_types == {
@@ -167,7 +169,7 @@ def test_execute_syncs_are_independent():
     """User sync failure must not stop partner sync from completing."""
     from sessionops.services.hasura.client import HasuraError
 
-    user_run    = _new_run(SyncRun.ENTITY_TYPE_USER,    SyncRun.ENTITY_SYNC_TYPE_USERS)
+    user_run = _new_run(SyncRun.ENTITY_TYPE_USER, SyncRun.ENTITY_SYNC_TYPE_USERS)
     partner_run = _new_run(SyncRun.ENTITY_TYPE_PARTNER, SyncRun.ENTITY_SYNC_TYPE_PARTNERS)
 
     with patch(

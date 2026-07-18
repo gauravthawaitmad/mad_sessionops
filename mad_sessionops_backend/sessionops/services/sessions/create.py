@@ -41,8 +41,7 @@ def create_school_session(
 
     if existing:
         raise ConflictError(
-            "Session already configured for this academic year. "
-            "Session is immutable in M4."
+            "Session already configured for this academic year. " "Session is immutable in M4."
         )
 
     return SchoolSessionDetails.objects.create(

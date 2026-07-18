@@ -7,6 +7,7 @@ Raises AuthenticationError on every failure — callers never see raw OAuth erro
 """
 
 import os
+from typing import cast
 
 import requests
 from google.auth.transport import requests as google_requests
@@ -14,7 +15,7 @@ from google.oauth2 import id_token as google_id_token
 
 from sessionops.exceptions import AuthenticationError
 
-_GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+_GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"  # nosec B105 — URL, not a password
 
 
 def exchange_code_for_id_token(code: str, code_verifier: str, redirect_uri: str) -> dict:
@@ -84,4 +85,4 @@ def exchange_code_for_id_token(code: str, code_verifier: str, redirect_uri: str)
             error_code="GOOGLE_EMAIL_UNVERIFIED",
         )
 
-    return claims
+    return cast(dict, claims)

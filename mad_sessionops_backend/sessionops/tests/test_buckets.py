@@ -6,11 +6,15 @@ import pytest
 
 from sessionops.exceptions import ConflictError, NotFound, ValidationError
 from sessionops.models import ClassSection, User
-from sessionops.services.sections.slug import normalize_section_slug, next_default_display_name
-from sessionops.services.structure.sections import create_bucket, edit_bucket, list_buckets_for_school
-
+from sessionops.services.sections.slug import next_default_display_name, normalize_section_slug
+from sessionops.services.structure.sections import (
+    create_bucket,
+    edit_bucket,
+    list_buckets_for_school,
+)
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> User:
     return User.objects.create(
@@ -23,6 +27,7 @@ def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> Us
 
 
 # ── normalize_section_slug ───────────────────────────────────────────────────────
+
 
 class TestNormalizeSectionSlug:
     def test_spaces_become_underscores(self):
@@ -54,6 +59,7 @@ class TestNormalizeSectionSlug:
 
 # ── next_default_display_name ────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestNextDefaultDisplayName:
     def test_first_bucket_is_group_1(self):
@@ -66,6 +72,7 @@ class TestNextDefaultDisplayName:
 
 
 # ── create_bucket ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestCreateBucket:
@@ -103,6 +110,7 @@ class TestCreateBucket:
 
 # ── edit_bucket ───────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestEditBucket:
     def test_renames_and_rederives_slug(self):
@@ -138,6 +146,7 @@ class TestEditBucket:
 
 
 # ── list_buckets_for_school ───────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestListBucketsForSchool:

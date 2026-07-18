@@ -20,10 +20,8 @@ from sessionops.services.rbac.scope import get_school_or_403
 def deactivate_child(child_id: int, payload: DeactivateIn, user: User) -> None:
     with transaction.atomic():
         try:
-            child = (
-                Child.objects
-                .select_for_update()
-                .get(child_id=child_id, is_active=True, removed=False)
+            child = Child.objects.select_for_update().get(
+                child_id=child_id, is_active=True, removed=False
             )
         except Child.DoesNotExist:
             raise NotFound(f"Child {child_id} not found.")
@@ -32,24 +30,22 @@ def deactivate_child(child_id: int, payload: DeactivateIn, user: User) -> None:
 
         now = timezone.now()
 
-        Child.objects.filter(child_id=child_id).update(
-            is_active=False, updated_by_id=user.user_id
+        Child.objects.filter(child_id=child_id).update(is_active=False, updated_by_id=user.user_id)
+        ChildClass.objects.filter(child_id=child_id, is_active=True, removed=False).update(
+            is_active=False, removed=True, deleted_at=now, updated_by_id=user.user_id
         )
-        ChildClass.objects.filter(
-            child_id=child_id, is_active=True, removed=False
-        ).update(is_active=False, removed=True, deleted_at=now, updated_by_id=user.user_id)
 
-        ChildClassSection.objects.filter(
-            child_id=child_id, is_active=True, removed=False
-        ).update(is_active=False, removed=True, deleted_at=now, updated_by_id=user.user_id)
+        ChildClassSection.objects.filter(child_id=child_id, is_active=True, removed=False).update(
+            is_active=False, removed=True, deleted_at=now, updated_by_id=user.user_id
+        )
 
-        BatchChild.objects.filter(
-            child_id=child_id, is_active=True, removed=False
-        ).update(is_active=False, removed=True, deleted_at=now, updated_by_id=user.user_id)
+        BatchChild.objects.filter(child_id=child_id, is_active=True, removed=False).update(
+            is_active=False, removed=True, deleted_at=now, updated_by_id=user.user_id
+        )
 
-        ChildProgram.objects.filter(
-            child_id=child_id, is_active=True, removed=False
-        ).update(is_active=False, removed=True, deleted_at=now, updated_by_id=user.user_id)
+        ChildProgram.objects.filter(child_id=child_id, is_active=True, removed=False).update(
+            is_active=False, removed=True, deleted_at=now, updated_by_id=user.user_id
+        )
 
         ChildRemovalLog.objects.create(
             child_id=child,

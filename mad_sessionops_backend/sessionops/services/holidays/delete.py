@@ -22,8 +22,8 @@ def soft_delete_holiday(school_holiday_id: int, user) -> None:
         raise PermissionDenied()
 
     now = timezone.now()
-    holiday.is_active  = False
-    holiday.removed    = True
+    holiday.is_active = False
+    holiday.removed = True
     holiday.deleted_at = now
     holiday.updated_by = user
     holiday.save(update_fields=["is_active", "removed", "deleted_at", "updated_by", "updated_at"])

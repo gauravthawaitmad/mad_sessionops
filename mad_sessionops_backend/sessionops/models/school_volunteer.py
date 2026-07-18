@@ -9,23 +9,30 @@ class SchoolVolunteer(models.Model):
     from the Volunteers tab. Used for R4 enforcement: one volunteer per school.
     """
 
-    school_volunteer_id     = models.BigAutoField(primary_key=True)
-    school_id               = models.BigIntegerField(db_index=True)
-    volunteer_id            = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="school_volunteer_entries"
+    school_volunteer_id = models.BigAutoField(primary_key=True)
+    school_id = models.BigIntegerField(db_index=True)
+    volunteer_id = models.ForeignKey(
+        "sessionops.User",
+        on_delete=models.PROTECT,
+        related_name="school_volunteer_entries",
+        db_column="volunteer_id",
     )
     school_academic_year_id = models.ForeignKey(
-        "SchoolAcademicYear", on_delete=models.PROTECT, null=True, blank=True
+        "SchoolAcademicYear",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_column="school_academic_year_id",
     )
-    is_active               = models.BooleanField(default=True)
-    removed                 = models.BooleanField(default=False)
-    deleted_at              = models.DateTimeField(null=True, blank=True)
-    created_at              = models.DateTimeField(auto_now_add=True)
-    updated_at              = models.DateTimeField(auto_now=True)
-    created_by              = models.ForeignKey(
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
-    updated_by              = models.ForeignKey(
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 

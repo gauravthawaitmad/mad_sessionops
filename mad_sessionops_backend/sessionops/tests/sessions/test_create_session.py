@@ -61,10 +61,11 @@ def _make_active_year() -> AcademicYear:
 
 
 START = date(2026, 7, 1)
-END   = date(2027, 4, 30)
+END = date(2027, 4, 30)
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_create_session_succeeds_with_valid_dates():
@@ -90,7 +91,7 @@ def test_create_session_starts_in_past_allowed():
     school = _make_school(co)
 
     past_start = date(2025, 1, 1)
-    past_end   = date(2025, 12, 31)
+    past_end = date(2025, 12, 31)
 
     session = create_school_session(school.partner_id, past_start, past_end, co)
     assert session.start_date == past_start

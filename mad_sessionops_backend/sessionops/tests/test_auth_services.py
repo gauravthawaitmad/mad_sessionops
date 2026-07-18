@@ -6,15 +6,15 @@ DB calls use Django's test DB (pytest-django).
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from django.utils import timezone
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.exceptions import AuthenticationError
 from sessionops.models import User, UserAuth
 from sessionops.services.auth import complete_google_login
 from sessionops.services.auth.tokens import logout, refresh_access_token
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -90,7 +90,7 @@ class TestCompleteGoogleLogin:
 
     def test_soft_deleted_auth_creates_new_row(self):
         user = _make_user()
-        old = UserAuth.objects.create(
+        UserAuth.objects.create(
             user=user,
             auth_type="google",
             auth_identifier="google-sub-123",
@@ -101,7 +101,9 @@ class TestCompleteGoogleLogin:
         self._call()
         active = UserAuth.objects.filter(user=user, auth_type="google").count()
         assert active == 1  # new active row
-        assert UserAuth.objects.all_with_deleted().filter(user=user, auth_type="google").count() == 2
+        assert (
+            UserAuth.objects.all_with_deleted().filter(user=user, auth_type="google").count() == 2
+        )
 
     def test_unknown_email_raises(self):
         with pytest.raises(AuthenticationError) as exc_info:

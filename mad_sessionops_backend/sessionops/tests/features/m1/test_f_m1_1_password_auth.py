@@ -28,9 +28,10 @@ Test structure:
 from datetime import timedelta
 from unittest.mock import patch
 
-import pytest
 from django.test import TestCase
 from django.utils import timezone
+
+import pytest
 
 from sessionops.models import PasswordResetToken, User, UserAuth
 from sessionops.schemas.auth import (
@@ -41,12 +42,12 @@ from sessionops.schemas.auth import (
     ResetPasswordSchema,
     SetPasswordSchema,
 )
-from sessionops.services.auth_service import AuthService, AuthenticationError
-
+from sessionops.services.auth_service import AuthenticationError, AuthService
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_user(email="test@makeadiff.in", role="CO Full Time", active=True) -> User:
     return User.objects.create(
@@ -58,7 +59,9 @@ def _make_user(email="test@makeadiff.in", role="CO Full Time", active=True) -> U
     )
 
 
-def _make_user_with_password(email="test@makeadiff.in", password="Password1") -> tuple[User, UserAuth]:
+def _make_user_with_password(
+    email="test@makeadiff.in", password="Password1"
+) -> tuple[User, UserAuth]:
     user = _make_user(email)
     auth = UserAuth.create_password_auth(user=user, email=email, password=password)
     return user, auth
@@ -67,6 +70,7 @@ def _make_user_with_password(email="test@makeadiff.in", password="Password1") ->
 # ---------------------------------------------------------------------------
 # TC-M1-1-01: Login success
 # ---------------------------------------------------------------------------
+
 
 class TestLoginSuccess(TestCase):
     def test_login_returns_tokens_and_user(self):
@@ -87,6 +91,7 @@ class TestLoginSuccess(TestCase):
 # TC-M1-1-02: Login — wrong password
 # ---------------------------------------------------------------------------
 
+
 class TestLoginWrongPassword(TestCase):
     def test_wrong_password_raises_invalid_credentials(self):
         """TC-M1-1-02: Wrong password → INVALID_CREDENTIALS error."""
@@ -103,6 +108,7 @@ class TestLoginWrongPassword(TestCase):
 # TC-M1-1-03: Login — unknown email
 # ---------------------------------------------------------------------------
 
+
 class TestLoginUnknownEmail(TestCase):
     def test_unknown_email_raises_invalid_credentials(self):
         """TC-M1-1-03: Unknown email → INVALID_CREDENTIALS (no enumeration)."""
@@ -117,6 +123,7 @@ class TestLoginUnknownEmail(TestCase):
 # TC-M1-1-04: Login — inactive user
 # ---------------------------------------------------------------------------
 
+
 class TestLoginInactiveUser(TestCase):
     def test_inactive_user_cannot_login(self):
         """TC-M1-1-04: Deactivated user → INVALID_CREDENTIALS."""
@@ -124,15 +131,14 @@ class TestLoginInactiveUser(TestCase):
         UserAuth.create_password_auth(user=user, email=user.email, password="Password1")
 
         with pytest.raises(AuthenticationError) as exc:
-            AuthService.login_with_password(
-                LoginSchema(email=user.email, password="Password1")
-            )
+            AuthService.login_with_password(LoginSchema(email=user.email, password="Password1"))
         assert exc.value.error_code == "INVALID_CREDENTIALS"
 
 
 # ---------------------------------------------------------------------------
 # TC-M1-1-05: Register — creates User + UserAuth
 # ---------------------------------------------------------------------------
+
 
 class TestRegister(TestCase):
     def test_register_creates_user_and_auth_record(self):
@@ -159,6 +165,7 @@ class TestRegister(TestCase):
 # TC-M1-1-06: Register — duplicate email
 # ---------------------------------------------------------------------------
 
+
 class TestRegisterDuplicateEmail(TestCase):
     def test_duplicate_email_raises_email_exists(self):
         """TC-M1-1-06: Duplicate email → EMAIL_EXISTS error."""
@@ -180,6 +187,7 @@ class TestRegisterDuplicateEmail(TestCase):
 # TC-M1-1-07: Register — weak password (schema-level, tested via ValueError)
 # ---------------------------------------------------------------------------
 
+
 class TestRegisterWeakPassword(TestCase):
     def test_schema_rejects_weak_password(self):
         """TC-M1-1-07: Password < 8 chars or no uppercase fails schema validation."""
@@ -197,6 +205,7 @@ class TestRegisterWeakPassword(TestCase):
 # ---------------------------------------------------------------------------
 # TC-M1-1-08 / 09: Token refresh
 # ---------------------------------------------------------------------------
+
 
 class TestTokenRefresh(TestCase):
     def test_valid_refresh_token_returns_new_access_token(self):
@@ -220,6 +229,7 @@ class TestTokenRefresh(TestCase):
 # TC-M1-1-10: Logout
 # ---------------------------------------------------------------------------
 
+
 class TestLogout(TestCase):
     def test_logout_blacklists_refresh_token(self):
         """TC-M1-1-10: Logout blacklists the refresh token so it cannot be reused."""
@@ -237,6 +247,7 @@ class TestLogout(TestCase):
 # ---------------------------------------------------------------------------
 # TC-M1-1-11: Forgot password — sends email
 # ---------------------------------------------------------------------------
+
 
 class TestForgotPassword(TestCase):
     @patch("sessionops.services.auth_service.send_password_reset_email")
@@ -257,6 +268,7 @@ class TestForgotPassword(TestCase):
 # TC-M1-1-12: Forgot password — unknown email (silent)
 # ---------------------------------------------------------------------------
 
+
 class TestForgotPasswordUnknownEmail(TestCase):
     @patch("sessionops.services.auth_service.send_password_reset_email")
     def test_unknown_email_is_silent(self, mock_send):
@@ -269,6 +281,7 @@ class TestForgotPasswordUnknownEmail(TestCase):
 # ---------------------------------------------------------------------------
 # TC-M1-1-13: Reset password — success
 # ---------------------------------------------------------------------------
+
 
 class TestResetPassword(TestCase):
     @patch("sessionops.services.auth_service.send_password_reset_email")
@@ -294,6 +307,7 @@ class TestResetPassword(TestCase):
 # TC-M1-1-14: Reset password — expired token
 # ---------------------------------------------------------------------------
 
+
 class TestResetPasswordExpiredToken(TestCase):
     def test_expired_token_raises_error(self):
         """TC-M1-1-14: Expired token → INVALID_RESET_TOKEN."""
@@ -310,6 +324,7 @@ class TestResetPasswordExpiredToken(TestCase):
 # ---------------------------------------------------------------------------
 # TC-M1-1-15: Reset password — already-used token
 # ---------------------------------------------------------------------------
+
 
 class TestResetPasswordUsedToken(TestCase):
     def test_used_token_raises_error(self):
@@ -329,6 +344,7 @@ class TestResetPasswordUsedToken(TestCase):
 # ---------------------------------------------------------------------------
 # TC-M1-1-16: Set password first-time — success
 # ---------------------------------------------------------------------------
+
 
 class TestSetPasswordFirstTime(TestCase):
     def test_hasura_synced_user_can_set_password(self):
@@ -351,6 +367,7 @@ class TestSetPasswordFirstTime(TestCase):
 # TC-M1-1-17: Set password first-time — already set
 # ---------------------------------------------------------------------------
 
+
 class TestSetPasswordAlreadySet(TestCase):
     def test_fails_when_password_already_exists(self):
         """TC-M1-1-17: User with existing password auth → PASSWORD_ALREADY_SET error."""
@@ -365,6 +382,7 @@ class TestSetPasswordAlreadySet(TestCase):
 # TC-M1-1-18 / 19: Change password
 # ---------------------------------------------------------------------------
 
+
 class TestChangePassword(TestCase):
     def test_change_password_success(self):
         """TC-M1-1-18: Correct old password → password updated."""
@@ -373,9 +391,7 @@ class TestChangePassword(TestCase):
             user,
             ChangePasswordSchema(old_password="OldPass1", new_password="NewPass1"),
         )
-        result = AuthService.login_with_password(
-            LoginSchema(email=user.email, password="NewPass1")
-        )
+        result = AuthService.login_with_password(LoginSchema(email=user.email, password="NewPass1"))
         assert result.user.email == user.email
 
     def test_change_password_wrong_old(self):
@@ -392,6 +408,7 @@ class TestChangePassword(TestCase):
 # ---------------------------------------------------------------------------
 # TC-M1-1-20: GET /me returns correct profile
 # ---------------------------------------------------------------------------
+
 
 class TestGetCurrentUser(TestCase):
     def test_get_current_user_by_id(self):

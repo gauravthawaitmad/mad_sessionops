@@ -19,28 +19,35 @@ import pytest
 from sessionops.models import Partner, User
 from sessionops.services.rbac.scope import can_view_school, schools_visible_to
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_user(user_id: int, role: str) -> User:
     return User(user_id=user_id, user_login=f"u{user_id}@test.com", user_role=role)
 
 
 def _make_partner(partner_id: int, co_id: int | None = None, is_active: bool = True) -> Partner:
-    return Partner(partner_id=partner_id, partner_name=f"School {partner_id}", co_id=co_id, is_active=is_active)
+    return Partner(
+        partner_id=partner_id, partner_name=f"School {partner_id}", co_id=co_id, is_active=is_active
+    )
 
 
 # ---------------------------------------------------------------------------
 # TC-M1-3-01  Admin roles see all partners
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize("role", ["Function Lead", "Project Lead", "Project Associate"])
 def test_admin_scope_sees_all(role):
-    partner_a = Partner.objects.create(partner_id=1, partner_name="School A", co_id=100, converted=True)
-    partner_b = Partner.objects.create(partner_id=2, partner_name="School B", co_id=200, converted=True)
+    partner_a = Partner.objects.create(
+        partner_id=1, partner_name="School A", co_id=100, converted=True
+    )
+    partner_b = Partner.objects.create(
+        partner_id=2, partner_name="School B", co_id=200, converted=True
+    )
     user = _make_user(999, role)
 
     qs = schools_visible_to(user)
@@ -53,6 +60,7 @@ def test_admin_scope_sees_all(role):
 # ---------------------------------------------------------------------------
 # TC-M1-3-02 / TC-M1-3-03  CO sees only their schools
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("role", ["CO Full Time", "CO Part Time"])
@@ -72,6 +80,7 @@ def test_co_scope_filters_by_co_id(role):
 # TC-M1-3-04  CHO sees empty queryset
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_cho_scope_returns_none():
     Partner.objects.create(partner_id=20, partner_name="Any School", co_id=1)
@@ -85,6 +94,7 @@ def test_cho_scope_returns_none():
 # ---------------------------------------------------------------------------
 # TC-M1-3-05  CXO treated as admin scope
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_cxo_scope_treated_as_admin():
@@ -100,6 +110,7 @@ def test_cxo_scope_treated_as_admin():
 # ---------------------------------------------------------------------------
 # TC-M1-3-06  Multi-role: one admin role is enough
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_multi_role_with_admin_role_gets_admin_scope():
@@ -117,6 +128,7 @@ def test_multi_role_with_admin_role_gets_admin_scope():
 # TC-M1-3-07  can_view_school — admin True for any school
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_can_view_school_admin_true():
     partner = Partner.objects.create(partner_id=50, partner_name="Random", co_id=99999)
@@ -128,6 +140,7 @@ def test_can_view_school_admin_true():
 # ---------------------------------------------------------------------------
 # TC-M1-3-08  can_view_school — CO True for own school
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_can_view_school_co_own_school_true():
@@ -142,6 +155,7 @@ def test_can_view_school_co_own_school_true():
 # TC-M1-3-09  can_view_school — CO False for other school
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_can_view_school_co_not_owner_false():
     partner = Partner.objects.create(partner_id=70, partner_name="Other School", co_id=9999999)
@@ -153,6 +167,7 @@ def test_can_view_school_co_not_owner_false():
 # ---------------------------------------------------------------------------
 # TC-M1-3-10  can_view_school — CHO always False
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_can_view_school_cho_false():
@@ -166,11 +181,16 @@ def test_can_view_school_cho_false():
 # TC-M1-3-11  Soft-deleted partners excluded from CO and admin scopes
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_schools_visible_to_excludes_inactive_partners():
     co_id = 3000000
-    Partner.objects.create(partner_id=90, partner_name="Active", co_id=co_id, is_active=True, converted=True)
-    Partner.objects.create(partner_id=91, partner_name="Removed", co_id=co_id, is_active=False, converted=True)
+    Partner.objects.create(
+        partner_id=90, partner_name="Active", co_id=co_id, is_active=True, converted=True
+    )
+    Partner.objects.create(
+        partner_id=91, partner_name="Removed", co_id=co_id, is_active=False, converted=True
+    )
     co_user = _make_user(co_id, "CO Full Time")
     admin_user = _make_user(1, "Function Lead")
 

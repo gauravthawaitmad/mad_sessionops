@@ -10,8 +10,7 @@ from sessionops.services.rbac.scope import can_modify_school, get_school_or_403
 
 
 @transaction.atomic
-def create_slot(school_id: int, day_of_week: str,
-                start_time: time, end_time: time, user) -> Slot:
+def create_slot(school_id: int, day_of_week: str, start_time: time, end_time: time, user) -> Slot:
     partner = get_school_or_403(user, school_id)
     if not can_modify_school(user, partner):
         raise PermissionDenied()
@@ -57,8 +56,9 @@ def list_slots(school_id: int, user) -> list[Slot]:
     get_school_or_403(user, school_id)  # raises 403/404 if no access
 
     slots = list(
-        Slot.objects.filter(school_id=school_id, is_active=True, removed=False)
-        .order_by("start_time")
+        Slot.objects.filter(school_id=school_id, is_active=True, removed=False).order_by(
+            "start_time"
+        )
     )
     slots.sort(key=lambda s: (DAY_ORDER.get(s.day_of_week, 99), s.start_time))
     return slots

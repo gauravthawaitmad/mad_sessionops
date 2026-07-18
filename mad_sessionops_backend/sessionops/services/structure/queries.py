@@ -3,15 +3,14 @@ from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 
 from sessionops.exceptions import ConflictError, NotFound
-from sessionops.models import Class, ChildClass, SchoolClass
-
+from sessionops.models import ChildClass, Class, SchoolClass
 
 # ── Classes ────────────────────────────────────────────────────────────────────
 
+
 def list_classes_for_school(school_id: int) -> QuerySet:
     return (
-        SchoolClass.objects
-        .filter(school_id=school_id, is_active=True, removed=False)
+        SchoolClass.objects.filter(school_id=school_id, is_active=True, removed=False)
         .select_related("class_id", "class_id__program_id")
         .annotate(
             sections_count=Count(
@@ -39,8 +38,7 @@ def add_class_to_school(school_id: int, class_id: int, user) -> SchoolClass:
         )
         # Re-fetch with related so schema resolvers work
         return (
-            SchoolClass.objects
-            .select_related("class_id", "class_id__program_id")
+            SchoolClass.objects.select_related("class_id", "class_id__program_id")
             .annotate(
                 sections_count=Count(
                     "classsection",
@@ -82,4 +80,3 @@ def soft_delete_school_class(school_class_id: int, school_id: int, user) -> None
     sc.deleted_at = now
     sc.updated_by = user
     sc.save(update_fields=["is_active", "removed", "deleted_at", "updated_by", "updated_at"])
-

@@ -10,22 +10,18 @@ class SchoolSessionDetails(models.Model):
     and creating a new row for the new academic year.
     """
 
-    session_id           = models.BigAutoField(primary_key=True)
-    school_id            = models.BigIntegerField(db_index=True)
-    school_academic_year = models.ForeignKey(
-        "SchoolAcademicYear", on_delete=models.PROTECT
-    )
-    start_date           = models.DateField()
-    end_date             = models.DateField()
-    is_active            = models.BooleanField(default=True)
-    removed              = models.BooleanField(default=False)
-    deleted_at           = models.DateTimeField(null=True, blank=True)
-    created_at           = models.DateTimeField(auto_now_add=True)
-    updated_at           = models.DateTimeField(auto_now=True)
-    created_by           = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
-    )
-    updated_by           = models.ForeignKey(
+    session_id = models.BigAutoField(primary_key=True)
+    school_id = models.BigIntegerField(db_index=True)
+    school_academic_year = models.ForeignKey("SchoolAcademicYear", on_delete=models.PROTECT)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey("sessionops.User", on_delete=models.PROTECT, related_name="+")
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 

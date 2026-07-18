@@ -2,20 +2,28 @@
 Tests for F-M3-3: Volunteer auto-population (list_school_volunteers service).
 """
 
+from datetime import time
+
 import pytest
 
 from sessionops.exceptions import NotFound, PermissionDenied
-from datetime import time
-
 from sessionops.models import (
-    AcademicYear, Class, ClassSection, ClassSectionSubject,
-    Partner, PartnerWorknode, Program,
-    SchoolAcademicYear, SchoolClass,
-    Slot, SlotClassSection, SlotClassSectionVolunteer,
-    Subject, User,
+    AcademicYear,
+    Class,
+    ClassSection,
+    ClassSectionSubject,
+    Partner,
+    PartnerWorknode,
+    Program,
+    SchoolAcademicYear,
+    SchoolClass,
+    Slot,
+    SlotClassSection,
+    SlotClassSectionVolunteer,
+    Subject,
+    User,
 )
 from sessionops.services.volunteers.list import list_school_volunteers
-
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -55,6 +63,7 @@ def _make_partner_worknode(school_id: int, worknode_id: int) -> PartnerWorknode:
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestListSchoolVolunteers:
@@ -195,10 +204,10 @@ class TestListSchoolVolunteers:
 
         assert result["status"] == "ok"
         v = result["volunteers"][0]
-        assert v["email"]   == "vol_detail@test.com"
+        assert v["email"] == "vol_detail@test.com"
         assert v["contact"] == "9876543210"
-        assert v["city"]    == "Pune"
-        assert v["state"]   == "Maharashtra"
+        assert v["city"] == "Pune"
+        assert v["state"] == "Maharashtra"
 
     def test_list_school_volunteers_returns_null_for_missing_contact_fields(self):
         """contact, city, state are None when not set on the User row."""
@@ -213,8 +222,8 @@ class TestListSchoolVolunteers:
         assert result["status"] == "ok"
         v = result["volunteers"][0]
         assert v["contact"] is None
-        assert v["city"]    is None
-        assert v["state"]   is None
+        assert v["city"] is None
+        assert v["state"] is None
 
 
 # ── Helpers for slot-class count tests ────────────────────────────────────────
@@ -321,7 +330,9 @@ def _make_slot_class_section(slot: Slot, section: ClassSection, admin: User) -> 
     )
 
 
-def _assign_volunteer(scs: SlotClassSection, volunteer: User, admin: User) -> SlotClassSectionVolunteer:
+def _assign_volunteer(
+    scs: SlotClassSection, volunteer: User, admin: User
+) -> SlotClassSectionVolunteer:
     return SlotClassSectionVolunteer.objects.create(
         slot_class_section_id=scs,
         volunteer_id=volunteer,
@@ -333,23 +344,23 @@ def _assign_volunteer(scs: SlotClassSection, volunteer: User, admin: User) -> Sl
 
 # ── active_slot_class_count tests ─────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestActiveSlotClassCount:
-
     def test_active_slot_class_count_reflects_actual_assignments(self):
         """Count is 1 when the volunteer has one active slot-class assignment at this school."""
         admin = _make_scs_user("admin_scs1@test.com", role="Project Lead")
-        co    = _make_scs_user("co_scs1@test.com")
-        sid   = _next_scs_school_id()
+        co = _make_scs_user("co_scs1@test.com")
+        sid = _next_scs_school_id()
         _make_scs_school(sid, co)
 
         wid = 501
         PartnerWorknode.objects.create(partner_id=str(sid), worknode_id=wid)
         vol = _make_scs_user("vol_scs1@test.com", role="Wingman", worknode_id=wid)
 
-        slot    = _make_slot(sid, admin)
+        slot = _make_slot(sid, admin)
         section = _make_section(sid, admin)
-        scs     = _make_slot_class_section(slot, section, admin)
+        scs = _make_slot_class_section(slot, section, admin)
         _assign_volunteer(scs, vol, admin)
 
         result = list_school_volunteers(sid, co)
@@ -359,9 +370,9 @@ class TestActiveSlotClassCount:
 
     def test_active_slot_class_count_zero_when_no_assignments(self):
         """Count is 0 when the volunteer has no slot-class assignments."""
-        admin = _make_scs_user("admin_scs2@test.com", role="Project Lead")
-        co    = _make_scs_user("co_scs2@test.com")
-        sid   = _next_scs_school_id()
+        _make_scs_user("admin_scs2@test.com", role="Project Lead")
+        co = _make_scs_user("co_scs2@test.com")
+        sid = _next_scs_school_id()
         _make_scs_school(sid, co)
 
         wid = 502
@@ -375,11 +386,11 @@ class TestActiveSlotClassCount:
 
     def test_active_slot_class_count_ignores_other_school_assignments(self):
         """Assignments at a different school do not inflate the count."""
-        admin  = _make_scs_user("admin_scs3@test.com", role="Project Lead")
-        co1    = _make_scs_user("co_scs3a@test.com")
-        co2    = _make_scs_user("co_scs3b@test.com")
-        sid_a  = _next_scs_school_id()
-        sid_b  = _next_scs_school_id()
+        admin = _make_scs_user("admin_scs3@test.com", role="Project Lead")
+        co1 = _make_scs_user("co_scs3a@test.com")
+        co2 = _make_scs_user("co_scs3b@test.com")
+        sid_a = _next_scs_school_id()
+        sid_b = _next_scs_school_id()
         _make_scs_school(sid_a, co1)
         _make_scs_school(sid_b, co2)
 
@@ -389,9 +400,9 @@ class TestActiveSlotClassCount:
         vol = _make_scs_user("vol_scs3@test.com", role="Wingman", worknode_id=wid)
 
         # Assign vol at school B only
-        slot_b    = _make_slot(sid_b, admin)
+        slot_b = _make_slot(sid_b, admin)
         section_b = _make_section(sid_b, admin)
-        scs_b     = _make_slot_class_section(slot_b, section_b, admin)
+        scs_b = _make_slot_class_section(slot_b, section_b, admin)
         _assign_volunteer(scs_b, vol, admin)
 
         # Query school A — should show 0
@@ -403,17 +414,17 @@ class TestActiveSlotClassCount:
     def test_active_slot_class_count_ignores_removed_assignments(self):
         """Assignments with removed=True are excluded from the count."""
         admin = _make_scs_user("admin_scs4@test.com", role="Project Lead")
-        co    = _make_scs_user("co_scs4@test.com")
-        sid   = _next_scs_school_id()
+        co = _make_scs_user("co_scs4@test.com")
+        sid = _next_scs_school_id()
         _make_scs_school(sid, co)
 
         wid = 504
         PartnerWorknode.objects.create(partner_id=str(sid), worknode_id=wid)
         vol = _make_scs_user("vol_scs4@test.com", role="Wingman", worknode_id=wid)
 
-        slot    = _make_slot(sid, admin)
+        slot = _make_slot(sid, admin)
         section = _make_section(sid, admin)
-        scs     = _make_slot_class_section(slot, section, admin)
+        scs = _make_slot_class_section(slot, section, admin)
         assignment = _assign_volunteer(scs, vol, admin)
 
         # Mark as removed
@@ -429,27 +440,36 @@ class TestActiveSlotClassCount:
     def test_active_slot_class_count_increments_for_multiple_assignments(self):
         """Count is 2 when the volunteer teaches two different slot-classes at the same school."""
         admin = _make_scs_user("admin_scs5@test.com", role="Project Lead")
-        co    = _make_scs_user("co_scs5@test.com")
-        sid   = _next_scs_school_id()
+        co = _make_scs_user("co_scs5@test.com")
+        sid = _next_scs_school_id()
         _make_scs_school(sid, co)
 
         wid = 505
         PartnerWorknode.objects.create(partner_id=str(sid), worknode_id=wid)
         vol = _make_scs_user("vol_scs5@test.com", role="Wingman", worknode_id=wid)
 
-        slot     = _make_slot(sid, admin)
-        section  = _make_section(sid, admin)
-        scs1     = _make_slot_class_section(slot, section, admin)
+        slot = _make_slot(sid, admin)
+        section = _make_section(sid, admin)
+        scs1 = _make_slot_class_section(slot, section, admin)
         _assign_volunteer(scs1, vol, admin)
 
         # Second slot
-        year, _  = AcademicYear.objects.get_or_create(label="2026-2027", defaults={"is_active": True, "created_by": admin})
-        say, _   = SchoolAcademicYear.objects.get_or_create(school_id=sid, academic_year_id=year, defaults={"created_by": admin})
+        year, _ = AcademicYear.objects.get_or_create(
+            label="2026-2027", defaults={"is_active": True, "created_by": admin}
+        )
+        say, _ = SchoolAcademicYear.objects.get_or_create(
+            school_id=sid, academic_year_id=year, defaults={"created_by": admin}
+        )
         slot2 = Slot.objects.create(
-            school_id=sid, school_academic_year_id=say,
-            slot_name="Tuesday 10:00", day_of_week="tuesday",
-            start_time=time(10, 0), end_time=time(11, 0),
-            recurring=True, is_active=True, created_by=admin,
+            school_id=sid,
+            school_academic_year_id=say,
+            slot_name="Tuesday 10:00",
+            day_of_week="tuesday",
+            start_time=time(10, 0),
+            end_time=time(11, 0),
+            recurring=True,
+            is_active=True,
+            created_by=admin,
         )
         scs2 = _make_slot_class_section(slot2, section, admin)
         _assign_volunteer(scs2, vol, admin)

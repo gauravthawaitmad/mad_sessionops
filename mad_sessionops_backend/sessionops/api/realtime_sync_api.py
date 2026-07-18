@@ -63,7 +63,9 @@ def _resolve_auth(request) -> User | None:
                 user = User.objects.filter(user_id=user_id, is_active=True).first()
                 if user and user_has_admin_access(user.user_role):
                     return user
-        except Exception:
+        except (
+            Exception
+        ):  # nosec B110 — any JWT parse/validation failure just falls through to "not authenticated" below
             pass
 
     raise AuthenticationError("Valid admin JWT or service token required")

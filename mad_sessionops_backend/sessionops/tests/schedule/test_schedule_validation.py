@@ -15,6 +15,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import sessionops.services.slot_classes.helpers as slot_class_helpers
 from sessionops.exceptions import ConflictError
 from sessionops.models import (
     AcademicYear,
@@ -33,7 +34,6 @@ from sessionops.models import (
 from sessionops.services.slot_classes.create import create_slot_class
 from sessionops.services.slots.create import create_slot
 from sessionops.services.slots.edit import edit_slot
-import sessionops.services.slot_classes.helpers as slot_class_helpers
 
 # ── Counters (ranges distinct from other test files) ──────────────────────────
 
@@ -50,6 +50,7 @@ def _reset_foundation_subject_cache():
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def _make_admin() -> User:
     uid = next(_UID)
@@ -162,10 +163,13 @@ def _make_volunteer(school_id: int, user: User) -> User:
     return vol
 
 
-def _make_slot(school_id: int, user: User,
-               day: str = "monday",
-               start: time = time(9, 0),
-               end: time = time(10, 0)) -> Slot:
+def _make_slot(
+    school_id: int,
+    user: User,
+    day: str = "monday",
+    start: time = time(9, 0),
+    end: time = time(10, 0),
+) -> Slot:
     year, _ = AcademicYear.objects.get_or_create(
         label="2026-2027",
         defaults={"is_active": True, "created_by": user},
@@ -196,6 +200,7 @@ def _payload(section, *volunteers):
 
 
 # ── R4: One volunteer per school ──────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_r4_volunteer_at_other_school_blocked_with_school_name_in_message():
@@ -238,6 +243,7 @@ def test_r4_volunteer_at_other_school_blocked_with_school_name_in_message():
 
 # ── R5: No duplicate section in slot ─────────────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_r5_duplicate_section_in_slot_blocked():
     """R5: Same section scheduled twice in the same slot must be rejected (409),
@@ -264,6 +270,7 @@ def test_r5_duplicate_section_in_slot_blocked():
 
 
 # ── R6: No volunteer double-booked in same slot ───────────────────────────────
+
 
 @pytest.mark.django_db
 def test_r6_volunteer_double_booked_in_slot_blocked():
@@ -293,6 +300,7 @@ def test_r6_volunteer_double_booked_in_slot_blocked():
 
 
 # ── R7: No overlapping slots ──────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_r7_overlapping_slots_blocked_on_create():

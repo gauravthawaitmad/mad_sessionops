@@ -101,21 +101,19 @@ def check_r6_volunteer_in_slot(slot: Slot, volunteer: User) -> None:
         volunteer_id=volunteer,
         is_active=True,
         removed=False,
-        slot_class_section_id__slot_id=slot,
+        slot_class_section_id__slot_id=slot.slot_id,
         slot_class_section_id__is_active=True,
         slot_class_section_id__removed=False,
     ).exists():
         raise ConflictError(
-            f"{volunteer.user_display_name} is already assigned to another class "
-            "in this slot."
+            f"{volunteer.user_display_name} is already assigned to another class " "in this slot."
         )
 
 
 def check_r4_volunteer(volunteer: User, school_id: int) -> None:
     """Raise ConflictError (R4) if volunteer has an active SchoolVolunteer row at a different school."""
     other_sv = (
-        SchoolVolunteer.objects
-        .filter(volunteer_id=volunteer, is_active=True, removed=False)
+        SchoolVolunteer.objects.filter(volunteer_id=volunteer, is_active=True, removed=False)
         .exclude(school_id=school_id)
         .first()
     )

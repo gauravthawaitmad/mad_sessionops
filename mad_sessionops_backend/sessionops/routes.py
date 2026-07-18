@@ -22,6 +22,7 @@ Two API instances:
 import os
 
 from django.http import JsonResponse
+
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
 from ninja.responses import Response
@@ -31,26 +32,21 @@ from sessionops import auth
 from sessionops.api.academic_years_api import academic_years_router
 from sessionops.api.admin_realtime_events_api import admin_realtime_events_router
 from sessionops.api.admin_sync_api import admin_sync_router
-from sessionops.api.realtime_sync_api import router as realtime_sync_router
 from sessionops.api.auth_api import auth_router
 from sessionops.api.children_api import children_router
+from sessionops.api.holidays_api import holidays_router
+from sessionops.api.migration_api import router as migration_router
+from sessionops.api.realtime_sync_api import router as realtime_sync_router
+from sessionops.api.schedule_api import schedule_router
 from sessionops.api.schools_api import schools_router
+from sessionops.api.sessions_api import sessions_router
+from sessionops.api.slot_classes_api import slot_classes_router
+from sessionops.api.slots_api import slots_router
 from sessionops.api.structure_api import classes_catalog_router, structure_router
 from sessionops.api.user_api import user_router
 from sessionops.api.volunteers_api import volunteers_router
-from sessionops.api.slots_api import slots_router
-from sessionops.api.slot_classes_api import slot_classes_router
-from sessionops.api.schedule_api import schedule_router
-from sessionops.api.sessions_api import sessions_router
-from sessionops.api.holidays_api import holidays_router
-from sessionops.exceptions import (
-    AuthenticationError,
-    ConflictError,
-    NotFound,
-    PermissionDenied,
-    ValidationError as BusinessValidationError,
-)
-
+from sessionops.exceptions import AuthenticationError, ConflictError, NotFound, PermissionDenied
+from sessionops.exceptions import ValidationError as BusinessValidationError
 
 # =============================================================================
 # MAIN API (Protected by default)
@@ -245,6 +241,10 @@ api.add_router("/api/admin/realtime-events", admin_realtime_events_router)
 _internal_sync_path = os.getenv("INTERNAL_SYNC_ENDPOINT_PATH", "/sync-user-internal")
 api.add_router(_internal_sync_path, realtime_sync_router)
 
+# Internal migration loader endpoints (F-M7-1) — fixed prefix, token-only auth
+# handled inside the router (see sessionops/api/migration_api.py)
+api.add_router("/api/internal/migrate/", migration_router)
+
 
 # =============================================================================
 # PUBLIC API (No Authentication)
@@ -276,4 +276,3 @@ def health_check(request):
         }
     """
     return {"status": "healthy", "service": "mad_backend"}
-

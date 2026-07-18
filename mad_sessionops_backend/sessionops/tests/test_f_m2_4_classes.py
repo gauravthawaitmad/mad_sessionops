@@ -5,15 +5,24 @@ Tests for F-M2-4: Classes — catalog, add, list, remove.
 import pytest
 
 from sessionops.exceptions import ConflictError, NotFound, PermissionDenied
-from sessionops.models import AcademicYear, Child, ChildClass, Class, ClassSection, Partner, Program, User
+from sessionops.models import (
+    AcademicYear,
+    Child,
+    ChildClass,
+    Class,
+    ClassSection,
+    Partner,
+    Program,
+    User,
+)
 from sessionops.services.structure.queries import (
     add_class_to_school,
     list_classes_for_school,
     soft_delete_school_class,
 )
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> User:
     return User.objects.create(
@@ -60,6 +69,7 @@ def _get_or_create_class(class_code: str = "5", class_name: str = "5th") -> Clas
 
 # ── Catalog tests ──────────────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestCatalog:
     def test_seeded_classes_exist(self):
@@ -80,6 +90,7 @@ class TestCatalog:
 
 # ── Add class ──────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestAddClass:
     def test_add_class_creates_school_class_row(self):
@@ -96,6 +107,7 @@ class TestAddClass:
 
     def test_add_class_creates_school_academic_year_if_missing(self):
         from sessionops.models import SchoolAcademicYear
+
         admin = _make_user()
         _make_active_year(admin)
         cls = _get_or_create_class()
@@ -132,6 +144,7 @@ class TestAddClass:
 
 
 # ── List classes ───────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestListClasses:
@@ -171,6 +184,7 @@ class TestListClasses:
 
 
 # ── Remove class ───────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestRemoveClass:
@@ -243,6 +257,7 @@ class TestRemoveClass:
 
 # ── RBAC via get_school_or_403 (service layer test) ───────────────────────────
 
+
 @pytest.mark.django_db
 class TestRBAC:
     def test_co_can_access_own_school(self):
@@ -262,5 +277,6 @@ class TestRBAC:
         _make_partner(3002, other_co)
 
         from sessionops.services.rbac.scope import get_school_or_403
+
         with pytest.raises(PermissionDenied):
             get_school_or_403(co, 3002)

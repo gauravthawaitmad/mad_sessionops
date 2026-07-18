@@ -7,25 +7,21 @@ class SlotClassSection(models.Model):
     class_section_subject_id are stored (denormalized) to match the Bubble schema.
     """
 
-    slot_class_section_id    = models.BigAutoField(primary_key=True)
-    slot_id                  = models.ForeignKey(
-        "Slot", on_delete=models.PROTECT
-    )
-    class_section_id         = models.ForeignKey(
-        "ClassSection", on_delete=models.PROTECT
+    slot_class_section_id = models.BigAutoField(primary_key=True)
+    slot_id = models.ForeignKey("Slot", on_delete=models.PROTECT, db_column="slot_id")
+    class_section_id = models.ForeignKey(
+        "ClassSection", on_delete=models.PROTECT, db_column="class_section_id"
     )
     class_section_subject_id = models.ForeignKey(
-        "ClassSectionSubject", on_delete=models.PROTECT
+        "ClassSectionSubject", on_delete=models.PROTECT, db_column="class_section_subject_id"
     )
-    is_active                = models.BooleanField(default=True)
-    removed                  = models.BooleanField(default=False)
-    deleted_at               = models.DateTimeField(null=True, blank=True)
-    created_at               = models.DateTimeField(auto_now_add=True)
-    updated_at               = models.DateTimeField(auto_now=True)
-    created_by               = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
-    )
-    updated_by               = models.ForeignKey(
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey("sessionops.User", on_delete=models.PROTECT, related_name="+")
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 

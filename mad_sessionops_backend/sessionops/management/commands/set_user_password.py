@@ -55,16 +55,12 @@ class Command(BaseCommand):
             existing.set_password(password)
             existing.save(update_fields=["password_hash", "updated_at"])
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"Updated password for {email} (user_id={user.user_id})"
-                )
+                self.style.SUCCESS(f"Updated password for {email} (user_id={user.user_id})")
             )
         else:
             UserAuth.create_password_auth(user=user, email=email, password=password)
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"Created password auth for {email} (user_id={user.user_id})"
-                )
+                self.style.SUCCESS(f"Created password auth for {email} (user_id={user.user_id})")
             )
 
         self.stdout.write(

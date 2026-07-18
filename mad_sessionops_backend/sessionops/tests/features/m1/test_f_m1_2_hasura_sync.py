@@ -24,7 +24,6 @@ from sessionops.models import Partner, SyncRun, User
 from sessionops.services.hasura.client import HasuraError, fetch_partners, fetch_users
 from sessionops.services.sync import run_sync
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -67,6 +66,7 @@ FAKE_ENV = {
 # TC-M1-2-01  fetch_users strips decimal suffix
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_fetch_users_strips_decimal_suffix():
     payload = {"prod_external_apps_user_data": [dict(USER_ROW_RAW)]}
@@ -84,6 +84,7 @@ def test_fetch_users_strips_decimal_suffix():
 # TC-M1-2-02  fetch_partners passes updated_after param
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_fetch_partners_uses_updated_after_param():
     payload = {"prod_external_apps_partner_data": [dict(PARTNER_ROW)]}
@@ -91,7 +92,9 @@ def test_fetch_partners_uses_updated_after_param():
     mock_resp.json.return_value = payload
 
     with patch.dict(os.environ, FAKE_ENV):
-        with patch("sessionops.services.hasura.client.requests.get", return_value=mock_resp) as mock_get:
+        with patch(
+            "sessionops.services.hasura.client.requests.get", return_value=mock_resp
+        ) as mock_get:
             fetch_partners()
 
     assert "updated_after" in mock_get.call_args.kwargs["params"]
@@ -100,6 +103,7 @@ def test_fetch_partners_uses_updated_after_param():
 # ---------------------------------------------------------------------------
 # TC-M1-2-03  client raises HasuraError on non-200
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_hasura_client_raises_on_non_200():
@@ -114,6 +118,7 @@ def test_hasura_client_raises_on_non_200():
 # ---------------------------------------------------------------------------
 # TC-M1-2-04  sync creates new users
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_sync_creates_new_users():
@@ -131,6 +136,7 @@ def test_sync_creates_new_users():
 # ---------------------------------------------------------------------------
 # TC-M1-2-05  sync updates existing users
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_sync_updates_existing_users():
@@ -158,6 +164,7 @@ def test_sync_updates_existing_users():
 # TC-M1-2-06  sync creates new partners
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_sync_creates_new_partners():
     with _mock_hasura([], [dict(PARTNER_ROW)]):
@@ -171,6 +178,7 @@ def test_sync_creates_new_partners():
 # ---------------------------------------------------------------------------
 # TC-M1-2-07  sync marks removed partner inactive
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_sync_marks_removed_partner_inactive():
@@ -188,6 +196,7 @@ def test_sync_marks_removed_partner_inactive():
 # ---------------------------------------------------------------------------
 # TC-M1-2-08  sync reactivates previously removed partner
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_sync_reactivates_previously_removed_partner():
@@ -215,6 +224,7 @@ def test_sync_reactivates_previously_removed_partner():
 # TC-M1-2-09  sync does not touch user is_active
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_sync_does_not_touch_user_is_active():
     user = User.objects.create(
@@ -237,6 +247,7 @@ def test_sync_does_not_touch_user_is_active():
 # TC-M1-2-10  sync creates SyncRun with success status
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_sync_creates_sync_run_on_success():
     with _mock_hasura([dict(USER_ROW)], [dict(PARTNER_ROW)]):
@@ -252,6 +263,7 @@ def test_sync_creates_sync_run_on_success():
 # ---------------------------------------------------------------------------
 # TC-M1-2-11  sync marks SyncRun failed on exception
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_sync_marks_run_failed_on_exception():
@@ -271,6 +283,7 @@ def test_sync_marks_run_failed_on_exception():
 # TC-M1-2-12  sync is idempotent
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_sync_is_idempotent():
     with _mock_hasura([dict(USER_ROW)], [dict(PARTNER_ROW)]):
@@ -287,6 +300,7 @@ def test_sync_is_idempotent():
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
+
 
 def _mock_hasura(users: list, partners: list):
     """Patch both hasura client functions in sync.py."""

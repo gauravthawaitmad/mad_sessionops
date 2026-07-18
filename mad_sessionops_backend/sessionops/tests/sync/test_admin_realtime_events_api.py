@@ -11,8 +11,9 @@ Auth pattern: admin JWT (Project Lead) for success paths, CO role for 403 paths.
 
 import json
 
-import pytest
 from django.test import Client
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import RealtimeSyncLog, User
@@ -243,14 +244,16 @@ def test_manual_sync_requires_admin():
     client = Client()
     resp = client.post(
         f"{BASE}/sync-user",
-        data=json.dumps({
-            "payload": {
-                "user_id": target.user_id,
-                "user_login": target.user_login,
-                "event_type": "update",
-                "sync_type": "manual_admin",
+        data=json.dumps(
+            {
+                "payload": {
+                    "user_id": target.user_id,
+                    "user_login": target.user_login,
+                    "event_type": "update",
+                    "sync_type": "manual_admin",
+                }
             }
-        }),
+        ),
         content_type="application/json",
         **_h(co),
     )
@@ -264,17 +267,19 @@ def test_manual_sync_valid_payload_returns_log_id():
     client = Client()
     resp = client.post(
         f"{BASE}/sync-user",
-        data=json.dumps({
-            "payload": {
-                "user_id": target.user_id,
-                "user_login": target.user_login,
-                "user_display_name": target.user_display_name,
-                "user_email": target.email,
-                "event_type": "update",
-                "sync_type": "manual_admin",
-                "user_role": "Youth",
+        data=json.dumps(
+            {
+                "payload": {
+                    "user_id": target.user_id,
+                    "user_login": target.user_login,
+                    "user_display_name": target.user_display_name,
+                    "user_email": target.email,
+                    "event_type": "update",
+                    "sync_type": "manual_admin",
+                    "user_role": "Youth",
+                }
             }
-        }),
+        ),
         content_type="application/json",
         **_h(admin),
     )
@@ -292,13 +297,15 @@ def test_manual_sync_missing_user_id_returns_400():
     client = Client()
     resp = client.post(
         f"{BASE}/sync-user",
-        data=json.dumps({
-            "payload": {
-                "user_login": "someone@test.com",
-                "event_type": "update",
-                "sync_type": "manual_admin",
+        data=json.dumps(
+            {
+                "payload": {
+                    "user_login": "someone@test.com",
+                    "event_type": "update",
+                    "sync_type": "manual_admin",
+                }
             }
-        }),
+        ),
         content_type="application/json",
         **_h(admin),
     )
@@ -311,13 +318,15 @@ def test_manual_sync_invalid_payload_missing_required_field_returns_400():
     client = Client()
     resp = client.post(
         f"{BASE}/sync-user",
-        data=json.dumps({
-            "payload": {
-                "user_id": 9_004_001,
-                # missing user_login and event_type (required by RealtimeSyncUserPayload)
-                "sync_type": "manual_admin",
+        data=json.dumps(
+            {
+                "payload": {
+                    "user_id": 9_004_001,
+                    # missing user_login and event_type (required by RealtimeSyncUserPayload)
+                    "sync_type": "manual_admin",
+                }
             }
-        }),
+        ),
         content_type="application/json",
         **_h(admin),
     )
@@ -331,17 +340,19 @@ def test_manual_sync_writes_triggered_by():
     client = Client()
     resp = client.post(
         f"{BASE}/sync-user",
-        data=json.dumps({
-            "payload": {
-                "user_id": target.user_id,
-                "user_login": target.user_login,
-                "user_display_name": target.user_display_name,
-                "user_email": target.email,
-                "event_type": "update",
-                "sync_type": "manual_admin",
-                "user_role": "Youth",
+        data=json.dumps(
+            {
+                "payload": {
+                    "user_id": target.user_id,
+                    "user_login": target.user_login,
+                    "user_display_name": target.user_display_name,
+                    "user_email": target.email,
+                    "event_type": "update",
+                    "sync_type": "manual_admin",
+                    "user_role": "Youth",
+                }
             }
-        }),
+        ),
         content_type="application/json",
         **_h(admin),
     )

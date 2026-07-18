@@ -2,21 +2,21 @@ from django.db import models
 
 
 class Class(models.Model):
-    class_id    = models.BigAutoField(primary_key=True)
-    class_name  = models.CharField(max_length=20)             # "5th", "6th"
-    class_code  = models.CharField(max_length=4, unique=True) # "5", "6"
-    program_id  = models.ForeignKey(
+    class_id = models.BigAutoField(primary_key=True)
+    class_name = models.CharField(max_length=20)  # "5th", "6th"
+    class_code = models.CharField(max_length=4, unique=True)  # "5", "6"
+    program_id = models.ForeignKey(
         "sessionops.Program", on_delete=models.PROTECT, db_column="program_id"
     )
-    is_active   = models.BooleanField(default=True)
-    removed     = models.BooleanField(default=False)
-    deleted_at  = models.DateTimeField(null=True, blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
-    created_by  = models.ForeignKey(
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
-    updated_by  = models.ForeignKey(
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 
@@ -29,24 +29,22 @@ class Class(models.Model):
 
 
 class SchoolClass(models.Model):
-    school_class_id         = models.BigAutoField(primary_key=True)
-    school_id               = models.BigIntegerField(db_index=True)
+    school_class_id = models.BigAutoField(primary_key=True)
+    school_id = models.BigIntegerField(db_index=True)
     school_academic_year_id = models.ForeignKey(
-        "sessionops.SchoolAcademicYear", on_delete=models.PROTECT, db_column="school_academic_year_id"
+        "sessionops.SchoolAcademicYear",
+        on_delete=models.PROTECT,
+        db_column="school_academic_year_id",
     )
     # db_column prevents Django from creating column "class_id_id"
-    class_id                = models.ForeignKey(
-        Class, on_delete=models.PROTECT, db_column="class_id"
-    )
-    is_active               = models.BooleanField(default=True)
-    removed                 = models.BooleanField(default=False)
-    deleted_at              = models.DateTimeField(null=True, blank=True)
-    created_at              = models.DateTimeField(auto_now_add=True)
-    updated_at              = models.DateTimeField(auto_now=True)
-    created_by              = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
-    )
-    updated_by              = models.ForeignKey(
+    class_id = models.ForeignKey(Class, on_delete=models.PROTECT, db_column="class_id")
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey("sessionops.User", on_delete=models.PROTECT, related_name="+")
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 

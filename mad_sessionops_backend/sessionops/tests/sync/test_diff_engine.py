@@ -5,8 +5,9 @@ Tests exercise compute_diff() in isolation — no DB writes except for
 User row creation needed by the function signature.
 """
 
-import pytest
 from django.utils import timezone
+
+import pytest
 
 from sessionops.models import User
 from sessionops.services.realtime_sync.diff import TRACKED_FIELDS, compute_diff
@@ -111,9 +112,7 @@ def test_diff_common_field_changed_display_name():
 
     changed_fields = {c["field"] for c in diff.common_fields_changed}
     assert "user_display_name" in changed_fields
-    name_change = next(
-        c for c in diff.common_fields_changed if c["field"] == "user_display_name"
-    )
+    name_change = next(c for c in diff.common_fields_changed if c["field"] == "user_display_name")
     assert name_change["old"] == "Old Name"
     assert name_change["new"] == "New Name"
 
@@ -155,9 +154,7 @@ def test_diff_contact_field_mapped_correctly():
 def test_diff_worknode_added():
     uid = next(_UID)
     user = _user(user_id=uid, worknode_id=None)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, worknode_id=42
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, worknode_id=42)
 
     diff = compute_diff(user, payload)
     assert diff.worknode_action == "added"
@@ -167,9 +164,7 @@ def test_diff_worknode_added():
 def test_diff_worknode_removed():
     uid = next(_UID)
     user = _user(user_id=uid, worknode_id=42)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, worknode_id=None
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, worknode_id=None)
 
     diff = compute_diff(user, payload)
     assert diff.worknode_action == "removed"
@@ -179,9 +174,7 @@ def test_diff_worknode_removed():
 def test_diff_worknode_updated():
     uid = next(_UID)
     user = _user(user_id=uid, worknode_id=10)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, worknode_id=20
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, worknode_id=20)
 
     diff = compute_diff(user, payload)
     assert diff.worknode_action == "updated"
@@ -191,9 +184,7 @@ def test_diff_worknode_updated():
 def test_diff_worknode_unchanged():
     uid = next(_UID)
     user = _user(user_id=uid, worknode_id=10)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, worknode_id=10
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, worknode_id=10)
 
     diff = compute_diff(user, payload)
     assert diff.worknode_action == "none"
@@ -294,9 +285,7 @@ def test_diff_pre_snapshot_contains_synced_at():
 def test_diff_reactivation_when_user_inactive():
     uid = next(_UID)
     user = _user(user_id=uid, is_active=False)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, user_active_status=True
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, user_active_status=True)
 
     diff = compute_diff(user, payload)
     assert diff.is_reactivation is True
@@ -306,9 +295,7 @@ def test_diff_reactivation_when_user_inactive():
 def test_diff_no_reactivation_when_user_active():
     uid = next(_UID)
     user = _user(user_id=uid, is_active=True)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, user_active_status=True
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, user_active_status=True)
 
     diff = compute_diff(user, payload)
     assert diff.is_reactivation is False

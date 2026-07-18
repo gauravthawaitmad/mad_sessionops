@@ -7,22 +7,18 @@ class ChildSubject(models.Model):
     Always derive current subjects via child → child_class_section → class_section → class_section_subject.
     """
 
-    child_subject_id         = models.BigAutoField(primary_key=True)
-    child_id                 = models.ForeignKey(
-        "Child", on_delete=models.PROTECT
-    )
+    child_subject_id = models.BigAutoField(primary_key=True)
+    child_id = models.ForeignKey("Child", on_delete=models.PROTECT, db_column="child_id")
     class_section_subject_id = models.ForeignKey(
-        "ClassSectionSubject", on_delete=models.PROTECT
+        "ClassSectionSubject", on_delete=models.PROTECT, db_column="class_section_subject_id"
     )
-    is_active                = models.BooleanField(default=True)
-    removed                  = models.BooleanField(default=False)
-    deleted_at               = models.DateTimeField(null=True, blank=True)
-    created_at               = models.DateTimeField(auto_now_add=True)
-    updated_at               = models.DateTimeField(auto_now=True)
-    created_by               = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
-    )
-    updated_by               = models.ForeignKey(
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey("sessionops.User", on_delete=models.PROTECT, related_name="+")
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 

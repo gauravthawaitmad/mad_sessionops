@@ -32,7 +32,7 @@ def create_holiday(school_id: int, payload: dict, user) -> SchoolHoliday:
         )
 
     start: date = payload["start_date"]
-    end: date   = payload["end_date"]
+    end: date = payload["end_date"]
 
     if start > end:
         raise ValidationError("start_date must be on or before end_date.")
@@ -49,9 +49,7 @@ def create_holiday(school_id: int, payload: dict, user) -> SchoolHoliday:
         school_id=school_id,
         is_active=True,
         removed=False,
-    ).filter(
-        Q(start_date__lte=end) & Q(end_date__gte=start)
-    )
+    ).filter(Q(start_date__lte=end) & Q(end_date__gte=start))
     if exclude_id is not None:
         overlap_qs = overlap_qs.exclude(school_holiday_id=exclude_id)
 

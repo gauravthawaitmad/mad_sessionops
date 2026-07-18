@@ -1,6 +1,5 @@
 from django.db import models
 
-
 SYNC_TYPES = [
     ("manual_admin", "Manual trigger by admin"),
     ("realtime_webhook", "Realtime via n8n / webhook"),
@@ -47,32 +46,32 @@ class RealtimeSyncLog(models.Model):
     realtime_sync_log_id = models.BigAutoField(primary_key=True)
 
     user_id_from_source = models.IntegerField(db_index=True)
-    sync_type           = models.CharField(max_length=30, choices=SYNC_TYPES)
-    event_type          = models.CharField(max_length=20, choices=EVENT_TYPES)
-    triggered_by        = models.ForeignKey(
+    sync_type = models.CharField(max_length=30, choices=SYNC_TYPES)
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
+    triggered_by = models.ForeignKey(
         "User",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="+",
     )
-    external_event_id   = models.CharField(max_length=200, null=True, blank=True, db_index=True)
+    external_event_id = models.CharField(max_length=200, null=True, blank=True, db_index=True)
 
-    received_at         = models.DateTimeField(auto_now_add=True, db_index=True)
-    processed_at        = models.DateTimeField(null=True, blank=True)
+    received_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
 
-    status              = models.CharField(max_length=30, choices=SYNC_STATUSES)
-    action_taken        = models.CharField(max_length=40, choices=ACTIONS_TAKEN)
-    error_details       = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=30, choices=SYNC_STATUSES)
+    action_taken = models.CharField(max_length=40, choices=ACTIONS_TAKEN)
+    error_details = models.TextField(null=True, blank=True)
 
-    pre_snapshot        = models.JSONField(null=True, blank=True)
-    incoming_payload    = models.JSONField(null=True, blank=True)
-    field_changes       = models.JSONField(null=True, blank=True)
-    cascaded_changes    = models.JSONField(null=True, blank=True)
-    rules_fired         = models.JSONField(null=True, blank=True)
+    pre_snapshot = models.JSONField(null=True, blank=True)
+    incoming_payload = models.JSONField(null=True, blank=True)
+    field_changes = models.JSONField(null=True, blank=True)
+    cascaded_changes = models.JSONField(null=True, blank=True)
+    rules_fired = models.JSONField(null=True, blank=True)
     deferred_operations = models.JSONField(null=True, blank=True)
 
-    created_at          = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "realtime_sync_log"

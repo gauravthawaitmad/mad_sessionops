@@ -21,8 +21,8 @@ from sessionops.schemas.children import ChildEditIn, ChildEnrollIn
 from sessionops.services.children.edit import edit_child
 from sessionops.services.children.enroll import enroll_child
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> User:
     return User.objects.create(
@@ -42,12 +42,15 @@ def _make_partner(partner_id: int) -> Partner:
     )
 
 
-def _make_section(school_id: int, user: User, code: str = "A", class_code: str = "5") -> ClassSection:
+def _make_section(
+    school_id: int, user: User, code: str = "A", class_code: str = "5"
+) -> ClassSection:
     program, _ = Program.objects.get_or_create(
         program_id=1,
         defaults={"program_name": "Foundation Program", "is_active": True},
     )
     from sessionops.models import Class
+
     cls, _ = Class.objects.get_or_create(
         class_code=class_code,
         defaults={
@@ -82,7 +85,10 @@ def _make_section(school_id: int, user: User, code: str = "A", class_code: str =
 
 def _enroll(school_id: int, section: ClassSection, user: User, **kwargs) -> Child:
     defaults = dict(
-        first_name="Asha", last_name="Kumar", gender="female", age=10,
+        first_name="Asha",
+        last_name="Kumar",
+        gender="female",
+        age=10,
         school_class_id=section.school_class_id_id,
         class_section_id=section.class_section_id,
     )
@@ -91,6 +97,7 @@ def _enroll(school_id: int, section: ClassSection, user: User, **kwargs) -> Chil
 
 
 # ── Tests: edit_child ─────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestEditChildDemographics:
@@ -224,6 +231,7 @@ class TestEditChildSectionChange:
 def _make_sixth_class(school_id: int, user: User) -> SchoolClass:
     program = Program.objects.get(program_id=1)
     from sessionops.models import Class
+
     cls_6, _ = Class.objects.get_or_create(
         class_code="6",
         defaults={"class_name": "6th", "program_id": program, "is_active": True},
@@ -255,9 +263,7 @@ class TestEditChildClassChange:
         )
 
         # Old ChildClass soft-deleted
-        assert ChildClass.objects.filter(
-            child_id=child, is_active=False, removed=True
-        ).exists()
+        assert ChildClass.objects.filter(child_id=child, is_active=False, removed=True).exists()
         # New ChildClass created for 6th — exactly one active row
         assert ChildClass.objects.filter(
             child_id=child, school_class_id=sc_6, is_active=True

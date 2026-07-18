@@ -64,8 +64,13 @@ def _make_active_year() -> AcademicYear:
         )
 
 
-def _make_slot(school: Partner, co: User, day: str = "monday",
-               start: time = time(9, 0), end: time = time(10, 0)) -> Slot:
+def _make_slot(
+    school: Partner,
+    co: User,
+    day: str = "monday",
+    start: time = time(9, 0),
+    end: time = time(10, 0),
+) -> Slot:
     return create_slot(
         school_id=school.partner_id,
         day_of_week=day,
@@ -76,6 +81,7 @@ def _make_slot(school: Partner, co: User, day: str = "monday",
 
 
 # ── Edit tests ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_edit_slot_updates_fields():
@@ -236,6 +242,7 @@ def test_admin_can_edit_any_slot():
 
 
 # ── Delete tests ───────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_delete_slot_succeeds():

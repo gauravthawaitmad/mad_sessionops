@@ -11,8 +11,9 @@ Coverage:
   - Label format validation (YYYY-YYYY)
 """
 
-import pytest
 from django.db import IntegrityError
+
+import pytest
 
 from sessionops.exceptions import ConflictError, NotFound
 from sessionops.models import AcademicYear, SchoolAcademicYear, User
@@ -90,7 +91,9 @@ class TestGetAllAcademicYears:
     def test_excludes_removed_years(self):
         user = _make_user()
         _make_active_year(user, "2026-2027")
-        AcademicYear.objects.create(label="2025-2026", is_active=False, removed=True, created_by=user)
+        AcademicYear.objects.create(
+            label="2025-2026", is_active=False, removed=True, created_by=user
+        )
         years = get_all_academic_years()
         assert len(years) == 1
 
@@ -113,6 +116,7 @@ class TestCreateAcademicYear:
 
     def test_label_must_be_yyyy_yyyy_format(self):
         from pydantic import ValidationError as PydanticValidationError
+
         with pytest.raises(PydanticValidationError):
             AcademicYearCreateIn(label="2026")
         with pytest.raises(PydanticValidationError):

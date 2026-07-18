@@ -142,4 +142,5 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
 
     # Re-fetch with annotations for response serialization
     from sessionops.services.children.queries import list_children
+
     return list_children(school_id).get(child_id=child.child_id)

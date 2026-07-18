@@ -15,9 +15,7 @@ class Command(BaseCommand):
         all_ok = True
         for entity_type, run in results.items():
             if run is None:
-                self.stderr.write(
-                    self.style.ERROR(f"  {entity_type}: FAILED (see sync_run table)")
-                )
+                self.stderr.write(self.style.ERROR(f"  {entity_type}: FAILED (see sync_run table)"))
                 all_ok = False
             else:
                 count = (

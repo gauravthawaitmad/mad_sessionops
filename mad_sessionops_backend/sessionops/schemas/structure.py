@@ -1,10 +1,10 @@
-from pydantic import field_validator
 from ninja import Schema
+from pydantic import field_validator
 
 from sessionops.models.class_section import SECTION_CODES
 
-
 # ── Class catalog ──────────────────────────────────────────────────────────────
+
 
 class ClassCatalogItemOut(Schema):
     class_id: int
@@ -14,11 +14,11 @@ class ClassCatalogItemOut(Schema):
 
     @staticmethod
     def resolve_class_id(obj) -> int:
-        return obj.class_id
+        return int(obj.class_id)
 
     @staticmethod
     def resolve_program_name(obj) -> str:
-        return obj.program_id.program_name
+        return str(obj.program_id.program_name)
 
 
 class ClassAddIn(Schema):
@@ -26,6 +26,7 @@ class ClassAddIn(Schema):
 
 
 # ── School class (per-school class instance) ───────────────────────────────────
+
 
 class SchoolClassOut(Schema):
     school_class_id: int
@@ -38,19 +39,19 @@ class SchoolClassOut(Schema):
 
     @staticmethod
     def resolve_class_id(obj) -> int:
-        return obj.class_id_id
+        return int(obj.class_id_id)
 
     @staticmethod
     def resolve_class_name(obj) -> str:
-        return obj.class_id.class_name
+        return str(obj.class_id.class_name)
 
     @staticmethod
     def resolve_class_code(obj) -> str:
-        return obj.class_id.class_code
+        return str(obj.class_id.class_code)
 
     @staticmethod
     def resolve_program_name(obj) -> str:
-        return obj.class_id.program_id.program_name
+        return str(obj.class_id.program_id.program_name)
 
     @staticmethod
     def resolve_sections_count(obj) -> int:
@@ -62,6 +63,7 @@ class SchoolClassOut(Schema):
 
 
 # ── Section ────────────────────────────────────────────────────────────────────
+
 
 class SectionOut(Schema):
     class_section_id: int
@@ -91,6 +93,7 @@ class AvailableCodesOut(Schema):
 
 # ── Buckets (F-M6-2) ─────────────────────────────────────────────────────────────
 
+
 class BucketAddIn(Schema):
     display_name: str | None = None
 
@@ -110,7 +113,8 @@ class BucketOut(Schema):
 
     @staticmethod
     def resolve_school_class_id(obj) -> int | None:
-        return obj.school_class_id_id
+        school_class_id = obj.school_class_id_id
+        return int(school_class_id) if school_class_id is not None else None
 
     @staticmethod
     def resolve_active_children_count(obj) -> int:
@@ -118,6 +122,7 @@ class BucketOut(Schema):
 
 
 # ── Bucket-children membership (F-M6-3) ─────────────────────────────────────────
+
 
 class BucketChildAddIn(Schema):
     child_id: int
@@ -130,8 +135,8 @@ class BucketChildOut(Schema):
 
     @staticmethod
     def resolve_child_id(obj) -> int:
-        return obj.child_id_id
+        return int(obj.child_id_id)
 
     @staticmethod
     def resolve_class_section_id(obj) -> int:
-        return obj.class_section_id_id
+        return int(obj.class_section_id_id)

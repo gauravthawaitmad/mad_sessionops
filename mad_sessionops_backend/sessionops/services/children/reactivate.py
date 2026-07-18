@@ -28,10 +28,8 @@ def reactivate_child(child_id: int, payload: ReactivateIn, user: User) -> Child:
     with transaction.atomic():
         # 1. Lock and validate — child must be deactivated (is_active=False, not hard-deleted)
         try:
-            child = (
-                Child.objects
-                .select_for_update()
-                .get(child_id=child_id, is_active=False, removed=False)
+            child = Child.objects.select_for_update().get(
+                child_id=child_id, is_active=False, removed=False
             )
         except Child.DoesNotExist:
             if Child.objects.filter(child_id=child_id, is_active=True).exists():
@@ -58,14 +56,10 @@ def reactivate_child(child_id: int, payload: ReactivateIn, user: User) -> Child:
         bucket = None
         if payload.class_section_id is not None:
             try:
-                bucket = (
-                    ClassSection.objects
-                    .select_for_update()
-                    .get(
-                        class_section_id=payload.class_section_id,
-                        is_active=True,
-                        removed=False,
-                    )
+                bucket = ClassSection.objects.select_for_update().get(
+                    class_section_id=payload.class_section_id,
+                    is_active=True,
+                    removed=False,
                 )
             except ClassSection.DoesNotExist:
                 raise NotFound(f"Bucket {payload.class_section_id} not found.")
@@ -118,12 +112,15 @@ def reactivate_child(child_id: int, payload: ReactivateIn, user: User) -> Child:
             )
             active_css = list(
                 ClassSectionSubject.objects.filter(
-                    class_section_id=bucket, is_active=True, removed=False,
+                    class_section_id=bucket,
+                    is_active=True,
+                    removed=False,
                 )
             )
             for css in active_css:
                 ChildSubject.objects.get_or_create(
-                    child_id=child, class_section_subject_id=css,
+                    child_id=child,
+                    class_section_subject_id=css,
                     defaults={"created_by": user},
                 )
         BatchChild.objects.create(
@@ -140,9 +137,10 @@ def reactivate_child(child_id: int, payload: ReactivateIn, user: User) -> Child:
 
         # 10. Mark current ChildRemovalLog inactive
         ChildRemovalLog.objects.filter(
-            child_id=child, is_active=True, removed=False
+            child_id=child.child_id, is_active=True, removed=False
         ).update(is_active=False, removed=True, deleted_at=now)
 
     # Re-fetch with annotations for serialization
     from sessionops.services.children.queries import list_children
+
     return list_children(child.school_id).get(child_id=child_id)

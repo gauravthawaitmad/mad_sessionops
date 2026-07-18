@@ -19,23 +19,53 @@ logger = logging.getLogger(__name__)
 BATCH_SIZE = 500
 
 USER_UPDATE_FIELDS = [
-    "user_login", "user_display_name", "email", "user_role", "worknode_id", "synced_at",
+    "user_login",
+    "user_display_name",
+    "email",
+    "user_role",
+    "worknode_id",
+    "synced_at",
 ]
 
 PARTNER_UPDATE_FIELDS = [
-    "partner_name", "co_id", "co_name",
-    "address_line_1", "address_line_2", "city", "city_id", "state", "state_id", "pincode",
-    "school_type", "partner_affiliation_type",
-    "poc_name", "poc_email", "poc_designation", "poc_contact",
-    "mou_sign_date", "mou_start_date", "mou_end_date", "mou_url",
-    "converted", "crm_partner_removed", "latest_conversion_stage", "lead_source",
-    "date_of_first_contact", "confirmed_child_count", "total_child_count", "classes",
-    "partner_created_date", "partner_updated_date", "synced_at", "is_active",
+    "partner_name",
+    "co_id",
+    "co_name",
+    "address_line_1",
+    "address_line_2",
+    "city",
+    "city_id",
+    "state",
+    "state_id",
+    "pincode",
+    "school_type",
+    "partner_affiliation_type",
+    "poc_name",
+    "poc_email",
+    "poc_designation",
+    "poc_contact",
+    "mou_sign_date",
+    "mou_start_date",
+    "mou_end_date",
+    "mou_url",
+    "converted",
+    "crm_partner_removed",
+    "latest_conversion_stage",
+    "lead_source",
+    "date_of_first_contact",
+    "confirmed_child_count",
+    "total_child_count",
+    "classes",
+    "partner_created_date",
+    "partner_updated_date",
+    "synced_at",
+    "is_active",
 ]
 
 # ---------------------------------------------------------------------------
 # Field parsing helpers
 # ---------------------------------------------------------------------------
+
 
 def parse_date(value) -> date | None:
     if not value:
@@ -79,6 +109,7 @@ def to_int(value) -> int | None:
 # ---------------------------------------------------------------------------
 # Object builders
 # ---------------------------------------------------------------------------
+
 
 def build_user_obj(row: dict, now: datetime) -> User | None:
     user_id = row.get("user_id")
@@ -141,6 +172,7 @@ def build_partner_obj(row: dict, now: datetime) -> Partner | None:
 # Single-row fallback (used when bulk hits a user_login collision)
 # ---------------------------------------------------------------------------
 
+
 def upsert_user_single(row: dict, now: datetime) -> bool:
     user_id = row.get("user_id")
     if not user_id:
@@ -162,7 +194,9 @@ def upsert_user_single(row: dict, now: datetime) -> bool:
             user_login = defaults["user_login"]
             logger.warning(
                 "upsert_user_single: user_login=%s exists under a different user_id; "
-                "updating that row to user_id=%s", user_login, user_id,
+                "updating that row to user_id=%s",
+                user_login,
+                user_id,
             )
             with transaction.atomic():
                 User.objects.filter(user_login=user_login).update(user_id=user_id, **defaults)
@@ -181,6 +215,7 @@ def upsert_user_single(row: dict, now: datetime) -> bool:
 # Bulk upsert helpers
 # ---------------------------------------------------------------------------
 
+
 def bulk_upsert_users(batch_rows: list[dict], now: datetime) -> tuple[int, int]:
     """
     Bulk upsert users using INSERT ... ON CONFLICT DO UPDATE.
@@ -191,9 +226,7 @@ def bulk_upsert_users(batch_rows: list[dict], now: datetime) -> tuple[int, int]:
         return 0, 0
 
     batch_ids = [o.user_id for o in objects]
-    existing_ids = set(
-        User.objects.filter(user_id__in=batch_ids).values_list("user_id", flat=True)
-    )
+    existing_ids = set(User.objects.filter(user_id__in=batch_ids).values_list("user_id", flat=True))
 
     try:
         User.objects.bulk_create(
@@ -266,17 +299,17 @@ def upsert_partner_worknode_row(row: dict, int_conv=to_int, str_conv=to_str) -> 
     PartnerWorknode.objects.update_or_create(
         partner_id=partner_id,
         defaults={
-            "worknode_id":            int_conv(worknode_id) or worknode_id,
-            "city_name":              str_conv(row.get("city_name")),
-            "state":                  str_conv(row.get("state")),
-            "co_name":                str_conv(row.get("co_name")),
-            "chapter_name":           str_conv(row.get("chapter_name")),
-            "engine":                 str_conv(row.get("engine")),
-            "chapter_status":         str_conv(row.get("chapter_status")),
+            "worknode_id": int_conv(worknode_id) or worknode_id,
+            "city_name": str_conv(row.get("city_name")),
+            "state": str_conv(row.get("state")),
+            "co_name": str_conv(row.get("co_name")),
+            "chapter_name": str_conv(row.get("chapter_name")),
+            "engine": str_conv(row.get("engine")),
+            "chapter_status": str_conv(row.get("chapter_status")),
             "sourcing_campaign_code": str_conv(row.get("sourcing_campaign_code")),
-            "campaign_name":          str_conv(row.get("campaign_name")),
-            "fundraiser_id":          str_conv(row.get("fundraiser_id")),
-            "fundraiser_name":        str_conv(row.get("fundraiser_name")),
+            "campaign_name": str_conv(row.get("campaign_name")),
+            "fundraiser_id": str_conv(row.get("fundraiser_id")),
+            "fundraiser_name": str_conv(row.get("fundraiser_name")),
         },
     )
     return partner_id

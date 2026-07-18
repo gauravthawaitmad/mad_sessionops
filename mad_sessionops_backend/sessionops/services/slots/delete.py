@@ -18,7 +18,7 @@ def soft_delete_slot(slot_id: int, user) -> Slot:
         raise PermissionDenied()
 
     active_count = SlotClassSection.objects.filter(
-        slot_id=slot, is_active=True, removed=False
+        slot_id=slot.slot_id, is_active=True, removed=False
     ).count()
     if active_count > 0:
         raise ConflictError(
@@ -26,8 +26,8 @@ def soft_delete_slot(slot_id: int, user) -> Slot:
             f"assignment{'s' if active_count != 1 else ''} first."
         )
 
-    slot.is_active  = False
-    slot.removed    = True
+    slot.is_active = False
+    slot.removed = True
     slot.deleted_at = timezone.now()
     slot.updated_by = user
     slot.save()

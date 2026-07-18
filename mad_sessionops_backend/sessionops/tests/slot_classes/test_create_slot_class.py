@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import sessionops.services.slot_classes.helpers as slot_class_helpers
 from sessionops.exceptions import ConflictError, PermissionDenied, ValidationError
 from sessionops.models import (
     AcademicYear,
@@ -33,7 +34,6 @@ from sessionops.models import (
     User,
 )
 from sessionops.services.slot_classes.create import create_slot_class
-import sessionops.services.slot_classes.helpers as slot_class_helpers
 from sessionops.services.slot_classes.helpers import get_foundation_subject
 
 # ── Counters ───────────────────────────────────────────────────────────────────
@@ -52,6 +52,7 @@ def _reset_foundation_subject_cache():
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_co(school_id: int) -> User:
     uid = next(_UID)
@@ -150,6 +151,7 @@ def _add_children(section: ClassSection, count: int, user: User) -> list[Child]:
 def _make_legacy_subject(name: str = "Foundation Day 1") -> object:
     """A pre-M6 subject row, to confirm new slot-classes never use it."""
     from sessionops.models import Subject
+
     program, _ = Program.objects.get_or_create(program_name="Foundation Program")
     subj, _ = Subject.objects.get_or_create(
         subject_name=name,
@@ -209,6 +211,7 @@ def _payload(section, *volunteers):
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_create_slot_class_creates_all_rows():
@@ -308,9 +311,12 @@ def test_create_slot_class_skips_school_volunteer_creation_if_exists():
     create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
     # Only one row should exist
-    assert SchoolVolunteer.objects.filter(
-        school_id=sid, volunteer_id=vol1, is_active=True, removed=False
-    ).count() == 1
+    assert (
+        SchoolVolunteer.objects.filter(
+            school_id=sid, volunteer_id=vol1, is_active=True, removed=False
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db
@@ -327,7 +333,9 @@ def test_create_slot_class_creates_child_subject_for_each_active_child():
 
     create_slot_class(slot.slot_id, _payload(section, vol1), co)
 
-    css = ClassSectionSubject.objects.get(class_section_id=section, subject_id=get_foundation_subject())
+    css = ClassSectionSubject.objects.get(
+        class_section_id=section, subject_id=get_foundation_subject()
+    )
     child_subjects = ChildSubject.objects.filter(class_section_subject_id=css)
     assert child_subjects.count() == 2
 
@@ -368,9 +376,12 @@ def test_create_slot_class_five_volunteers_boundary_succeeds():
 
     scs = create_slot_class(slot.slot_id, _payload(section, *volunteers), co)
 
-    assert SlotClassSectionVolunteer.objects.filter(
-        slot_class_section_id=scs, is_active=True, removed=False
-    ).count() == 5
+    assert (
+        SlotClassSectionVolunteer.objects.filter(
+            slot_class_section_id=scs, is_active=True, removed=False
+        ).count()
+        == 5
+    )
 
 
 @pytest.mark.django_db
@@ -389,7 +400,11 @@ def test_create_slot_class_r_bucket_violation_returns_400():
     with pytest.raises(ValidationError) as exc_info:
         create_slot_class(slot.slot_id, _payload(section, *volunteers), co)
 
-    assert "1 child" in exc_info.value.message or "1 children" in exc_info.value.message or "only 1" in exc_info.value.message
+    assert (
+        "1 child" in exc_info.value.message
+        or "1 children" in exc_info.value.message
+        or "only 1" in exc_info.value.message
+    )
 
 
 @pytest.mark.django_db

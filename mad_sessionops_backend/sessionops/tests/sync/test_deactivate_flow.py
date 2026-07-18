@@ -12,8 +12,9 @@ Tests cover handle_deactivate() directly:
 
 from datetime import time
 
-import pytest
 from django.utils import timezone
+
+import pytest
 
 from sessionops.models import (
     AcademicYear,

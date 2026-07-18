@@ -7,8 +7,9 @@ All Hasura calls are mocked — no network I/O.
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
-import pytest
 from django.utils import timezone as dj_timezone
+
+import pytest
 
 from sessionops.exceptions import ConflictError
 from sessionops.models import Partner, PartnerWorknode, SyncRun, User
@@ -72,9 +73,12 @@ def test_cursor_is_null_when_no_partners():
 def test_cursor_advances_after_user_upsert():
     uid = next(_UID)
     User.objects.create(
-        user_id=uid, user_login=f"u{uid}@t.com",
-        user_display_name="U", email=f"u{uid}@t.com",
-        user_role="CO Full Time", synced_at=dj_timezone.now(),
+        user_id=uid,
+        user_login=f"u{uid}@t.com",
+        user_display_name="U",
+        email=f"u{uid}@t.com",
+        user_role="CO Full Time",
+        synced_at=dj_timezone.now(),
     )
     cursor = _get_user_cursor()
     assert cursor is not None
@@ -110,9 +114,12 @@ def test_subsequent_runs_use_cursor_from_max_synced_at():
     uid = next(_UID)
     ts = datetime(2026, 6, 1, tzinfo=timezone.utc)
     User.objects.create(
-        user_id=uid, user_login=f"u{uid}@t.com",
-        user_display_name="U", email=f"u{uid}@t.com",
-        user_role="CO Full Time", synced_at=ts,
+        user_id=uid,
+        user_login=f"u{uid}@t.com",
+        user_display_name="U",
+        email=f"u{uid}@t.com",
+        user_role="CO Full Time",
+        synced_at=ts,
     )
 
     with _mock_all() as mocks:
@@ -208,7 +215,7 @@ def test_sync_handles_hasura_error_marks_run_failed():
         "sessionops.services.sync.incremental.fetch_chapter_mapping",
         return_value=[],
     ):
-        results = run_incremental_sync(run_type="auto")
+        run_incremental_sync(run_type="auto")
 
     user_run = SyncRun.objects.filter(entity_type="user").first()
     assert user_run.status == SyncRun.STATUS_FAILED

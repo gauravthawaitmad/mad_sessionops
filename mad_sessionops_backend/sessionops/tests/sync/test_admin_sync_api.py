@@ -4,8 +4,9 @@ F-M4-4 / F-M4-5 / F-M4-7: Admin sync dashboard API integration tests.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from django.test import Client
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import SyncRun, User

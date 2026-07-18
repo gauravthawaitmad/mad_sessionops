@@ -34,16 +34,22 @@ def get_run_detail(sync_run_id: int) -> SyncRun:
 def _last_successful_sync_for(entity_key: str) -> "dt.datetime | None":
     """Return started_at of the most recent successful run that included entity_key."""
     old_types_map = {
-        "user":              [SyncRun.ENTITY_SYNC_TYPE_USERS, SyncRun.ENTITY_SYNC_TYPE_ALL],
-        "partner":           [SyncRun.ENTITY_SYNC_TYPE_PARTNERS, SyncRun.ENTITY_SYNC_TYPE_ALL],
-        "partner_worknode":  [SyncRun.ENTITY_SYNC_TYPE_PARTNER_WORKNODE, SyncRun.ENTITY_SYNC_TYPE_ALL],
+        "user": [SyncRun.ENTITY_SYNC_TYPE_USERS, SyncRun.ENTITY_SYNC_TYPE_ALL],
+        "partner": [SyncRun.ENTITY_SYNC_TYPE_PARTNERS, SyncRun.ENTITY_SYNC_TYPE_ALL],
+        "partner_worknode": [
+            SyncRun.ENTITY_SYNC_TYPE_PARTNER_WORKNODE,
+            SyncRun.ENTITY_SYNC_TYPE_ALL,
+        ],
     }
     old_types = old_types_map.get(entity_key, [SyncRun.ENTITY_SYNC_TYPE_ALL])
-    run = SyncRun.objects.filter(
-        Q(entity_type=entity_key)
-        | Q(entity_sync_type__in=old_types, entity_type__isnull=True),
-        status=SyncRun.STATUS_SUCCESS,
-    ).order_by("-started_at").first()
+    run = (
+        SyncRun.objects.filter(
+            Q(entity_type=entity_key) | Q(entity_sync_type__in=old_types, entity_type__isnull=True),
+            status=SyncRun.STATUS_SUCCESS,
+        )
+        .order_by("-started_at")
+        .first()
+    )
     return run.started_at if run else None
 
 
@@ -52,41 +58,41 @@ def get_entity_stats() -> dict:
 
     # --- User ---
     all_users = User.objects.all()
-    user_active   = all_users.filter(is_active=True).count()
+    user_active = all_users.filter(is_active=True).count()
     user_inactive = all_users.filter(is_active=False, deleted_at__isnull=True).count()
-    user_removed  = all_users.filter(deleted_at__isnull=False).count()
-    user_last     = _last_successful_sync_for("user")
+    user_removed = all_users.filter(deleted_at__isnull=False).count()
+    user_last = _last_successful_sync_for("user")
 
     # --- Partner ---
-    partner_active   = Partner.objects.count()
+    partner_active = Partner.objects.count()
     partner_inactive = Partner.all_objects.filter(is_active=False, deleted_at__isnull=True).count()
-    partner_removed  = Partner.all_objects.filter(deleted_at__isnull=False).count()
-    partner_last     = _last_successful_sync_for("partner")
+    partner_removed = Partner.all_objects.filter(deleted_at__isnull=False).count()
+    partner_last = _last_successful_sync_for("partner")
 
     # --- PartnerWorknode (no soft-delete) ---
     pw_total = PartnerWorknode.objects.count()
-    pw_last  = _last_successful_sync_for("partner_worknode")
+    pw_last = _last_successful_sync_for("partner_worknode")
 
     return {
         "user": {
-            "total":               user_active + user_inactive + user_removed,
-            "active":              user_active,
-            "inactive":            user_inactive,
-            "removed":             user_removed,
+            "total": user_active + user_inactive + user_removed,
+            "active": user_active,
+            "inactive": user_inactive,
+            "removed": user_removed,
             "last_successful_sync": user_last,
         },
         "partner": {
-            "total":               partner_active + partner_inactive + partner_removed,
-            "active":              partner_active,
-            "inactive":            partner_inactive,
-            "removed":             partner_removed,
+            "total": partner_active + partner_inactive + partner_removed,
+            "active": partner_active,
+            "inactive": partner_inactive,
+            "removed": partner_removed,
             "last_successful_sync": partner_last,
         },
         "partner_worknode": {
-            "total":               pw_total,
-            "active":              pw_total,
-            "inactive":            0,
-            "removed":             0,
+            "total": pw_total,
+            "active": pw_total,
+            "inactive": 0,
+            "removed": 0,
             "last_successful_sync": pw_last,
         },
     }
@@ -101,7 +107,9 @@ def _next_cron_run(now: dt.datetime) -> dt.datetime:
         if candidate > now_ist:
             return candidate
     tomorrow = today + dt.timedelta(days=1)
-    return dt.datetime(tomorrow.year, tomorrow.month, tomorrow.day, _CRON_HOURS[0], 0, 0, tzinfo=_IST)
+    return dt.datetime(
+        tomorrow.year, tomorrow.month, tomorrow.day, _CRON_HOURS[0], 0, 0, tzinfo=_IST
+    )
 
 
 def get_cron_health() -> dict:

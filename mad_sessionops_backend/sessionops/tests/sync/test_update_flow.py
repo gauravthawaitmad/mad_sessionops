@@ -2,8 +2,9 @@
 F-M8a-3: handle_update flow unit tests.
 """
 
-import pytest
 from django.utils import timezone
+
+import pytest
 
 from sessionops.models import User
 from sessionops.services.realtime_sync.diff import UserDiff
@@ -135,9 +136,7 @@ def test_handle_update_worknode_add_partial_success_when_no_mapping():
     # No PartnerWorknode entry exists → resolver returns None → partial_success
     uid = next(_UID)
     user = _user(user_id=uid, worknode_id=None)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, worknode_id=10
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, worknode_id=10)
 
     result = handle_update(user, payload, _diff(worknode_action="added"), user_id=uid)
 
@@ -152,9 +151,7 @@ def test_handle_update_worknode_remove_succeeds_when_no_old_school():
     # No PartnerWorknode for old worknode → old_school_id is None → cascade skipped → success
     uid = next(_UID)
     user = _user(user_id=uid, worknode_id=10)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, worknode_id=None
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, worknode_id=None)
 
     result = handle_update(user, payload, _diff(worknode_action="removed"), user_id=uid)
 
@@ -169,9 +166,7 @@ def test_handle_update_worknode_update_partial_success_when_new_mapping_missing(
     # No PartnerWorknode for new worknode_id=20 → partial_success, worknode_id stays at 10
     uid = next(_UID)
     user = _user(user_id=uid, worknode_id=10)
-    payload = _payload(
-        user_login=user.user_login, user_email=user.email, worknode_id=20
-    )
+    payload = _payload(user_login=user.user_login, user_email=user.email, worknode_id=20)
 
     result = handle_update(user, payload, _diff(worknode_action="updated"), user_id=uid)
 

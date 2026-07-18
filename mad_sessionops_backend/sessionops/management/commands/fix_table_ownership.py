@@ -4,7 +4,9 @@ from django.db import connections
 
 
 class Command(BaseCommand):
-    help = "Reassign all tables in the app schema to DBUSER. Run as DBADMINUSER (--database migrate)."
+    help = (
+        "Reassign all tables in the app schema to DBUSER. Run as DBADMINUSER (--database migrate)."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -16,7 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         db_alias = options["database"]
         schema = settings.DBSCHEMA
-        target_user = settings.DATABASES["default"]["USER"]
+        target_user = str(settings.DATABASES["default"]["USER"])
 
         with connections[db_alias].cursor() as cursor:
             cursor.execute(
@@ -26,12 +28,16 @@ class Command(BaseCommand):
             tables = [row[0] for row in cursor.fetchall()]
 
         if not tables:
-            self.stdout.write(self.style.SUCCESS(
-                f"All tables in '{schema}' already owned by '{target_user}'. Nothing to do."
-            ))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"All tables in '{schema}' already owned by '{target_user}'. Nothing to do."
+                )
+            )
             return
 
-        self.stdout.write(f"Fixing {len(tables)} table(s) in '{schema}' -> owner '{target_user}'...")
+        self.stdout.write(
+            f"Fixing {len(tables)} table(s) in '{schema}' -> owner '{target_user}'..."
+        )
         with connections[db_alias].cursor() as cursor:
             for table in tables:
                 cursor.execute(f'ALTER TABLE "{schema}"."{table}" OWNER TO "{target_user}"')

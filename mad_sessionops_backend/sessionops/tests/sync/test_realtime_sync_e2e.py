@@ -6,9 +6,10 @@ Auth and allowlist behaviour are covered by test_realtime_sync_endpoint.py.
 
 import json
 
-import pytest
 from django.test import Client
 from django.utils import timezone
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import RealtimeSyncLog, User

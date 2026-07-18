@@ -9,8 +9,9 @@ Mocks exchange_code_for_id_token to avoid live Google calls.
 import json
 from unittest.mock import patch
 
-import pytest
 from django.test import Client
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import User, UserAuth
@@ -71,7 +72,11 @@ def client():
 @pytest.mark.django_db
 class TestGoogleCallback:
     def _post(self, client, email="user@example.com", sub=_GOOGLE_SUB, **payload_overrides):
-        payload = {"code": "auth-code", "code_verifier": "verifier", "redirect_uri": "http://localhost/cb"}
+        payload = {
+            "code": "auth-code",
+            "code_verifier": "verifier",
+            "redirect_uri": "http://localhost/cb",
+        }
         payload.update(payload_overrides)
         with patch(
             "sessionops.services.auth.exchange_code_for_id_token",
@@ -142,8 +147,12 @@ class TestGoogleCallback:
     def test_missing_code_returns_422(self, client):
         _make_user()
         payload = {"code_verifier": "v", "redirect_uri": "http://localhost/cb"}
-        with patch("sessionops.services.auth.exchange_code_for_id_token", return_value=_google_claims()):
-            resp = client.post(_CALLBACK_URL, data=json.dumps(payload), content_type="application/json")
+        with patch(
+            "sessionops.services.auth.exchange_code_for_id_token", return_value=_google_claims()
+        ):
+            resp = client.post(
+                _CALLBACK_URL, data=json.dumps(payload), content_type="application/json"
+            )
         assert resp.status_code == 422
 
     def test_error_envelope_shape(self, client):

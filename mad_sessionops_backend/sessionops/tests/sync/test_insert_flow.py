@@ -2,8 +2,9 @@
 F-M8a-3: handle_insert flow unit tests.
 """
 
-import pytest
 from django.utils import timezone
+
+import pytest
 
 from sessionops.models import User
 from sessionops.services.realtime_sync.diff import UserDiff
@@ -56,9 +57,7 @@ def _new_diff() -> UserDiff:
 @pytest.mark.django_db
 def test_handle_insert_creates_new_user():
     uid = next(_UID)
-    payload = _payload(
-        user_login=f"brand{uid}@insert.test", user_email=f"brand{uid}@insert.test"
-    )
+    payload = _payload(user_login=f"brand{uid}@insert.test", user_email=f"brand{uid}@insert.test")
     handle_insert(None, payload, _new_diff(), user_id=uid)
 
     user = User.objects.get(user_id=uid)
@@ -152,9 +151,7 @@ def test_handle_insert_reactivates_soft_deleted_user():
         user_display_name="Reactivated",
         user_role="Wingman",
     )
-    diff = UserDiff(
-        user_exists_locally=True, is_reactivation=True, incoming_role="Wingman"
-    )
+    diff = UserDiff(user_exists_locally=True, is_reactivation=True, incoming_role="Wingman")
 
     handle_insert(existing, payload, diff, user_id=uid)
 
@@ -169,9 +166,7 @@ def test_handle_insert_reactivation_sets_synced_at():
     uid = next(_UID)
     existing = _user(user_id=uid, is_active=False, synced_at=None)
     payload = _payload(user_login=existing.user_login, user_email=existing.email)
-    diff = UserDiff(
-        user_exists_locally=True, is_reactivation=True, incoming_role="Youth"
-    )
+    diff = UserDiff(user_exists_locally=True, is_reactivation=True, incoming_role="Youth")
     before = timezone.now()
 
     handle_insert(existing, payload, diff, user_id=uid)
@@ -185,12 +180,8 @@ def test_handle_insert_reactivation_sets_synced_at():
 def test_handle_insert_reactivation_sets_worknode_id():
     uid = next(_UID)
     existing = _user(user_id=uid, is_active=False, worknode_id=None)
-    payload = _payload(
-        user_login=existing.user_login, user_email=existing.email, worknode_id=77
-    )
-    diff = UserDiff(
-        user_exists_locally=True, is_reactivation=True, incoming_role="Youth"
-    )
+    payload = _payload(user_login=existing.user_login, user_email=existing.email, worknode_id=77)
+    diff = UserDiff(user_exists_locally=True, is_reactivation=True, incoming_role="Youth")
 
     handle_insert(existing, payload, diff, user_id=uid)
 

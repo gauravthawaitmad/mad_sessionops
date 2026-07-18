@@ -8,16 +8,17 @@ _cleanup_other_school_assignments, _cascade_remove_user_from_school).
 
 from datetime import time
 
-import pytest
 from django.utils import timezone
+
+import pytest
 
 from sessionops.models import (
     AcademicYear,
     Class,
     ClassSection,
     ClassSectionSubject,
-    PartnerWorknode,
     Partner,
+    PartnerWorknode,
     Program,
     SchoolAcademicYear,
     SchoolClass,
@@ -252,9 +253,7 @@ def test_worknode_added_partial_success_when_no_mapping():
     vol = _user(worknode_id=None)
     now = timezone.now()
 
-    result = cascade_worknode_added(
-        vol, _payload(vol, worknode_id=99999), _diff(), now, [], []
-    )
+    result = cascade_worknode_added(vol, _payload(vol, worknode_id=99999), _diff(), now, [], [])
 
     assert result.status == "partial_success"
     assert result.action_taken == "no_school_found_for_worknode"
@@ -281,9 +280,7 @@ def test_worknode_added_preserves_existing_sv_at_same_school():
     wid = _worknode(sid)
     vol = _user(worknode_id=None)
     # Pre-existing active SchoolVolunteer at the same school
-    existing_sv = SchoolVolunteer.objects.create(
-        school_id=sid, volunteer_id=vol
-    )
+    existing_sv = SchoolVolunteer.objects.create(school_id=sid, volunteer_id=vol)
     now = timezone.now()
 
     result = cascade_worknode_added(vol, _payload(vol, worknode_id=wid), _diff(), now, [], [])
@@ -291,11 +288,14 @@ def test_worknode_added_preserves_existing_sv_at_same_school():
     assert result.status == "success"
     existing_sv.refresh_from_db()
     assert existing_sv.is_active is True  # untouched
-    assert existing_sv.removed is False   # untouched
+    assert existing_sv.removed is False  # untouched
     # Only one SchoolVolunteer row at this school
-    assert SchoolVolunteer.objects.filter(
-        school_id=sid, volunteer_id=vol, is_active=True, removed=False
-    ).count() == 1
+    assert (
+        SchoolVolunteer.objects.filter(
+            school_id=sid, volunteer_id=vol, is_active=True, removed=False
+        ).count()
+        == 1
+    )
     # cascaded_changes has no "created" entry (SV already existed)
     created_entries = [c for c in result.cascaded_changes if c.get("action") == "created"]
     assert len(created_entries) == 0
@@ -458,9 +458,7 @@ def test_worknode_updated_removes_from_old_school_and_adds_to_new():
     SchoolVolunteer.objects.create(school_id=sid_a, volunteer_id=vol)
     now = timezone.now()
 
-    result = cascade_worknode_updated(
-        vol, _payload(vol, worknode_id=wid_b), _diff(), now, [], []
-    )
+    result = cascade_worknode_updated(vol, _payload(vol, worknode_id=wid_b), _diff(), now, [], [])
 
     assert result.status == "success"
     assert result.action_taken == "worknode_updated"
@@ -485,9 +483,7 @@ def test_worknode_updated_partial_success_when_new_mapping_missing():
     SchoolVolunteer.objects.create(school_id=sid_a, volunteer_id=vol)
     now = timezone.now()
 
-    result = cascade_worknode_updated(
-        vol, _payload(vol, worknode_id=99999), _diff(), now, [], []
-    )
+    result = cascade_worknode_updated(vol, _payload(vol, worknode_id=99999), _diff(), now, [], [])
 
     assert result.status == "partial_success"
     assert result.action_taken == "no_school_found_for_worknode"
@@ -578,9 +574,7 @@ def test_deferred_operations_set_on_partial_success_updated():
     vol = _user(worknode_id=wid_a)
     now = timezone.now()
 
-    result = cascade_worknode_updated(
-        vol, _payload(vol, worknode_id=99999), _diff(), now, [], []
-    )
+    result = cascade_worknode_updated(vol, _payload(vol, worknode_id=99999), _diff(), now, [], [])
 
     assert result.deferred_operations is not None
     assert result.deferred_operations["new_worknode_id"] == 99999

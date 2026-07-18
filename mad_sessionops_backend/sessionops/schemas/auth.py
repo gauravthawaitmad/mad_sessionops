@@ -47,7 +47,6 @@ from typing import Optional
 from ninja import Schema
 from pydantic import EmailStr, field_validator
 
-
 # =============================================================================
 # REQUEST SCHEMAS - What clients send to us
 # =============================================================================

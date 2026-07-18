@@ -23,8 +23,8 @@ from sessionops.schemas.children import ChildEnrollIn
 from sessionops.services.children.enroll import enroll_child
 from sessionops.services.children.queries import list_children
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> User:
     return User.objects.create(
@@ -54,6 +54,7 @@ def _make_section(school_id: int, user: User, code: str = "A") -> ClassSection:
         defaults={"program_name": "Foundation Program", "is_active": True},
     )
     from sessionops.models import Class
+
     cls, _ = Class.objects.get_or_create(
         class_code="5",
         defaults={"class_name": "5th", "program_id": program, "is_active": True},
@@ -96,6 +97,7 @@ def _payload(section: ClassSection, **overrides) -> ChildEnrollIn:
 
 
 # ── Tests: enroll_child ────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestEnrollChild:
@@ -193,8 +195,10 @@ class TestEnrollChild:
         _make_partner(107)
         section = _make_section(107, user, code="G")
         payload = ChildEnrollIn(
-            first_name="Ghost", last_name="Child",
-            gender="male", age=11,
+            first_name="Ghost",
+            last_name="Child",
+            gender="male",
+            age=11,
             school_class_id=section.school_class_id_id,
             class_section_id=99999,
         )
@@ -205,8 +209,11 @@ class TestEnrollChild:
         user = _make_user("u7b@t.com")
         _make_partner(1070)
         payload = ChildEnrollIn(
-            first_name="Ghost", last_name="Child",
-            gender="male", age=11, school_class_id=99999,
+            first_name="Ghost",
+            last_name="Child",
+            gender="male",
+            age=11,
+            school_class_id=99999,
         )
         with pytest.raises(NotFound, match="School class"):
             enroll_child(1070, payload, user)
@@ -240,6 +247,7 @@ class TestEnrollChild:
 
 # ── Tests: list_children ───────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestListChildren:
     def test_returns_enrolled_children(self):
@@ -259,9 +267,7 @@ class TestListChildren:
         section = _make_section(201, user, code="I")
 
         child = enroll_child(201, _payload(section, first_name="Remove"), user)
-        Child.objects.filter(child_id=child.child_id).update(
-            is_active=False, removed=True
-        )
+        Child.objects.filter(child_id=child.child_id).update(is_active=False, removed=True)
 
         qs = list_children(201, status="active")
         assert qs.count() == 0
@@ -272,9 +278,7 @@ class TestListChildren:
         section = _make_section(202, user, code="J")
 
         child = enroll_child(202, _payload(section, first_name="Mixed"), user)
-        Child.objects.filter(child_id=child.child_id).update(
-            is_active=False, removed=True
-        )
+        Child.objects.filter(child_id=child.child_id).update(is_active=False, removed=True)
 
         assert list_children(202, status="all").count() == 1
         assert list_children(202, status="active").count() == 0

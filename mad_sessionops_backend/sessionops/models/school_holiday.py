@@ -19,22 +19,20 @@ class SchoolHoliday(models.Model):
     Metadata edits (reason, description, remarks) update in place.
     """
 
-    school_holiday_id   = models.BigAutoField(primary_key=True)
-    school_id           = models.BigIntegerField(db_index=True)
-    holiday_reason      = models.CharField(max_length=50, choices=HOLIDAY_REASONS)
-    start_date          = models.DateField()
-    end_date            = models.DateField()
+    school_holiday_id = models.BigAutoField(primary_key=True)
+    school_id = models.BigIntegerField(db_index=True)
+    holiday_reason = models.CharField(max_length=50, choices=HOLIDAY_REASONS)
+    start_date = models.DateField()
+    end_date = models.DateField()
     holiday_description = models.TextField(null=True, blank=True)
-    remarks             = models.TextField(null=True, blank=True)
-    is_active           = models.BooleanField(default=True)
-    removed             = models.BooleanField(default=False)
-    deleted_at          = models.DateTimeField(null=True, blank=True)
-    created_at          = models.DateTimeField(auto_now_add=True)
-    updated_at          = models.DateTimeField(auto_now=True)
-    created_by          = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
-    )
-    updated_by          = models.ForeignKey(
+    remarks = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey("sessionops.User", on_delete=models.PROTECT, related_name="+")
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 

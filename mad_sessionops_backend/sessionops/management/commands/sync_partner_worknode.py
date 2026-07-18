@@ -12,11 +12,9 @@ class Command(BaseCommand):
         sync_run = run_partner_worknode_sync(progress=self.stdout.write)
 
         if sync_run.status == "success":
-            self.stdout.write(self.style.SUCCESS(
-                "Partner worknode sync complete."
-            ))
+            self.stdout.write(self.style.SUCCESS("Partner worknode sync complete."))
         else:
-            self.stderr.write(self.style.ERROR(
-                f"Partner worknode sync FAILED: {sync_run.error_message}"
-            ))
+            self.stderr.write(
+                self.style.ERROR(f"Partner worknode sync FAILED: {sync_run.error_message}")
+            )
             raise SystemExit(1)

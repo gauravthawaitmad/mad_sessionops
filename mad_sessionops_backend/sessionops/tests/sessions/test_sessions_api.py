@@ -4,8 +4,9 @@ F-M4-2: Sessions API integration tests.
 import json
 from datetime import date
 
-import pytest
 from django.test import Client
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import AcademicYear, Partner, User
@@ -72,10 +73,11 @@ def client():
 
 
 START = date(2026, 7, 1)
-END   = date(2027, 4, 30)
+END = date(2027, 4, 30)
 
 
 # ── GET /session/ ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_get_session_returns_null_when_not_configured(client):
@@ -118,6 +120,7 @@ def test_get_session_returns_403_for_other_co(client):
 
 # ── GET /session/defaults/ ────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_get_session_defaults_returns_mou_values(client):
     _make_active_year()
@@ -148,6 +151,7 @@ def test_get_session_defaults_returns_403_for_other_co(client):
 
 
 # ── POST /session/ ────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_post_session_creates_row(client):

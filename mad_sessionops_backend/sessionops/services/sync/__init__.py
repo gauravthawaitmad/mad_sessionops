@@ -1,33 +1,33 @@
 import logging
 from typing import Callable
 
-import sentry_sdk
 from django.db import close_old_connections
 from django.utils import timezone as dj_timezone
 
+import sentry_sdk
+
 from sessionops.models import Partner, PartnerWorknode, SyncRun, User
 from sessionops.services.hasura.client import fetch_chapter_mapping, fetch_partners, fetch_users
-from sessionops.services.sync.upsert import (
-    BATCH_SIZE as _BATCH_SIZE,
-    bulk_upsert_partners as _bulk_upsert_partners,
-    bulk_upsert_users as _bulk_upsert_users,
-    parse_date as _parse_date,
-    parse_datetime as _parse_datetime,
-    to_int as _int,
-    to_str as _str,
-    upsert_partner_worknode_row,
-)
+from sessionops.services.sync.upsert import BATCH_SIZE as _BATCH_SIZE
+from sessionops.services.sync.upsert import bulk_upsert_partners as _bulk_upsert_partners
+from sessionops.services.sync.upsert import bulk_upsert_users as _bulk_upsert_users
+from sessionops.services.sync.upsert import parse_date as _parse_date
+from sessionops.services.sync.upsert import parse_datetime as _parse_datetime
+from sessionops.services.sync.upsert import to_int as _int
+from sessionops.services.sync.upsert import to_str as _str
+from sessionops.services.sync.upsert import upsert_partner_worknode_row
 
 logger = logging.getLogger(__name__)
 
 # Re-export for backward compat with existing tests
-_build_user_obj = None   # internal — use upsert.build_user_obj directly if needed
+_build_user_obj = None  # internal — use upsert.build_user_obj directly if needed
 _build_partner_obj = None
 
 
 # ---------------------------------------------------------------------------
 # Internal phase runners (legacy M1 all-entities sync)
 # ---------------------------------------------------------------------------
+
 
 def _run_users_phase(sync_run: SyncRun, now, progress: Callable[[str], None]) -> None:
     progress("Fetching users from Hasura...")
@@ -38,7 +38,7 @@ def _run_users_phase(sync_run: SyncRun, now, progress: Callable[[str], None]) ->
     total_created = total_updated = 0
     for batch_start in range(0, total, _BATCH_SIZE):
         close_old_connections()
-        batch = rows[batch_start:batch_start + _BATCH_SIZE]
+        batch = rows[batch_start : batch_start + _BATCH_SIZE]
         batch_created, batch_updated = _bulk_upsert_users(batch, now)
         total_created += batch_created
         total_updated += batch_updated
@@ -50,7 +50,9 @@ def _run_users_phase(sync_run: SyncRun, now, progress: Callable[[str], None]) ->
     sync_run.users_updated = total_updated
     logger.info(
         "Hasura sync: users done — fetched=%d created=%d updated=%d",
-        total, total_created, total_updated,
+        total,
+        total_created,
+        total_updated,
     )
 
 
@@ -63,7 +65,7 @@ def _run_partners_phase(sync_run: SyncRun, now, progress: Callable[[str], None])
     total_created = total_updated = 0
     for batch_start in range(0, total, _BATCH_SIZE):
         close_old_connections()
-        batch = rows[batch_start:batch_start + _BATCH_SIZE]
+        batch = rows[batch_start : batch_start + _BATCH_SIZE]
         batch_created, batch_updated = _bulk_upsert_partners(batch, now)
         total_created += batch_created
         total_updated += batch_updated
@@ -75,7 +77,9 @@ def _run_partners_phase(sync_run: SyncRun, now, progress: Callable[[str], None])
     sync_run.partners_updated = total_updated
     logger.info(
         "Hasura sync: partners done — fetched=%d created=%d updated=%d",
-        total, total_created, total_updated,
+        total,
+        total_created,
+        total_updated,
     )
 
 
@@ -98,13 +102,16 @@ def _run_partner_worknode_phase(sync_run: SyncRun, now, progress: Callable[[str]
     progress(f"  partner_worknode: upserted={upserted} deleted={deleted_count}")
     logger.info(
         "Hasura sync: partner_worknode done — fetched=%d upserted=%d deleted=%d",
-        total, upserted, deleted_count,
+        total,
+        upserted,
+        deleted_count,
     )
 
 
 # ---------------------------------------------------------------------------
 # Legacy M1 sync entry points (kept for backward compat with existing tests)
 # ---------------------------------------------------------------------------
+
 
 def _execute_sync(entity_sync_type: str, phases, progress: Callable[[str], None] | None) -> SyncRun:
     def _p(msg: str) -> None:
@@ -147,7 +154,9 @@ def run_partner_sync(progress: Callable[[str], None] | None = None) -> SyncRun:
 
 
 def run_partner_worknode_sync(progress: Callable[[str], None] | None = None) -> SyncRun:
-    return _execute_sync(SyncRun.ENTITY_SYNC_TYPE_PARTNER_WORKNODE, [_run_partner_worknode_phase], progress)
+    return _execute_sync(
+        SyncRun.ENTITY_SYNC_TYPE_PARTNER_WORKNODE, [_run_partner_worknode_phase], progress
+    )
 
 
 def run_sync(progress: Callable[[str], None] | None = None) -> SyncRun:

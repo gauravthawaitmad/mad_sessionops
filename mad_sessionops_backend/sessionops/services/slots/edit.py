@@ -25,9 +25,9 @@ def edit_slot(
     if not can_modify_school(user, partner):
         raise PermissionDenied()
 
-    new_day   = day_of_week if day_of_week is not None else slot.day_of_week
-    new_start = start_time  if start_time  is not None else slot.start_time
-    new_end   = end_time    if end_time    is not None else slot.end_time
+    new_day = day_of_week if day_of_week is not None else slot.day_of_week
+    new_start = start_time if start_time is not None else slot.start_time
+    new_end = end_time if end_time is not None else slot.end_time
 
     if new_start >= new_end:
         raise ValidationError("start_time must be before end_time.")
@@ -51,9 +51,9 @@ def edit_slot(
         )
 
     slot.day_of_week = new_day
-    slot.start_time  = new_start
-    slot.end_time    = new_end
-    slot.slot_name   = f"{new_day.capitalize()} {new_start.strftime('%H:%M')}"
-    slot.updated_by  = user
+    slot.start_time = new_start
+    slot.end_time = new_end
+    slot.slot_name = f"{new_day.capitalize()} {new_start.strftime('%H:%M')}"
+    slot.updated_by = user
     slot.save()
     return slot

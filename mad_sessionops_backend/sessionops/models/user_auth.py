@@ -30,7 +30,7 @@ class UserAuth(SoftDeleteBaseModel):
     """
 
     AUTH_TYPE_GOOGLE = "google"
-    AUTH_TYPE_PASSWORD = "password"
+    AUTH_TYPE_PASSWORD = "password"  # nosec B105 — auth_type discriminator value, not a credential
 
     AUTH_TYPE_CHOICES = [
         ("password", "Password"),
