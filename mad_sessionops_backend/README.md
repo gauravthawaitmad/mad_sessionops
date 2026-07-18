@@ -2,8 +2,8 @@
 
 Django + Ninja backend for Session-Ops, MAD's school operations platform.
 
-[![Backend CI](https://github.com/makeadiff/mad_sessionops/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/makeadiff/mad_sessionops/actions/workflows/backend-ci.yml)
-[![codecov](https://codecov.io/gh/makeadiff/mad_sessionops/branch/main/graph/badge.svg?flag=backend)](https://codecov.io/gh/makeadiff/mad_sessionops)
+[![Backend CI](https://github.com/gauravthawaitmad/mad_sessionops/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/gauravthawaitmad/mad_sessionops/actions/workflows/backend-ci.yml)
+[![codecov](https://codecov.io/gh/gauravthawaitmad/mad_sessionops/branch/main/graph/badge.svg?flag=backend)](https://codecov.io/gh/gauravthawaitmad/mad_sessionops)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview

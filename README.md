@@ -1,8 +1,8 @@
 # Session-Ops
 
-[![Backend CI](https://github.com/makeadiff/mad_sessionops/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/makeadiff/mad_sessionops/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/makeadiff/mad_sessionops/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/makeadiff/mad_sessionops/actions/workflows/frontend-ci.yml)
-[![codecov](https://codecov.io/gh/makeadiff/mad_sessionops/branch/main/graph/badge.svg)](https://codecov.io/gh/makeadiff/mad_sessionops)
+[![Backend CI](https://github.com/gauravthawaitmad/mad_sessionops/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/gauravthawaitmad/mad_sessionops/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/gauravthawaitmad/mad_sessionops/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/gauravthawaitmad/mad_sessionops/actions/workflows/frontend-ci.yml)
+[![codecov](https://codecov.io/gh/gauravthawaitmad/mad_sessionops/branch/main/graph/badge.svg)](https://codecov.io/gh/gauravthawaitmad/mad_sessionops)
 
 MAD's internal school operations platform. Manages the full lifecycle of MAD's school partnerships: City Officers set up classes, enroll children, assign volunteers, and schedule teaching slots. External user data syncs from Hasura via webhooks.
 
@@ -27,7 +27,7 @@ Both sub-projects have their own `CLAUDE.md` with stack details, architecture ru
 ## Quick start (local Docker)
 
 ```bash
-git clone https://github.com/makeadiff/mad_sessionops.git
+git clone https://github.com/gauravthawaitmad/mad_sessionops.git
 cd mad_sessionops
 
 # backend needs real dev credentials (RDS, Redis, Google OAuth, etc.)
