@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -17,7 +17,7 @@ export interface ChildItem {
   childId: number;
   firstName: string;
   lastName: string;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   age: number | null;
   city: string | null;
   motherTongue: string | null;
@@ -32,7 +32,7 @@ export interface ChildItem {
 export interface EnrollChildInput {
   first_name: string;
   last_name: string;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   age: number;
   school_class_id: number;
   class_section_id?: number;
@@ -46,7 +46,7 @@ export interface EnrollChildInput {
 export interface EditChildInput {
   first_name?: string;
   last_name?: string;
-  gender?: 'male' | 'female' | 'other';
+  gender?: "male" | "female" | "other";
   age?: number;
   school_class_id?: number;
   class_section_id?: number | null;
@@ -63,7 +63,7 @@ export interface ReactivateChildInput {
 }
 
 export interface ListChildrenParams {
-  status?: 'active' | 'inactive' | 'all';
+  status?: "active" | "inactive" | "all";
   class_id?: number;
   section_id?: number;
   unassigned?: boolean;
@@ -106,7 +106,7 @@ function mapChild(raw: RawChild): ChildItem {
     childId: raw.child_id,
     firstName: raw.first_name,
     lastName: raw.last_name,
-    gender: raw.gender as 'male' | 'female' | 'other',
+    gender: raw.gender as "male" | "female" | "other",
     age: raw.age,
     city: raw.city,
     motherTongue: raw.mother_tongue,
@@ -133,22 +133,17 @@ export async function fetchChildren(
   params: ListChildrenParams = {}
 ): Promise<ChildItem[]> {
   const query = new URLSearchParams();
-  if (params.status)     query.set('status', params.status);
-  if (params.class_id)   query.set('class_id', String(params.class_id));
-  if (params.section_id) query.set('section_id', String(params.section_id));
-  if (params.unassigned) query.set('unassigned', 'true');
-  if (params.search)     query.set('search', params.search);
+  if (params.status) query.set("status", params.status);
+  if (params.class_id) query.set("class_id", String(params.class_id));
+  if (params.section_id) query.set("section_id", String(params.section_id));
+  if (params.unassigned) query.set("unassigned", "true");
+  if (params.search) query.set("search", params.search);
   const qs = query.toString();
-  const raw = await api.get<RawChild[]>(
-    `/schools/${schoolId}/children/${qs ? `?${qs}` : ''}`
-  );
+  const raw = await api.get<RawChild[]>(`/schools/${schoolId}/children/${qs ? `?${qs}` : ""}`);
   return raw.map(mapChild);
 }
 
-export async function enrollChild(
-  schoolId: number,
-  data: EnrollChildInput
-): Promise<ChildItem> {
+export async function enrollChild(schoolId: number, data: EnrollChildInput): Promise<ChildItem> {
   const raw = await api.post<RawChild>(`/schools/${schoolId}/children/`, data);
   return mapChild(raw);
 }
@@ -175,6 +170,9 @@ export async function reactivateChild(
   childId: number,
   data: ReactivateChildInput
 ): Promise<ChildItem> {
-  const raw = await api.post<RawChild>(`/schools/${schoolId}/children/${childId}/reactivate/`, data);
+  const raw = await api.post<RawChild>(
+    `/schools/${schoolId}/children/${childId}/reactivate/`,
+    data
+  );
   return mapChild(raw);
 }

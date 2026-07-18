@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Skeleton from '@mui/material/Skeleton';
-import { GraduationCap, Users, BookOpen } from 'lucide-react';
-import { colors } from '@/config/design-tokens';
-import { SchoolToolbar } from './SchoolToolbar';
-import { SchoolTable } from './SchoolTable';
-import { SchoolEmptyState } from './SchoolEmptyState';
-import { fetchSchools } from '@/lib/api/services/schools.service';
-import type { SchoolListItem, SchoolSummary, SortOption } from '@/lib/api/services/schools.service';
-import { selectScopeWarning } from '@/lib/redux/features/auth/authSlice';
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useSelector } from "react-redux";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Skeleton from "@mui/material/Skeleton";
+import { GraduationCap, Users, BookOpen } from "lucide-react";
+import { colors } from "@/config/design-tokens";
+import { SchoolToolbar } from "./SchoolToolbar";
+import { SchoolTable } from "./SchoolTable";
+import { SchoolEmptyState } from "./SchoolEmptyState";
+import { fetchSchools } from "@/lib/api/services/schools.service";
+import type { SchoolListItem, SchoolSummary, SortOption } from "@/lib/api/services/schools.service";
+import { selectScopeWarning } from "@/lib/redux/features/auth/authSlice";
 
 interface SchoolListPageProps {
   userName: string;
@@ -33,14 +33,14 @@ function MetricCard({ icon: Icon, label, value, accent, loading }: MetricCardPro
     <Box
       sx={{
         flex: 1,
-        display: 'flex',
-        alignItems: 'center',
+        display: "flex",
+        alignItems: "center",
         gap: 1.5,
         px: 2.5,
         py: 1.75,
         bgcolor: colors.white,
         border: `1px solid ${colors.gray[200]}`,
-        borderRadius: '10px',
+        borderRadius: "10px",
         minWidth: 0,
       }}
     >
@@ -48,26 +48,37 @@ function MetricCard({ icon: Icon, label, value, accent, loading }: MetricCardPro
         sx={{
           width: 36,
           height: 36,
-          borderRadius: '9px',
+          borderRadius: "9px",
           bgcolor: `${accent}14`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           flexShrink: 0,
         }}
       >
         <Icon size={17} strokeWidth={1.75} color={accent} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
-        <Typography sx={{ fontSize: '10px', fontWeight: 600, color: colors.gray[400], textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1 }}>
+        <Typography
+          sx={{
+            fontSize: "10px",
+            fontWeight: 600,
+            color: colors.gray[400],
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            lineHeight: 1,
+          }}
+        >
           {label}
         </Typography>
-        <Box sx={{ height: 26, display: 'flex', alignItems: 'center', mt: 0.375 }}>
+        <Box sx={{ height: 26, display: "flex", alignItems: "center", mt: 0.375 }}>
           {loading ? (
             <Skeleton width={44} height={20} />
           ) : (
-            <Typography sx={{ fontSize: '20px', fontWeight: 700, color: colors.gray[900], lineHeight: 1 }}>
-              {typeof value === 'number' ? value.toLocaleString() : value}
+            <Typography
+              sx={{ fontSize: "20px", fontWeight: 700, color: colors.gray[900], lineHeight: 1 }}
+            >
+              {typeof value === "number" ? value.toLocaleString() : value}
             </Typography>
           )}
         </Box>
@@ -81,13 +92,13 @@ function MetricCard({ icon: Icon, label, value, accent, loading }: MetricCardPro
 function sortSchools(schools: SchoolListItem[], sort: SortOption): SchoolListItem[] {
   const copy = [...schools];
   switch (sort) {
-    case 'name_asc':
+    case "name_asc":
       return copy.sort((a, b) => a.name.localeCompare(b.name));
-    case 'city_asc':
-      return copy.sort((a, b) => (a.city ?? '').localeCompare(b.city ?? ''));
-    case 'children_desc':
+    case "city_asc":
+      return copy.sort((a, b) => (a.city ?? "").localeCompare(b.city ?? ""));
+    case "children_desc":
       return copy.sort((a, b) => b.childrenCount - a.childrenCount);
-    case 'updated_desc':
+    case "updated_desc":
     default:
       return copy.sort((a, b) => {
         if (!a.updatedAt && !b.updatedAt) return 0;
@@ -107,9 +118,9 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [sort, setSort] = useState<SortOption>('updated_desc');
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sort, setSort] = useState<SortOption>("updated_desc");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadSchools = useCallback(async () => {
@@ -120,13 +131,15 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
       setAllSchools(data.schools);
       setSummary(data.summary);
     } catch {
-      setError('Could not load schools. Please try again.');
+      setError("Could not load schools. Please try again.");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadSchools(); }, [loadSchools]);
+  useEffect(() => {
+    loadSchools();
+  }, [loadSchools]);
 
   function handleSearchChange(v: string) {
     setSearch(v);
@@ -135,8 +148,8 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
   }
 
   function handleClearSearch() {
-    setSearch('');
-    setDebouncedSearch('');
+    setSearch("");
+    setDebouncedSearch("");
   }
 
   const visibleSchools = useMemo(() => {
@@ -146,8 +159,8 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
       result = result.filter(
         (s) =>
           s.name.toLowerCase().includes(q) ||
-          (s.city ?? '').toLowerCase().includes(q) ||
-          (s.coName ?? '').toLowerCase().includes(q),
+          (s.city ?? "").toLowerCase().includes(q) ||
+          (s.coName ?? "").toLowerCase().includes(q)
       );
     }
     return sortSchools(result, sort);
@@ -156,28 +169,29 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
   const isEmpty = !loading && allSchools.length === 0;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#F8FAFC' }}>
-
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "#F8FAFC" }}>
       {/* ── Fixed top ─────────────────────────────────────────────────────────── */}
-      <Box sx={{ flexShrink: 0, px: 4, pt: 3.5, pb: 2.5, bgcolor: '#F8FAFC' }}>
-
+      <Box sx={{ flexShrink: 0, px: 4, pt: 3.5, pb: 2.5, bgcolor: "#F8FAFC" }}>
         {/* Title + subtitle */}
         <Box sx={{ mb: 2.5 }}>
-          <Typography sx={{ fontSize: '24px', fontWeight: 700, color: colors.gray[900], lineHeight: 1.2 }}>
+          <Typography
+            sx={{ fontSize: "24px", fontWeight: 700, color: colors.gray[900], lineHeight: 1.2 }}
+          >
             My schools
           </Typography>
-          <Box sx={{ mt: 0.5, height: 18, display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ mt: 0.5, height: 18, display: "flex", alignItems: "center" }}>
             {loading ? (
               <Skeleton width={180} height={13} />
             ) : summary ? (
-              <Typography sx={{ fontSize: '13px', color: colors.gray[500] }}>
+              <Typography sx={{ fontSize: "13px", color: colors.gray[500] }}>
                 Academic year {summary.academicYear}
-                {allSchools.length > 0 && (() => {
-                  const cities = new Set(allSchools.map((s) => s.city).filter(Boolean));
-                  return cities.size > 0
-                    ? ` · ${cities.size === 1 ? `${[...cities][0]}` : `${cities.size} cities`}`
-                    : '';
-                })()}
+                {allSchools.length > 0 &&
+                  (() => {
+                    const cities = new Set(allSchools.map((s) => s.city).filter(Boolean));
+                    return cities.size > 0
+                      ? ` · ${cities.size === 1 ? `${[...cities][0]}` : `${cities.size} cities`}`
+                      : "";
+                  })()}
               </Typography>
             ) : null}
           </Box>
@@ -185,10 +199,28 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
 
         {/* Metrics */}
         {!isEmpty && (
-          <Box sx={{ display: 'flex', gap: 1.5, mb: 2.5 }}>
-            <MetricCard icon={BookOpen}     label="Total schools"    value={summary?.totalSchools ?? 0}      accent="#0284C7" loading={loading} />
-            <MetricCard icon={Users}        label="Total children"   value={summary?.childrenEnrolled ?? 0}  accent="#7C3AED" loading={loading} />
-            <MetricCard icon={GraduationCap} label="Total volunteers" value={summary?.activeVolunteers ?? 0}  accent="#059669" loading={loading} />
+          <Box sx={{ display: "flex", gap: 1.5, mb: 2.5 }}>
+            <MetricCard
+              icon={BookOpen}
+              label="Total schools"
+              value={summary?.totalSchools ?? 0}
+              accent="#0284C7"
+              loading={loading}
+            />
+            <MetricCard
+              icon={Users}
+              label="Total children"
+              value={summary?.childrenEnrolled ?? 0}
+              accent="#7C3AED"
+              loading={loading}
+            />
+            <MetricCard
+              icon={GraduationCap}
+              label="Total volunteers"
+              value={summary?.activeVolunteers ?? 0}
+              accent="#059669"
+              loading={loading}
+            />
           </Box>
         )}
 
@@ -203,17 +235,28 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
         )}
 
         {error && (
-          <Typography sx={{ color: 'error.main', mt: 1.5, fontSize: '13px' }}>{error}</Typography>
+          <Typography sx={{ color: "error.main", mt: 1.5, fontSize: "13px" }}>{error}</Typography>
         )}
       </Box>
 
       {/* ── Table — fills remaining height ────────────────────────────────────── */}
       {isEmpty ? (
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {scopeWarning ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, px: 4, textAlign: 'center' }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                py: 8,
+                px: 4,
+                textAlign: "center",
+              }}
+            >
               <BookOpen size={32} color={colors.gray[400]} strokeWidth={1.5} />
-              <Typography sx={{ mt: 2, mb: 1, fontWeight: 600, color: colors.gray[900], fontSize: '18px' }}>
+              <Typography
+                sx={{ mt: 2, mb: 1, fontWeight: 600, color: colors.gray[900], fontSize: "18px" }}
+              >
                 No schools assigned
               </Typography>
               <Typography sx={{ color: colors.gray[500], maxWidth: 380, lineHeight: 1.6 }}>
@@ -225,7 +268,7 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
           )}
         </Box>
       ) : (
-        <Box sx={{ flex: 1, overflow: 'hidden', px: 4, pb: 3, minHeight: 0 }}>
+        <Box sx={{ flex: 1, overflow: "hidden", px: 4, pb: 3, minHeight: 0 }}>
           <SchoolTable
             schools={visibleSchools}
             loading={loading}
@@ -234,7 +277,6 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
           />
         </Box>
       )}
-
     </Box>
   );
 }

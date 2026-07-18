@@ -1,37 +1,37 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Divider from '@mui/material/Divider';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Tooltip from '@mui/material/Tooltip';
-import { Plus, Layers, BookOpen, X } from 'lucide-react';
-import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Divider from "@mui/material/Divider";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Tooltip from "@mui/material/Tooltip";
+import { Plus, Layers, BookOpen, X } from "lucide-react";
+import { fetchBuckets, type BucketItem } from "@/lib/api/services/buckets.service";
 import {
   fetchSchoolClasses,
   removeSchoolClass,
   type SchoolClassItem,
-} from '@/lib/api/services/structure.service';
-import { fetchChildren, type ChildItem } from '@/lib/api/services/children.service';
-import { showApiError } from '@/lib/toast/toast';
-import { BucketCard } from './BucketCard';
-import { AddBucketModal } from './AddBucketModal';
-import { AddClassModal } from './AddClassModal';
+} from "@/lib/api/services/structure.service";
+import { fetchChildren, type ChildItem } from "@/lib/api/services/children.service";
+import { showApiError } from "@/lib/toast/toast";
+import { BucketCard } from "./BucketCard";
+import { AddBucketModal } from "./AddBucketModal";
+import { AddClassModal } from "./AddClassModal";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const TEXT_MUTED   = '#94A3B8';
-const TEXT_STRONG  = '#0F172A';
-const CARD_BORDER  = '#E2E8F0';
-const DANGER       = '#EF4444';
-const CLASS_ACCENT = '#7C3AED';
+const TEXT_MUTED = "#94A3B8";
+const TEXT_STRONG = "#0F172A";
+const CARD_BORDER = "#E2E8F0";
+const DANGER = "#EF4444";
+const CLASS_ACCENT = "#7C3AED";
 
 // ── Section header (shared visual weight for Classes + Buckets) ────────────────
 
@@ -47,8 +47,8 @@ function SectionHeader({
   disabled?: boolean;
 }) {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
-      <Typography sx={{ fontSize: '18px', fontWeight: 700, color: TEXT_STRONG }}>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2.5 }}>
+      <Typography sx={{ fontSize: "18px", fontWeight: 700, color: TEXT_STRONG }}>
         {title}
       </Typography>
       {actionLabel && onAction && (
@@ -80,14 +80,14 @@ function ClassCard({
   return (
     <Box
       sx={{
-        position: 'relative',
+        position: "relative",
         p: 2,
         border: `1px solid ${CARD_BORDER}`,
-        borderRadius: '10px',
-        bgcolor: '#fff',
+        borderRadius: "10px",
+        bgcolor: "#fff",
         minWidth: 0,
-        transition: 'all 0.12s ease',
-        '&:hover': { borderColor: '#C4B5FD', bgcolor: '#FAF8FF' },
+        transition: "all 0.12s ease",
+        "&:hover": { borderColor: "#C4B5FD", bgcolor: "#FAF8FF" },
       }}
     >
       {canModify && (
@@ -97,8 +97,12 @@ function ClassCard({
             aria-label={`Remove ${schoolClass.className}`}
             onClick={onRemove}
             sx={{
-              position: 'absolute', top: 8, right: 8, p: 0.5, color: TEXT_MUTED,
-              '&:hover': { color: DANGER, bgcolor: '#FEF2F2' },
+              position: "absolute",
+              top: 8,
+              right: 8,
+              p: 0.5,
+              color: TEXT_MUTED,
+              "&:hover": { color: DANGER, bgcolor: "#FEF2F2" },
             }}
           >
             <X size={14} />
@@ -110,21 +114,21 @@ function ClassCard({
         sx={{
           width: 40,
           height: 40,
-          borderRadius: '9px',
-          bgcolor: '#F5F3FF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          borderRadius: "9px",
+          bgcolor: "#F5F3FF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           mb: 1.25,
         }}
       >
         <BookOpen size={18} strokeWidth={1.75} color={CLASS_ACCENT} />
       </Box>
 
-      <Typography sx={{ fontSize: '14px', fontWeight: 700, color: TEXT_STRONG, mb: 0.25, pr: 3 }}>
+      <Typography sx={{ fontSize: "14px", fontWeight: 700, color: TEXT_STRONG, mb: 0.25, pr: 3 }}>
         {schoolClass.className}
       </Typography>
-      <Typography sx={{ fontSize: '11px', color: TEXT_MUTED }}>
+      <Typography sx={{ fontSize: "11px", color: TEXT_MUTED }}>
         {schoolClass.programName}
       </Typography>
     </Box>
@@ -143,25 +147,38 @@ function EmptyState({
   subtitle: string;
 }) {
   return (
-    <Box sx={{ mt: 2, mb: 2, py: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, border: `1px dashed ${CARD_BORDER}`, borderRadius: '10px', bgcolor: '#FAFAFA' }}>
+    <Box
+      sx={{
+        mt: 2,
+        mb: 2,
+        py: 4,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 1.5,
+        border: `1px dashed ${CARD_BORDER}`,
+        borderRadius: "10px",
+        bgcolor: "#FAFAFA",
+      }}
+    >
       <Box
         sx={{
           width: 48,
           height: 48,
-          borderRadius: '12px',
-          bgcolor: '#F1F5F9',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          borderRadius: "12px",
+          bgcolor: "#F1F5F9",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           mb: 0.5,
         }}
       >
         {icon}
       </Box>
-      <Typography sx={{ fontSize: '15px', fontWeight: 600, color: TEXT_STRONG }}>
+      <Typography sx={{ fontSize: "15px", fontWeight: 600, color: TEXT_STRONG }}>
         {title}
       </Typography>
-      <Typography sx={{ fontSize: '13px', color: TEXT_MUTED, textAlign: 'center', maxWidth: 300 }}>
+      <Typography sx={{ fontSize: "13px", color: TEXT_MUTED, textAlign: "center", maxWidth: 300 }}>
         {subtitle}
       </Typography>
     </Box>
@@ -185,14 +202,16 @@ function RemoveClassDialog({
 }) {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontSize: '15px', fontWeight: 700 }}>Remove Class</DialogTitle>
+      <DialogTitle sx={{ fontSize: "15px", fontWeight: 700 }}>Remove Class</DialogTitle>
       <DialogContent>
-        <Typography sx={{ fontSize: '14px', color: '#475569' }}>
+        <Typography sx={{ fontSize: "14px", color: "#475569" }}>
           Remove <strong>{className}</strong> from this school?
         </Typography>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onCancel} disabled={confirming} size="small">Cancel</Button>
+        <Button onClick={onCancel} disabled={confirming} size="small">
+          Cancel
+        </Button>
         <Button
           variant="contained"
           color="error"
@@ -236,10 +255,16 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
     let cancelled = false;
     setClassesLoading(true);
     fetchSchoolClasses(schoolId)
-      .then((data) => { if (!cancelled) setClasses(data); })
+      .then((data) => {
+        if (!cancelled) setClasses(data);
+      })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setClassesLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => {
+        if (!cancelled) setClassesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [schoolId]);
 
   useEffect(() => {
@@ -247,20 +272,34 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
     setLoading(true);
     setError(null);
     fetchBuckets(schoolId)
-      .then((data) => { if (!cancelled) { setBuckets(data); setLoading(false); } })
-      .catch(() => { if (!cancelled) { setError('Failed to load buckets.'); setLoading(false); } });
-    return () => { cancelled = true; };
+      .then((data) => {
+        if (!cancelled) {
+          setBuckets(data);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("Failed to load buckets.");
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [schoolId]);
 
   const loadChildren = useCallback(() => {
     setChildrenLoading(true);
-    fetchChildren(schoolId, { status: 'active' })
+    fetchChildren(schoolId, { status: "active" })
       .then(setChildren)
       .catch(() => {})
       .finally(() => setChildrenLoading(false));
   }, [schoolId]);
 
-  useEffect(() => { loadChildren(); }, [loadChildren]);
+  useEffect(() => {
+    loadChildren();
+  }, [loadChildren]);
 
   const childrenByBucket = useMemo(() => {
     const map = new Map<number, ChildItem[]>();
@@ -302,7 +341,7 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
         />
 
         {classesLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress size={24} />
           </Box>
         ) : classes.length === 0 ? (
@@ -312,7 +351,13 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
             subtitle="Add a class to start enrolling children into this school."
           />
         ) : (
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: 2,
+            }}
+          >
             {classes.map((c) => (
               <ClassCard
                 key={c.schoolClassId}
@@ -337,13 +382,13 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
         />
 
         {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
             <CircularProgress size={32} />
           </Box>
         )}
 
         {!loading && error && (
-          <Typography sx={{ color: DANGER, fontSize: '14px', textAlign: 'center', mt: 8 }}>
+          <Typography sx={{ color: DANGER, fontSize: "14px", textAlign: "center", mt: 8 }}>
             {error}
           </Typography>
         )}
@@ -357,7 +402,13 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
         )}
 
         {!loading && !error && buckets.length > 0 && (
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: 2,
+            }}
+          >
             {buckets.map((b) => (
               <BucketCard
                 key={b.classSectionId}
@@ -367,9 +418,13 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
                 roster={childrenByBucket.get(b.classSectionId) ?? []}
                 rosterLoading={childrenLoading}
                 onUpdated={(updated) =>
-                  setBuckets((prev) => prev.map((x) => (x.classSectionId === updated.classSectionId ? updated : x)))
+                  setBuckets((prev) =>
+                    prev.map((x) => (x.classSectionId === updated.classSectionId ? updated : x))
+                  )
                 }
-                onRemoved={(id) => setBuckets((prev) => prev.filter((x) => x.classSectionId !== id))}
+                onRemoved={(id) =>
+                  setBuckets((prev) => prev.filter((x) => x.classSectionId !== id))
+                }
                 onRosterChange={loadChildren}
               />
             ))}
@@ -387,7 +442,7 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
 
       <RemoveClassDialog
         open={Boolean(removeClassTarget)}
-        className={removeClassTarget?.className ?? ''}
+        className={removeClassTarget?.className ?? ""}
         onCancel={() => setRemoveClassTarget(null)}
         onConfirm={handleRemoveClassConfirm}
         confirming={removingClass}

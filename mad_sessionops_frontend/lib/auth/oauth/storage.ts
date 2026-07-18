@@ -7,7 +7,7 @@
  * Uses sessionStorage for security (cleared when tab closes)
  */
 
-import { OAUTH_STORAGE_KEYS } from './config';
+import { OAUTH_STORAGE_KEYS } from "./config";
 
 /**
  * OAuth session data structure
@@ -30,13 +30,13 @@ class OAuthStorage {
    * Check if we're in a browser environment
    */
   private isClient(): boolean {
-    return typeof window !== 'undefined' && typeof sessionStorage !== 'undefined';
+    return typeof window !== "undefined" && typeof sessionStorage !== "undefined";
   }
 
   /**
    * Save OAuth session data
    */
-  saveSession(data: Omit<OAuthSessionData, 'timestamp'>): void {
+  saveSession(data: Omit<OAuthSessionData, "timestamp">): void {
     if (!this.isClient()) return;
 
     const sessionData: OAuthSessionData = {
@@ -54,10 +54,10 @@ class OAuthStorage {
       }
 
       // Store timestamp for expiry check
-      sessionStorage.setItem('oauth_timestamp', sessionData.timestamp.toString());
+      sessionStorage.setItem("oauth_timestamp", sessionData.timestamp.toString());
     } catch (error) {
-      console.error('Failed to save OAuth session:', error);
-      throw new Error('Failed to save OAuth session data');
+      console.error("Failed to save OAuth session:", error);
+      throw new Error("Failed to save OAuth session data");
     }
   }
 
@@ -72,7 +72,7 @@ class OAuthStorage {
       const codeVerifier = sessionStorage.getItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
       const nonce = sessionStorage.getItem(OAUTH_STORAGE_KEYS.NONCE);
       const redirectUrl = sessionStorage.getItem(OAUTH_STORAGE_KEYS.REDIRECT_URL);
-      const timestamp = sessionStorage.getItem('oauth_timestamp');
+      const timestamp = sessionStorage.getItem("oauth_timestamp");
 
       if (!state || !codeVerifier || !nonce || !timestamp) {
         return null;
@@ -94,7 +94,7 @@ class OAuthStorage {
 
       return sessionData;
     } catch (error) {
-      console.error('Failed to retrieve OAuth session:', error);
+      console.error("Failed to retrieve OAuth session:", error);
       return null;
     }
   }
@@ -108,14 +108,14 @@ class OAuthStorage {
     const session = this.getSession();
 
     if (!session) {
-      console.error('No OAuth session found');
+      console.error("No OAuth session found");
       return false;
     }
 
     const isValid = session.state === receivedState;
 
     if (!isValid) {
-      console.error('State mismatch - possible CSRF attack');
+      console.error("State mismatch - possible CSRF attack");
     }
 
     return isValid;
@@ -152,9 +152,9 @@ class OAuthStorage {
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.NONCE);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.REDIRECT_URL);
-      sessionStorage.removeItem('oauth_timestamp');
+      sessionStorage.removeItem("oauth_timestamp");
     } catch (error) {
-      console.error('Failed to clear OAuth session:', error);
+      console.error("Failed to clear OAuth session:", error);
     }
   }
 

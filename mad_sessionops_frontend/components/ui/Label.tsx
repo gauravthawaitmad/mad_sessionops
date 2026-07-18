@@ -11,7 +11,7 @@ import { FormLabel, FormLabelProps } from "@mui/material";
  * Clean label for form inputs
  */
 
-export interface LabelProps extends Omit<FormLabelProps, 'children'> {
+export interface LabelProps extends Omit<FormLabelProps, "children"> {
   /** Label text */
   children: ReactNode;
   /** Show required asterisk */

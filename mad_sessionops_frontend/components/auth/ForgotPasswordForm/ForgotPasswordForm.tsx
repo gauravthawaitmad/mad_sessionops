@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Box, Stack, Typography } from '@mui/material';
-import { Send } from 'lucide-react';
-import Link from 'next/link';
-import { forgotPasswordSchema } from '../validation/authValidation';
-import { Input, Button, Alert, Label } from '@/components/ui';
-import services from '@/lib/api/services/index';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Box, Stack, Typography } from "@mui/material";
+import { Send } from "lucide-react";
+import Link from "next/link";
+import { forgotPasswordSchema } from "../validation/authValidation";
+import { Input, Button, Alert, Label } from "@/components/ui";
+import services from "@/lib/api/services/index";
 
 type FormData = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordForm() {
   const [submitted, setSubmitted] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState('');
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const [apiError, setApiError] = useState<string | undefined>();
 
   const {
@@ -25,7 +25,7 @@ export function ForgotPasswordForm() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(forgotPasswordSchema),
-    mode: 'onBlur',
+    mode: "onBlur",
   });
 
   const onSubmit = async (data: FormData) => {
@@ -37,9 +37,9 @@ export function ForgotPasswordForm() {
     } catch (err: any) {
       // 404 = email not in the system
       if (err?.status === 404) {
-        setApiError('No account found with this email address.');
+        setApiError("No account found with this email address.");
       } else {
-        setApiError(err?.message || 'Something went wrong. Please try again.');
+        setApiError(err?.message || "Something went wrong. Please try again.");
       }
     }
   };
@@ -48,10 +48,11 @@ export function ForgotPasswordForm() {
     return (
       <Box textAlign="center">
         <Alert severity="success" sx={{ mb: 3 }}>
-          A link has been sent to <strong>{submittedEmail}</strong>. Check your inbox and use it within 30 minutes.
+          A link has been sent to <strong>{submittedEmail}</strong>. Check your inbox and use it
+          within 30 minutes.
         </Alert>
         <Typography variant="body2" color="text.secondary">
-          Back to{' '}
+          Back to{" "}
           <Link href="/login" style={{ fontWeight: 600 }}>
             Sign in
           </Link>
@@ -61,7 +62,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ width: '100%' }}>
+    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ width: "100%" }}>
       {apiError && (
         <Alert severity="error" onClose={() => setApiError(undefined)} closable sx={{ mb: 2 }}>
           {apiError}
@@ -70,7 +71,7 @@ export function ForgotPasswordForm() {
 
       <Stack spacing={2}>
         <Box>
-          <Label htmlFor="email" required sx={{ fontSize: '0.8125rem', mb: 0.5 }}>
+          <Label htmlFor="email" required sx={{ fontSize: "0.8125rem", mb: 0.5 }}>
             Email
           </Label>
           <Input
@@ -79,7 +80,7 @@ export function ForgotPasswordForm() {
             size="small"
             autoComplete="email"
             placeholder="you@email.com"
-            {...register('email')}
+            {...register("email")}
             error={errors.email?.message}
             disabled={isSubmitting}
           />
@@ -94,12 +95,12 @@ export function ForgotPasswordForm() {
           endIcon={!isSubmitting && <Send size={16} strokeWidth={1.5} />}
           sx={{
             py: 1.125,
-            fontSize: '0.875rem',
+            fontSize: "0.875rem",
             fontWeight: 600,
-            textTransform: 'none',
-            boxShadow: 'none',
-            bgcolor: '#111827',
-            '&:hover': { bgcolor: '#1f2937', boxShadow: 'none' },
+            textTransform: "none",
+            boxShadow: "none",
+            bgcolor: "#111827",
+            "&:hover": { bgcolor: "#1f2937", boxShadow: "none" },
             mt: 0.5,
           }}
         >
@@ -107,9 +108,9 @@ export function ForgotPasswordForm() {
         </Button>
 
         <Box textAlign="center">
-          <Typography sx={{ fontSize: '0.8125rem', color: '#6b7280' }}>
-            Remember your password?{' '}
-            <Link href="/login" style={{ fontWeight: 600, color: '#111827' }}>
+          <Typography sx={{ fontSize: "0.8125rem", color: "#6b7280" }}>
+            Remember your password?{" "}
+            <Link href="/login" style={{ fontWeight: 600, color: "#111827" }}>
               Sign in
             </Link>
           </Typography>

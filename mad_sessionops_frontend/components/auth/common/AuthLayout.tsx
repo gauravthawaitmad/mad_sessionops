@@ -1,15 +1,7 @@
-'use client';
+"use client";
 
-import {
-  Box,
-  Card,
-  CardContent,
-  Container,
-  Typography,
-  useTheme,
-  alpha,
-} from '@mui/material';
-import { ReactNode } from 'react';
+import { Box, Card, CardContent, Container, Typography, useTheme, alpha } from "@mui/material";
+import { ReactNode } from "react";
 
 /**
  * ============================================
@@ -38,10 +30,10 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.default',
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.default",
         // Gradient background
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${theme.palette.background.default} 100%)`,
       }}
@@ -49,10 +41,10 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       <Container component="main" maxWidth="xs">
         <Box
           sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
             py: 4,
           }}
         >
@@ -66,16 +58,16 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                 width: 64,
                 height: 64,
                 borderRadius: 2,
-                bgcolor: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto',
+                bgcolor: "primary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto",
                 mb: 2,
                 boxShadow: theme.shadows[4],
-                transition: 'transform 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.05)',
+                transition: "transform 0.3s ease",
+                "&:hover": {
+                  transform: "scale(1.05)",
                 },
               }}
             >
@@ -83,8 +75,8 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                 variant="h4"
                 component="div"
                 sx={{
-                  color: 'white',
-                  fontWeight: 'bold',
+                  color: "white",
+                  fontWeight: "bold",
                 }}
               >
                 M
@@ -113,14 +105,14 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             elevation={4}
             sx={{
               borderRadius: 3,
-              overflow: 'hidden',
+              overflow: "hidden",
               boxShadow: theme.shadows[8],
             }}
           >
             <CardContent
               sx={{
                 p: 4,
-                '&:last-child': {
+                "&:last-child": {
                   pb: 4,
                 },
               }}
@@ -137,11 +129,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                   {title}
                 </Typography>
                 {subtitle && (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    textAlign="center"
-                  >
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
                     {subtitle}
                   </Typography>
                 )}

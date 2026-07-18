@@ -243,20 +243,21 @@ User is logged in! ✅
 
 ## 📝 Code Connections Table
 
-| UI Component | Redux Action | Auth Service | Backend Endpoint |
-|--------------|--------------|--------------|------------------|
-| `LoginForm.tsx` | `loginUser()` | `authService.login()` | `POST /auth/login` |
-| `GoogleLoginButton.tsx` | `loginSuccess()` | `authService.loginWithGoogleOAuth()` | `POST /auth/google/oauth/callback` |
-| `RegisterForm.tsx` | `registerUser()` | `authService.register()` | `POST /auth/register` |
-| - | `verifyToken()` | `authService.verifyToken()` | `POST /auth/verify-token` |
-| - | `refreshAccessToken()` | `authService.refreshToken()` | `POST /auth/refresh-token` |
-| Logout Button | `logoutUser()` | `authService.logout()` | `POST /auth/logout` |
+| UI Component            | Redux Action           | Auth Service                         | Backend Endpoint                   |
+| ----------------------- | ---------------------- | ------------------------------------ | ---------------------------------- |
+| `LoginForm.tsx`         | `loginUser()`          | `authService.login()`                | `POST /auth/login`                 |
+| `GoogleLoginButton.tsx` | `loginSuccess()`       | `authService.loginWithGoogleOAuth()` | `POST /auth/google/oauth/callback` |
+| `RegisterForm.tsx`      | `registerUser()`       | `authService.register()`             | `POST /auth/register`              |
+| -                       | `verifyToken()`        | `authService.verifyToken()`          | `POST /auth/verify-token`          |
+| -                       | `refreshAccessToken()` | `authService.refreshToken()`         | `POST /auth/refresh-token`         |
+| Logout Button           | `logoutUser()`         | `authService.logout()`               | `POST /auth/logout`                |
 
 ---
 
 ## 🎯 File Locations
 
 ### UI Components
+
 ```
 components/auth/LoginForm/LoginForm.tsx
 components/auth/common/GoogleLoginButton.tsx
@@ -264,6 +265,7 @@ components/auth/RegisterForm/ (to be created)
 ```
 
 ### Redux (State Management)
+
 ```
 lib/redux/features/auth/authSlice.ts      ← Async thunks + reducers
 lib/redux/features/auth/types.ts          ← TypeScript types
@@ -273,12 +275,14 @@ lib/redux/persistConfig.ts                 ← Persistence config
 ```
 
 ### API Services
+
 ```
 lib/api/services/auth.service.ts           ← Auth API methods
 lib/api/client.ts                          ← Axios client + interceptors
 ```
 
 ### OAuth Implementation
+
 ```
 lib/auth/oauth/client.ts                   ← OAuth client
 lib/auth/oauth/config.ts                   ← OAuth config
@@ -323,43 +327,47 @@ app/auth/callback/google/page.tsx          ← OAuth callback page
 
 ```typescript
 // Login
-import { useAppDispatch } from '@/lib/redux';
-import { loginUser } from '@/lib/redux/features/auth/authSlice';
+import { useAppDispatch } from "@/lib/redux";
+import { loginUser } from "@/lib/redux/features/auth/authSlice";
 
 const dispatch = useAppDispatch();
 
 const handleLogin = async () => {
-  await dispatch(loginUser({
-    email: 'user@example.com',
-    password: 'password123'
-  }));
+  await dispatch(
+    loginUser({
+      email: "user@example.com",
+      password: "password123",
+    })
+  );
 };
 ```
 
 ```typescript
 // Register
-import { registerUser } from '@/lib/redux/features/auth/authSlice';
+import { registerUser } from "@/lib/redux/features/auth/authSlice";
 
-await dispatch(registerUser({
-  name: 'John Doe',
-  email: 'john@example.com',
-  password: 'password123',
-  confirmPassword: 'password123',
-  acceptTerms: true
-}));
+await dispatch(
+  registerUser({
+    name: "John Doe",
+    email: "john@example.com",
+    password: "password123",
+    confirmPassword: "password123",
+    acceptTerms: true,
+  })
+);
 ```
 
 ```typescript
 // Logout
-import { logoutUser } from '@/lib/redux/features/auth/authSlice';
+import { logoutUser } from "@/lib/redux/features/auth/authSlice";
 
 await dispatch(logoutUser());
 ```
 
 ```typescript
 // Check Auth State
-import { useAppSelector } from '@/lib/redux';
-import { selectIsAuthenticated, selectUser } from '@/lib/redux/features/auth/authSlice';
+import { useAppSelector } from "@/lib/redux";
+import { selectIsAuthenticated, selectUser } from "@/lib/redux/features/auth/authSlice";
 
 const isAuthenticated = useAppSelector(selectIsAuthenticated);
 const user = useAppSelector(selectUser);
@@ -433,6 +441,7 @@ Displays error to user
 ## 🧪 Testing Checklist
 
 ### Frontend Ready ✅
+
 - [x] Login form with validation
 - [x] Google OAuth button
 - [x] Redux actions connected to services
@@ -442,6 +451,7 @@ Displays error to user
 - [x] Session persistence
 
 ### Backend Needed ❌
+
 - [ ] POST /auth/login endpoint
 - [ ] POST /auth/register endpoint
 - [ ] POST /auth/google/oauth/callback endpoint

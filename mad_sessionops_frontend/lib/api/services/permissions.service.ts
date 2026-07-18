@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 export interface SchoolPermissions {
   canView: boolean;
@@ -11,7 +11,7 @@ interface RawPermissions {
 }
 
 export async function fetchPermissions(schoolId: number): Promise<SchoolPermissions> {
-  const raw = await api.get<RawPermissions>('/auth/me/permissions/', {
+  const raw = await api.get<RawPermissions>("/auth/me/permissions/", {
     params: { school_id: schoolId },
   });
   return { canView: raw.can_view, canModify: raw.can_modify };

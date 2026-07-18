@@ -28,16 +28,16 @@ Open http://localhost:3000.
 
 All frontend env vars are `NEXT_PUBLIC_*` (baked into the JS bundle at build time — see `config/env.config.ts`):
 
-| Variable | Purpose |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Backend API base URL |
-| `NEXT_PUBLIC_APP_URL` | This app's own URL (OAuth redirects, etc.) |
-| `NEXT_PUBLIC_APP_NAME` | Required — build fails without it |
-| `NEXT_PUBLIC_APP_ENV` | `development` / `staging` / `production` |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `NEXT_PUBLIC_ENABLE_ANALYTICS` / `NEXT_PUBLIC_ENABLE_DEBUG` / `NEXT_PUBLIC_ENABLE_MOCK_API` | Feature flags |
-| `NEXT_PUBLIC_LOG_LEVEL` | `debug` / `info` / `warn` / `error` |
-| `NEXT_PUBLIC_API_TIMEOUT` | Axios request timeout (ms) |
+| Variable                                                                                    | Purpose                                    |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `NEXT_PUBLIC_API_URL`                                                                       | Backend API base URL                       |
+| `NEXT_PUBLIC_APP_URL`                                                                       | This app's own URL (OAuth redirects, etc.) |
+| `NEXT_PUBLIC_APP_NAME`                                                                      | Required — build fails without it          |
+| `NEXT_PUBLIC_APP_ENV`                                                                       | `development` / `staging` / `production`   |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`                                                              | Google OAuth client ID                     |
+| `NEXT_PUBLIC_ENABLE_ANALYTICS` / `NEXT_PUBLIC_ENABLE_DEBUG` / `NEXT_PUBLIC_ENABLE_MOCK_API` | Feature flags                              |
+| `NEXT_PUBLIC_LOG_LEVEL`                                                                     | `debug` / `info` / `warn` / `error`        |
+| `NEXT_PUBLIC_API_TIMEOUT`                                                                   | Axios request timeout (ms)                 |
 
 ## Scripts
 

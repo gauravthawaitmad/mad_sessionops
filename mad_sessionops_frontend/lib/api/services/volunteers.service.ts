@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -14,7 +14,7 @@ export interface VolunteerCard {
   activeSlotClassCount: number;
 }
 
-export type VolunteerListStatus = 'ok' | 'no_worknode' | 'no_volunteers';
+export type VolunteerListStatus = "ok" | "no_worknode" | "no_volunteers";
 
 export interface VolunteerListResponse {
   status: VolunteerListStatus;
@@ -46,14 +46,14 @@ interface RawVolunteerListResponse {
 
 function mapVolunteer(raw: RawVolunteerCard): VolunteerCard {
   return {
-    userId:              raw.user_id,
-    userDisplayName:     raw.user_display_name,
-    userLogin:           raw.user_login,
-    userRole:            raw.user_role,
-    email:               raw.email,
-    contact:             raw.contact,
-    city:                raw.city,
-    state:               raw.state,
+    userId: raw.user_id,
+    userDisplayName: raw.user_display_name,
+    userLogin: raw.user_login,
+    userRole: raw.user_role,
+    email: raw.email,
+    contact: raw.contact,
+    city: raw.city,
+    state: raw.state,
     activeSlotClassCount: raw.active_slot_class_count,
   };
 }
@@ -61,9 +61,7 @@ function mapVolunteer(raw: RawVolunteerCard): VolunteerCard {
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export async function fetchVolunteers(schoolId: number): Promise<VolunteerListResponse> {
-  const raw = await api.get<RawVolunteerListResponse>(
-    `/schools/${schoolId}/volunteers/`,
-  );
+  const raw = await api.get<RawVolunteerListResponse>(`/schools/${schoolId}/volunteers/`);
   return {
     status: raw.status as VolunteerListStatus,
     message: raw.message ?? null,

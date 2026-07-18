@@ -166,26 +166,23 @@ export const refreshAccessToken = createAsyncThunk(
   }
 );
 
-export const logoutUser = createAsyncThunk(
-  "auth/logout",
-  async (_, { getState }) => {
-    const state = getState() as RootState;
-    const { accessToken, refreshToken } = state.auth;
-    try {
-      // Only hit the backend if we have a valid session to blacklist.
-      // Without an access token the request would 401 and trigger the
-      // refresh interceptor, creating an unintended cycle.
-      if (accessToken && refreshToken) {
-        await services.auth.logout(refreshToken);
-      }
-    } catch (error) {
-      console.error("Logout API error (continuing local cleanup):", error);
-    } finally {
-      clearAuthCookie();
+export const logoutUser = createAsyncThunk("auth/logout", async (_, { getState }) => {
+  const state = getState() as RootState;
+  const { accessToken, refreshToken } = state.auth;
+  try {
+    // Only hit the backend if we have a valid session to blacklist.
+    // Without an access token the request would 401 and trigger the
+    // refresh interceptor, creating an unintended cycle.
+    if (accessToken && refreshToken) {
+      await services.auth.logout(refreshToken);
     }
-    return null;
+  } catch (error) {
+    console.error("Logout API error (continuing local cleanup):", error);
+  } finally {
+    clearAuthCookie();
   }
-);
+  return null;
+});
 
 // ============================================================================
 // SLICE

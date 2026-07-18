@@ -1,57 +1,65 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import CircularProgress from '@mui/material/CircularProgress';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import LinearProgress from '@mui/material/LinearProgress';
-import { Plus, Trash2, Pencil } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
-import {
-  fetchSlotClasses,
-  type SlotClassItem,
-} from '@/lib/api/services/slot_classes.service';
-import type { SlotItem, DayOfWeek } from '@/lib/api/services/slots.service';
-import { AddSlotClassModal, type PrefillBucket } from './AddSlotClassModal';
-import { DeleteSlotClassModal } from './DeleteSlotClassModal';
-import { formatTime } from './SlotCard';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
+import LinearProgress from "@mui/material/LinearProgress";
+import { Plus, Trash2, Pencil } from "lucide-react";
+import toast from "react-hot-toast";
+import { fetchBuckets, type BucketItem } from "@/lib/api/services/buckets.service";
+import { fetchSlotClasses, type SlotClassItem } from "@/lib/api/services/slot_classes.service";
+import type { SlotItem, DayOfWeek } from "@/lib/api/services/slots.service";
+import { AddSlotClassModal, type PrefillBucket } from "./AddSlotClassModal";
+import { DeleteSlotClassModal } from "./DeleteSlotClassModal";
+import { formatTime } from "./SlotCard";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
-const BORDER = '#E2E8F0';
-const MUTED  = '#94A3B8';
+const BORDER = "#E2E8F0";
+const MUTED = "#94A3B8";
 const MAX_CAP = 5;
 
 const DAY_COLOR: Record<DayOfWeek, { bg: string; text: string; border: string }> = {
-  monday:    { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' },
-  tuesday:   { bg: '#F0FDF4', text: '#15803D', border: '#BBF7D0' },
-  wednesday: { bg: '#FFF7ED', text: '#C2410C', border: '#FED7AA' },
-  thursday:  { bg: '#FDF4FF', text: '#7E22CE', border: '#E9D5FF' },
-  friday:    { bg: '#FFF1F2', text: '#BE123C', border: '#FECDD3' },
-  saturday:  { bg: '#F5F3FF', text: '#6D28D9', border: '#DDD6FE' },
-  sunday:    { bg: '#F5F3FF', text: '#6D28D9', border: '#DDD6FE' },
+  monday: { bg: "#EFF6FF", text: "#1D4ED8", border: "#BFDBFE" },
+  tuesday: { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0" },
+  wednesday: { bg: "#FFF7ED", text: "#C2410C", border: "#FED7AA" },
+  thursday: { bg: "#FDF4FF", text: "#7E22CE", border: "#E9D5FF" },
+  friday: { bg: "#FFF1F2", text: "#BE123C", border: "#FECDD3" },
+  saturday: { bg: "#F5F3FF", text: "#6D28D9", border: "#DDD6FE" },
+  sunday: { bg: "#F5F3FF", text: "#6D28D9", border: "#DDD6FE" },
 };
 
 const DAY_SHORT: Record<DayOfWeek, string> = {
-  monday: 'MON', tuesday: 'TUE', wednesday: 'WED',
-  thursday: 'THU', friday: 'FRI', saturday: 'SAT', sunday: 'SUN',
+  monday: "MON",
+  tuesday: "TUE",
+  wednesday: "WED",
+  thursday: "THU",
+  friday: "FRI",
+  saturday: "SAT",
+  sunday: "SUN",
 };
 
 function initials(name: string): string {
-  return name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
 }
 
 function firstName(name: string): string {
-  return name.split(' ')[0] ?? name;
+  return name.split(" ")[0] ?? name;
 }
 
 function capColor(count: number): string {
-  if (count >= MAX_CAP)     return '#EF4444';
-  if (count >= MAX_CAP - 1) return '#F59E0B';
-  return '#22C55E';
+  if (count >= MAX_CAP) return "#EF4444";
+  if (count >= MAX_CAP - 1) return "#F59E0B";
+  return "#22C55E";
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -75,7 +83,7 @@ function buildByBucket(bySlot: BySlot): ByBucket {
 
 // ── AssignedCell ──────────────────────────────────────────────────────────────
 
-const VOL_COLORS = ['#0284C7', '#7C3AED'] as const;
+const VOL_COLORS = ["#0284C7", "#7C3AED"] as const;
 
 function AssignedCell({
   scs,
@@ -89,29 +97,32 @@ function AssignedCell({
   return (
     <Box
       sx={{
-        height: '100%',
+        height: "100%",
         p: 1,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: 0.625,
-        bgcolor: '#F0F9FF',
-        border: '1.5px solid #BAE6FD',
-        borderRadius: '8px',
-        transition: 'all 0.15s ease',
-        '&:hover': { borderColor: '#38BDF8', bgcolor: '#E0F2FE' },
+        bgcolor: "#F0F9FF",
+        border: "1.5px solid #BAE6FD",
+        borderRadius: "8px",
+        transition: "all 0.15s ease",
+        "&:hover": { borderColor: "#38BDF8", bgcolor: "#E0F2FE" },
       }}
     >
       {/* Row 1: delete (only rendered when there's something to show) */}
       {canModify && (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
           <IconButton
             size="small"
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             sx={{
               p: 0.25,
               flexShrink: 0,
               color: MUTED,
-              '&:hover': { color: '#EF4444', bgcolor: '#FEF2F2' },
+              "&:hover": { color: "#EF4444", bgcolor: "#FEF2F2" },
             }}
           >
             <Trash2 size={11} />
@@ -121,38 +132,38 @@ function AssignedCell({
 
       {/* Volunteer rows — show first name only to keep cells compact */}
       {scs.volunteers.length === 0 ? (
-        <Typography sx={{ fontSize: '9px', color: MUTED, fontStyle: 'italic', lineHeight: 1.3 }}>
+        <Typography sx={{ fontSize: "9px", color: MUTED, fontStyle: "italic", lineHeight: 1.3 }}>
           No volunteers
         </Typography>
       ) : (
         scs.volunteers.map((v, i) => (
           <Tooltip key={v.userId} title={v.userDisplayName} placement="top" arrow>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
               <Box
                 sx={{
                   width: 14,
                   height: 14,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   bgcolor: VOL_COLORS[i % VOL_COLORS.length],
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '6px',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "6px",
                   fontWeight: 800,
-                  color: '#fff',
+                  color: "#fff",
                   flexShrink: 0,
-                  userSelect: 'none',
+                  userSelect: "none",
                 }}
               >
                 {initials(v.userDisplayName)}
               </Box>
               <Typography
                 sx={{
-                  fontSize: '10px',
-                  color: '#334155',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  fontSize: "10px",
+                  color: "#334155",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                   lineHeight: 1.3,
                 }}
               >
@@ -173,11 +184,11 @@ function EmptyCell({ canModify, onClick }: { canModify: boolean; onClick: () => 
     return (
       <Box
         sx={{
-          height: '100%',
+          height: "100%",
           minHeight: 80,
-          borderRadius: '8px',
+          borderRadius: "8px",
           border: `1.5px dashed ${BORDER}`,
-          bgcolor: '#FAFAFA',
+          bgcolor: "#FAFAFA",
         }}
       />
     );
@@ -187,20 +198,24 @@ function EmptyCell({ canModify, onClick }: { canModify: boolean; onClick: () => 
     <Box
       onClick={onClick}
       sx={{
-        height: '100%',
+        height: "100%",
         minHeight: 80,
-        borderRadius: '8px',
+        borderRadius: "8px",
         border: `1.5px dashed ${BORDER}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-        transition: 'all 0.15s ease',
-        '& .ph-icon': { opacity: 0.2, transition: 'opacity 0.15s ease, color 0.15s ease', color: MUTED },
-        '&:hover': {
-          borderColor: '#93C5FD',
-          bgcolor: '#F0F9FF',
-          '& .ph-icon': { opacity: 1, color: '#3B82F6' },
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+        transition: "all 0.15s ease",
+        "& .ph-icon": {
+          opacity: 0.2,
+          transition: "opacity 0.15s ease, color 0.15s ease",
+          color: MUTED,
+        },
+        "&:hover": {
+          borderColor: "#93C5FD",
+          bgcolor: "#F0F9FF",
+          "& .ph-icon": { opacity: 1, color: "#3B82F6" },
         },
       }}
     >
@@ -231,44 +246,49 @@ function SlotColHeader({
       sx={{
         px: 1.5,
         py: 1.25,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: 0.5,
-        bgcolor: '#FAFBFF',
+        bgcolor: "#FAFBFF",
         borderBottom: `1.5px solid ${BORDER}`,
         borderLeft: `1px solid ${BORDER}`,
         minHeight: 68,
-        position: 'relative',
+        position: "relative",
       }}
     >
       <Box
         sx={{
           px: 0.875,
           py: 0.25,
-          borderRadius: '6px',
+          borderRadius: "6px",
           bgcolor: color.bg,
           border: `1.5px solid ${color.border}`,
-          alignSelf: 'flex-start',
+          alignSelf: "flex-start",
         }}
       >
-        <Typography sx={{ fontSize: '9px', fontWeight: 800, color: color.text, letterSpacing: '0.06em' }}>
+        <Typography
+          sx={{ fontSize: "9px", fontWeight: 800, color: color.text, letterSpacing: "0.06em" }}
+        >
           {DAY_SHORT[slot.dayOfWeek]}
         </Typography>
       </Box>
 
-      <Typography sx={{ fontSize: '11px', fontWeight: 700, color: '#1E293B', lineHeight: 1.3 }}>
+      <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#1E293B", lineHeight: 1.3 }}>
         {formatTime(slot.startTime)}
-        <Typography component="span" sx={{ color: MUTED, fontWeight: 400 }}> – </Typography>
+        <Typography component="span" sx={{ color: MUTED, fontWeight: 400 }}>
+          {" "}
+          –{" "}
+        </Typography>
         {formatTime(slot.endTime)}
       </Typography>
 
       <Typography
         sx={{
-          fontSize: '10px',
+          fontSize: "10px",
           color: MUTED,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
           pr: canModify ? 3.5 : 0,
         }}
       >
@@ -279,31 +299,37 @@ function SlotColHeader({
       {canModify && (
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 6,
             right: 6,
-            display: 'flex',
+            display: "flex",
             gap: 0.25,
           }}
         >
           <IconButton
             size="small"
-            onClick={(e) => { e.stopPropagation(); onEdit(slot); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(slot);
+            }}
             sx={{
               p: 0.375,
               color: MUTED,
-              '&:hover': { color: '#2563EB', bgcolor: '#EFF6FF' },
+              "&:hover": { color: "#2563EB", bgcolor: "#EFF6FF" },
             }}
           >
             <Pencil size={11} />
           </IconButton>
           <IconButton
             size="small"
-            onClick={(e) => { e.stopPropagation(); onDelete(slot); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(slot);
+            }}
             sx={{
               p: 0.375,
               color: MUTED,
-              '&:hover': { color: '#EF4444', bgcolor: '#FEF2F2' },
+              "&:hover": { color: "#EF4444", bgcolor: "#FEF2F2" },
             }}
           >
             <Trash2 size={11} />
@@ -320,30 +346,30 @@ function SlotColHeader({
 function BucketRowHeader({ bucket }: { bucket: BucketItem }) {
   const count = bucket.activeChildrenCount;
   const color = capColor(count);
-  const name  = bucket.sectionDisplayName ?? bucket.sectionName;
+  const name = bucket.sectionDisplayName ?? bucket.sectionName;
 
   return (
     <Box
       sx={{
         px: 2,
         py: 1.25,
-        display: 'flex',
-        flexDirection: 'column',
+        display: "flex",
+        flexDirection: "column",
         gap: 0.375,
         borderRight: `1.5px solid ${BORDER}`,
         borderBottom: `1px solid ${BORDER}`,
-        bgcolor: '#fff',
-        position: 'sticky',
+        bgcolor: "#fff",
+        position: "sticky",
         left: 0,
         zIndex: 1,
         minHeight: 80,
-        justifyContent: 'center',
+        justifyContent: "center",
       }}
     >
-      <Typography sx={{ fontSize: '13px', fontWeight: 700, color: '#1E293B', lineHeight: 1.3 }}>
+      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#1E293B", lineHeight: 1.3 }}>
         {name}
       </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
         <LinearProgress
           variant="determinate"
           value={Math.min((count / MAX_CAP) * 100, 100)}
@@ -351,12 +377,12 @@ function BucketRowHeader({ bucket }: { bucket: BucketItem }) {
             width: 36,
             height: 3,
             borderRadius: 2,
-            bgcolor: '#E2E8F0',
+            bgcolor: "#E2E8F0",
             flexShrink: 0,
-            '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 2 },
+            "& .MuiLinearProgress-bar": { bgcolor: color, borderRadius: 2 },
           }}
         />
-        <Typography sx={{ fontSize: '9px', color: MUTED, lineHeight: 1 }}>
+        <Typography sx={{ fontSize: "9px", color: MUTED, lineHeight: 1 }}>
           {count}/{MAX_CAP}
         </Typography>
       </Box>
@@ -385,17 +411,23 @@ export function SlotGridView({
   onEditSlot,
   onDeleteSlot,
 }: SlotGridViewProps) {
-  const [buckets,       setBuckets]       = useState<BucketItem[]>([]);
-  const [bySlot,        setBySlot]        = useState<BySlot>(new Map());
-  const [loading,       setLoading]       = useState(true);
-  const [addModal,      setAddModal]      = useState<{ slot: SlotItem; bucket: PrefillBucket } | null>(null);
-  const [deleteTarget,  setDeleteTarget]  = useState<{ slot: SlotItem; scs: SlotClassItem } | null>(null);
+  const [buckets, setBuckets] = useState<BucketItem[]>([]);
+  const [bySlot, setBySlot] = useState<BySlot>(new Map());
+  const [loading, setLoading] = useState(true);
+  const [addModal, setAddModal] = useState<{ slot: SlotItem; bucket: PrefillBucket } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ slot: SlotItem; scs: SlotClassItem } | null>(
+    null
+  );
 
   // Use a stable string key (sorted slot IDs) so `loadAll` only re-runs
   // when the SET of slots actually changes — not on every parent re-render.
   const slotIdsKey = useMemo(
-    () => slots.map((s) => s.slotId).sort().join(','),
-    [slots],
+    () =>
+      slots
+        .map((s) => s.slotId)
+        .sort()
+        .join(","),
+    [slots]
   );
 
   const loadAll = useCallback(async () => {
@@ -415,14 +447,16 @@ export function SlotGridView({
       });
       setBySlot(map);
     } catch {
-      toast.error('Failed to load schedule grid.');
+      toast.error("Failed to load schedule grid.");
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolId, slotIdsKey]); // stable key — avoids re-fetching on count-only changes
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
 
   // ── Slot-class: add ──────────────────────────────────────────────────────────
 
@@ -433,7 +467,7 @@ export function SlotGridView({
       return next;
     });
     onCountChange(slot.slotId, +1);
-    toast.success('Class assigned.');
+    toast.success("Class assigned.");
   }
 
   // ── Slot-class: delete (opens confirmation modal) ────────────────────────────
@@ -448,21 +482,19 @@ export function SlotGridView({
       const next = new Map(prev);
       next.set(
         deleteTarget.slot.slotId,
-        (next.get(deleteTarget.slot.slotId) ?? []).filter(
-          (s) => s.slotClassSectionId !== scsId,
-        ),
+        (next.get(deleteTarget.slot.slotId) ?? []).filter((s) => s.slotClassSectionId !== scsId)
       );
       return next;
     });
     onCountChange(deleteTarget.slot.slotId, -1);
-    toast.success('Assignment removed.');
+    toast.success("Assignment removed.");
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
         <CircularProgress size={28} />
       </Box>
     );
@@ -476,17 +508,17 @@ export function SlotGridView({
     <>
       <Box
         sx={{
-          overflowX: 'auto',
+          overflowX: "auto",
           border: `1.5px solid ${BORDER}`,
-          borderRadius: '12px',
-          bgcolor: '#fff',
+          borderRadius: "12px",
+          bgcolor: "#fff",
         }}
       >
         <Box
           sx={{
-            display: 'grid',
+            display: "grid",
             gridTemplateColumns: colTemplate,
-            minWidth: slots.length > 0 ? `${180 + slots.length * 150}px` : '100%',
+            minWidth: slots.length > 0 ? `${180 + slots.length * 150}px` : "100%",
           }}
         >
           {/* ── Header row ─────────────────────────────────────────────── */}
@@ -496,23 +528,23 @@ export function SlotGridView({
             sx={{
               px: 2,
               py: 1.25,
-              bgcolor: '#F8FAFC',
+              bgcolor: "#F8FAFC",
               borderBottom: `1.5px solid ${BORDER}`,
               borderRight: `1.5px solid ${BORDER}`,
-              position: 'sticky',
+              position: "sticky",
               left: 0,
               zIndex: 2,
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
             }}
           >
             <Typography
               sx={{
-                fontSize: '11px',
+                fontSize: "11px",
                 fontWeight: 700,
                 color: MUTED,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
               }}
             >
               Bucket
@@ -535,14 +567,14 @@ export function SlotGridView({
               sx={{
                 px: 3,
                 py: 1.25,
-                bgcolor: '#F8FAFC',
+                bgcolor: "#F8FAFC",
                 borderBottom: `1.5px solid ${BORDER}`,
                 borderLeft: `1px solid ${BORDER}`,
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
               }}
             >
-              <Typography sx={{ fontSize: '12px', color: MUTED, fontStyle: 'italic' }}>
+              <Typography sx={{ fontSize: "12px", color: MUTED, fontStyle: "italic" }}>
                 Add a slot to see columns here
               </Typography>
             </Box>
@@ -553,13 +585,13 @@ export function SlotGridView({
           {totalBuckets === 0 ? (
             <Box
               sx={{
-                gridColumn: '1 / -1',
+                gridColumn: "1 / -1",
                 px: 3,
                 py: 5,
-                textAlign: 'center',
+                textAlign: "center",
               }}
             >
-              <Typography sx={{ fontSize: '13px', color: MUTED }}>
+              <Typography sx={{ fontSize: "13px", color: MUTED }}>
                 No buckets configured yet. Add buckets in the Buckets tab first.
               </Typography>
             </Box>
@@ -593,9 +625,9 @@ export function SlotGridView({
                               setAddModal({
                                 slot,
                                 bucket: {
-                                  classSectionId:      bucket.classSectionId,
-                                  sectionDisplayName:  bucket.sectionDisplayName,
-                                  sectionName:         bucket.sectionName,
+                                  classSectionId: bucket.classSectionId,
+                                  sectionDisplayName: bucket.sectionDisplayName,
+                                  sectionName: bucket.sectionName,
                                   activeChildrenCount: bucket.activeChildrenCount,
                                 },
                               })
@@ -611,7 +643,7 @@ export function SlotGridView({
                     sx={{
                       borderBottom: `1px solid ${BORDER}`,
                       borderLeft: `1px solid ${BORDER}`,
-                      bgcolor: '#FAFAFA',
+                      bgcolor: "#FAFAFA",
                     }}
                   />
                 )}

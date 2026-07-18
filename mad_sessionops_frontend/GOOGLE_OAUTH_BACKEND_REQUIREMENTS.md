@@ -17,20 +17,23 @@ This endpoint receives the authorization code from the frontend after the user a
 ## Request
 
 ### Headers
+
 ```
 Content-Type: application/json
 ```
 
 ### Body
+
 ```json
 {
-  "code": "string",           // Authorization code from Google
-  "codeVerifier": "string",   // PKCE code verifier (128 chars)
-  "redirectUri": "string"     // Must match the redirect URI configured in Google Console
+  "code": "string", // Authorization code from Google
+  "codeVerifier": "string", // PKCE code verifier (128 chars)
+  "redirectUri": "string" // Must match the redirect URI configured in Google Console
 }
 ```
 
 ### Example Request
+
 ```json
 {
   "code": "4/0ATX87lMhdnyy3HrF7Jd15QuBL0sIOro5oDcN48mo069_9ZbVNSDgfLdaGcUH8mzQzulTSA",
@@ -60,6 +63,7 @@ code={code}
 ```
 
 **Google Response:**
+
 ```json
 {
   "access_token": "ya29.a0AfH6SMBx...",
@@ -77,7 +81,7 @@ Decode the `id_token` JWT to extract user information:
 ```json
 {
   "iss": "https://accounts.google.com",
-  "sub": "1234567890",           // Google User ID
+  "sub": "1234567890", // Google User ID
   "email": "user@example.com",
   "email_verified": true,
   "name": "John Doe",
@@ -90,6 +94,7 @@ Decode the `id_token` JWT to extract user information:
 ```
 
 **Important:** Verify the ID token signature using Google's public keys:
+
 - https://www.googleapis.com/oauth2/v3/certs
 
 ### Step 3: Create or Update User
@@ -150,6 +155,7 @@ refresh_token = create_refresh_token(
 ```
 
 ### Example Success Response
+
 ```json
 {
   "user": {
@@ -175,6 +181,7 @@ refresh_token = create_refresh_token(
 ## Error Responses
 
 ### 400 Bad Request - Invalid Code
+
 ```json
 {
   "code": "INVALID_CODE",
@@ -183,6 +190,7 @@ refresh_token = create_refresh_token(
 ```
 
 ### 401 Unauthorized - Invalid Client
+
 ```json
 {
   "code": "INVALID_CLIENT",
@@ -191,6 +199,7 @@ refresh_token = create_refresh_token(
 ```
 
 ### 422 Unprocessable Entity - Validation Error
+
 ```json
 {
   "code": "VALIDATION_ERROR",
@@ -204,6 +213,7 @@ refresh_token = create_refresh_token(
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "code": "SERVER_ERROR",
@@ -387,35 +397,35 @@ def google_oauth_callback(request):
 ## Node.js/Express Example
 
 ```javascript
-const express = require('express');
-const axios = require('axios');
-const jwt = require('jsonwebtoken');
+const express = require("express");
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
 
-app.post('/api/auth/google/oauth/callback', async (req, res) => {
+app.post("/api/auth/google/oauth/callback", async (req, res) => {
   const { code, codeVerifier, redirectUri } = req.body;
 
   // Validate inputs
   if (!code || !codeVerifier || !redirectUri) {
     return res.status(422).json({
-      code: 'VALIDATION_ERROR',
-      message: 'Missing required fields'
+      code: "VALIDATION_ERROR",
+      message: "Missing required fields",
     });
   }
 
   try {
     // Step 1: Exchange code with Google
     const tokenResponse = await axios.post(
-      'https://oauth2.googleapis.com/token',
+      "https://oauth2.googleapis.com/token",
       {
         code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
         redirect_uri: redirectUri,
         code_verifier: codeVerifier,
-        grant_type: 'authorization_code'
+        grant_type: "authorization_code",
       },
       {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
       }
     );
 
@@ -431,23 +441,17 @@ app.post('/api/auth/google/oauth/callback', async (req, res) => {
         email: decoded.email,
         name: decoded.name,
         avatar: decoded.picture,
-        emailVerified: decoded.email_verified
+        emailVerified: decoded.email_verified,
       },
       { upsert: true, new: true }
     );
 
     // Step 4: Generate app tokens
-    const accessToken = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+    const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    const refreshToken = jwt.sign(
-      { userId: user._id },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '30d' }
-    );
+    const refreshToken = jwt.sign({ userId: user._id }, process.env.REFRESH_TOKEN_SECRET, {
+      expiresIn: "30d",
+    });
 
     // Step 5: Return response
     res.json({
@@ -459,18 +463,17 @@ app.post('/api/auth/google/oauth/callback', async (req, res) => {
         role: user.role,
         emailVerified: user.emailVerified,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
       },
       accessToken,
       refreshToken,
-      expiresIn: 3600
+      expiresIn: 3600,
     });
-
   } catch (error) {
-    console.error('Google OAuth Error:', error);
+    console.error("Google OAuth Error:", error);
     res.status(500).json({
-      code: 'SERVER_ERROR',
-      message: 'Failed to process Google OAuth'
+      code: "SERVER_ERROR",
+      message: "Failed to process Google OAuth",
     });
   }
 });
@@ -491,6 +494,7 @@ app.post('/api/auth/google/oauth/callback', async (req, res) => {
 ## Frontend Integration
 
 The frontend is already configured and will:
+
 1. Initiate OAuth flow from `/login` page
 2. Redirect to Google for authorization
 3. Receive callback at `/auth/callback/google`

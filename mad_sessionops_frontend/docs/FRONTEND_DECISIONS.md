@@ -16,12 +16,14 @@ Format: same as backend — ID, Date, Status, Context, Decision, Consequences, A
 **Decision:** App Router (not Pages Router).
 
 **Consequences:**
+
 - Nested layouts, server components, streaming SSR available
 - `proxy.ts` (not `middleware.ts`) for route guards per Next.js 16 naming
 - Some third-party libs have weaker App Router integration — evaluated per-case
 - Smaller ecosystem of tutorials than Pages Router, but the canonical one going forward
 
 **Alternatives:**
+
 - **Pages Router** — more mature, more examples. Rejected because App Router is the forward path and Pages Router is deprecated-in-spirit.
 
 ---
@@ -36,6 +38,7 @@ Format: same as backend — ID, Date, Status, Context, Decision, Consequences, A
 **Decision:** MUI v6 with Emotion.
 
 **Consequences:**
+
 - Accessibility built in on most components
 - React 19 compatible (v5 was not — forced the upgrade in Sprint 0)
 - Larger bundle than Tailwind alternatives
@@ -43,6 +46,7 @@ Format: same as backend — ID, Date, Status, Context, Decision, Consequences, A
 - Theming via `theme.palette`, `theme.spacing`, etc. — enforced throughout
 
 **Alternatives:**
+
 - **Tailwind + shadcn/ui** — smaller bundle, more control, but copy-in model increases maintenance and MAD's design language leans Material. Rejected.
 - **Chakra UI** — nice API, smaller ecosystem and slower on React 19. Rejected.
 - **Ant Design** — heavier, very opinionated look. Rejected.
@@ -59,12 +63,14 @@ Format: same as backend — ID, Date, Status, Context, Decision, Consequences, A
 **Decision:** Redux Toolkit with redux-persist and a SSR-safe storage fallback.
 
 **Consequences:**
+
 - Great devtools, predictable patterns
 - More boilerplate than Zustand
 - SSR gotcha: redux-persist crashes without a storage fallback (see FD005)
 - Team familiarity wins over novelty
 
 **Alternatives:**
+
 - **Zustand** — cleaner API, less ceremony. Rejected because team familiarity with Redux outweighs boilerplate costs.
 - **React Context only** — works for auth but weak for data caching. Rejected.
 - **TanStack Query (React Query) alone** — great for server state, but we also need client-only state like UI preferences. Could add later alongside Redux, not instead of.
@@ -81,12 +87,14 @@ Format: same as backend — ID, Date, Status, Context, Decision, Consequences, A
 **Decision:** Single Axios instance with a response interceptor. On 401, queue all concurrent failing requests, trigger one refresh, re-run the queue with the new access token.
 
 **Consequences:**
+
 - No refresh races
 - Interceptor is non-trivial — documented and tested
 - Only path for API calls (fetch is forbidden)
 - Refresh failure → log out + redirect cleanly
 
 **Alternatives:**
+
 - **Plain fetch with per-request retry** — we'd reinvent the wheel badly.
 - **Refresh before each request** — chatty, doesn't handle server-side token invalidation.
 
@@ -102,12 +110,14 @@ Format: same as backend — ID, Date, Status, Context, Decision, Consequences, A
 **Decision:** Persist config checks for `typeof window` and falls back to a `createNoopStorage` object (async methods that resolve with empty values) on the server.
 
 **Consequences:**
+
 - Server renders cleanly with empty persisted state
 - Client hydrates and rehydrates real localStorage
 - Any new persisted slices inherit this behavior via the shared config
 - A small "flash" of unauthenticated state is possible on first paint if the user is mid-action — acceptable for an internal tool
 
 **Alternatives:**
+
 - **Dynamic import of the store on client only** — breaks server components that need store access.
 - **Cookie-based persistence for the whole store** — overkill; cookies should be for what the server needs to read.
 
@@ -123,10 +133,12 @@ Format: same as backend — ID, Date, Status, Context, Decision, Consequences, A
 **Decision:** Follow the Next.js 16 convention. Project uses `proxy.ts` at repo root with `export function proxy(...)`.
 
 **Consequences:**
+
 - Tutorials and docs written for Next.js 13–15 refer to `middleware.ts` — ignore that naming
 - Future upgrades may rename again; check release notes
 
 **Alternatives:**
+
 - None. This is what Next.js 16 requires.
 
 ---
@@ -139,17 +151,20 @@ Format: same as backend — ID, Date, Status, Context, Decision, Consequences, A
 **Context:** Initial scaffolding stored the access token in three places: Redux, redux-persist's localStorage (via Redux), and a `tokenUtils` localStorage helper. These drifted — refresh updated one, not another — causing auth bugs.
 
 **Decision:** The access token has exactly two storage locations, both updated together:
+
 - Redux slice (persisted automatically by redux-persist) — for API client reads
 - `access_token` cookie — for `proxy.ts` route guard reads
 
 The `tokenUtils` direct localStorage wrapper is deleted.
 
 **Consequences:**
+
 - Every token update (login, refresh, logout) updates both locations atomically
 - No drift because the auth slice's reducers are the only code path that writes
 - Adding another read location in future requires revisiting this doc
 
 **Alternatives:**
+
 - **Cookie only** — API client can't read httpOnly cookies directly. Would require a server proxy for every API call. Rejected.
 - **Redux only** — `proxy.ts` can't read client-side state. Rejected.
 
@@ -165,11 +180,13 @@ The `tokenUtils` direct localStorage wrapper is deleted.
 **Decision:** Yes, but only for UX. Zod schemas on the frontend validate field shape, required fields, obvious patterns (email format, phone E.164). Business rules (max 5 children, 1 volunteer per school) are **never** checked client-side.
 
 **Consequences:**
+
 - Faster error feedback for typos and format mistakes
 - No duplicated business logic
 - Backend validation errors are mapped back to form fields via React Hook Form's `setError`
 
 **Alternatives:**
+
 - **No client validation** — worse UX, every typo is a round trip.
 - **Client validation including business rules** — duplicates logic, drifts, creates false confidence.
 
@@ -185,11 +202,13 @@ The `tokenUtils` direct localStorage wrapper is deleted.
 **Decision:** All API calls go through the single Axios instance exported from `lib/api/client.ts`. Direct `fetch()` calls to the backend are forbidden. Per-feature typed functions wrap the client.
 
 **Consequences:**
+
 - Every request gets auth headers and refresh logic
 - Adding telemetry, logging, or tracing is one-file change
 - `fetch()` is still fine for non-backend calls (CDN resources, etc.)
 
 **Alternatives:**
+
 - **`fetch()` + manual headers** — disciplined teams do this. We're a team of one, simpler to enforce via lint.
 
 ---
@@ -202,6 +221,7 @@ The `tokenUtils` direct localStorage wrapper is deleted.
 **Context:** A UI prototype was generated via AI during planning. It will inform visual design for Sprint 2 feature pages (auth, school list, school detail shell).
 
 **Decision:** TBD at Sprint 2 kickoff. Options depending on prototype quality:
+
 - Adopt screens/components directly
 - Take as design reference, rebuild in MUI
 - Ignore if it doesn't fit the MUI + theme approach

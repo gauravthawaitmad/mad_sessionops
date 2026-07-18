@@ -7,13 +7,9 @@
  * Authorization Code Flow with PKCE
  */
 
-import {
-  GOOGLE_OAUTH_CONFIG,
-  getGoogleClientId,
-  getOAuthCallbackUrl,
-} from './config';
-import { createPKCEChallenge, generateState, generateNonce } from './pkce';
-import { oauthStorage } from './storage';
+import { GOOGLE_OAUTH_CONFIG, getGoogleClientId, getOAuthCallbackUrl } from "./config";
+import { createPKCEChallenge, generateState, generateNonce } from "./pkce";
+import { oauthStorage } from "./storage";
 
 /**
  * OAuth error types
@@ -22,10 +18,10 @@ export class OAuthError extends Error {
   constructor(
     message: string,
     public code?: string,
-    public description?: string,
+    public description?: string
   ) {
     super(message);
-    this.name = 'OAuthError';
+    this.name = "OAuthError";
   }
 }
 
@@ -65,8 +61,8 @@ export class GoogleOAuthClient {
       // Redirect to Google
       window.location.href = authUrl;
     } catch (error) {
-      console.error('Failed to initiate OAuth flow:', error);
-      throw new OAuthError('Failed to start Google login');
+      console.error("Failed to initiate OAuth flow:", error);
+      throw new OAuthError("Failed to start Google login");
     }
   }
 
@@ -84,7 +80,7 @@ export class GoogleOAuthClient {
       client_id: getGoogleClientId(),
       redirect_uri: getOAuthCallbackUrl(),
       response_type: GOOGLE_OAUTH_CONFIG.responseType,
-      scope: GOOGLE_OAUTH_CONFIG.scopes.join(' '),
+      scope: GOOGLE_OAUTH_CONFIG.scopes.join(" "),
       state,
       nonce,
       code_challenge: codeChallenge,
@@ -102,7 +98,7 @@ export class GoogleOAuthClient {
    */
   async handleCallback(
     code: string,
-    state: string,
+    state: string
   ): Promise<{
     code: string;
     codeVerifier: string;
@@ -111,9 +107,9 @@ export class GoogleOAuthClient {
     // Validate state (CSRF protection)
     if (!oauthStorage.validateState(state)) {
       throw new OAuthError(
-        'Invalid state parameter',
-        'invalid_state',
-        'Possible CSRF attack detected',
+        "Invalid state parameter",
+        "invalid_state",
+        "Possible CSRF attack detected"
       );
     }
 
@@ -121,9 +117,9 @@ export class GoogleOAuthClient {
     const codeVerifier = oauthStorage.getCodeVerifier();
     if (!codeVerifier) {
       throw new OAuthError(
-        'Code verifier not found',
-        'missing_verifier',
-        'OAuth session expired or invalid',
+        "Code verifier not found",
+        "missing_verifier",
+        "OAuth session expired or invalid"
       );
     }
 
@@ -148,9 +144,9 @@ export class GoogleOAuthClient {
     oauthStorage.clearSession();
 
     throw new OAuthError(
-      errorDescription || 'OAuth authentication failed',
+      errorDescription || "OAuth authentication failed",
       error,
-      errorDescription,
+      errorDescription
     );
   }
 

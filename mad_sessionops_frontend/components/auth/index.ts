@@ -5,10 +5,10 @@
  */
 
 // Forms
-export { LoginForm } from './LoginForm';
+export { LoginForm } from "./LoginForm";
 
 // Layouts
-export { AuthLayout } from './common';
+export { AuthLayout } from "./common";
 
 // Validation (centralized)
-export * from './validation/authValidation';
+export * from "./validation/authValidation";

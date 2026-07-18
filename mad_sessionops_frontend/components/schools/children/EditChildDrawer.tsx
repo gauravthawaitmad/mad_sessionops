@@ -1,49 +1,46 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import LinearProgress from '@mui/material/LinearProgress';
-import CircularProgress from '@mui/material/CircularProgress';
-import IconButton from '@mui/material/IconButton';
-import Skeleton from '@mui/material/Skeleton';
-import Alert from '@mui/material/Alert';
-import { X, ArrowLeftRight } from 'lucide-react';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  fetchSchoolClasses,
-  type SchoolClassItem,
-} from '@/lib/api/services/structure.service';
-import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
+import { useState, useEffect } from "react";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import LinearProgress from "@mui/material/LinearProgress";
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Skeleton from "@mui/material/Skeleton";
+import Alert from "@mui/material/Alert";
+import { X, ArrowLeftRight } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { fetchSchoolClasses, type SchoolClassItem } from "@/lib/api/services/structure.service";
+import { fetchBuckets, type BucketItem } from "@/lib/api/services/buckets.service";
 import {
   updateChild,
   type ChildItem,
   type EditChildInput,
-} from '@/lib/api/services/children.service';
-import toast from 'react-hot-toast';
+} from "@/lib/api/services/children.service";
+import toast from "react-hot-toast";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  first_name:         z.string().min(1, 'Required'),
-  last_name:          z.string().min(1, 'Required'),
-  gender:             z.enum(['male', 'female', 'other']),
-  age:                z.number().int().min(3, 'Min 3').max(25, 'Max 25').optional(),
-  school_class_id:    z.number().min(1, 'Select a class'),
-  class_section_id:   z.number().nullable().optional(),
-  date_of_birth:      z.string().optional(),
+  first_name: z.string().min(1, "Required"),
+  last_name: z.string().min(1, "Required"),
+  gender: z.enum(["male", "female", "other"]),
+  age: z.number().int().min(3, "Min 3").max(25, "Max 25").optional(),
+  school_class_id: z.number().min(1, "Select a class"),
+  class_section_id: z.number().nullable().optional(),
+  date_of_birth: z.string().optional(),
   date_of_enrollment: z.string().optional(),
-  mad_joining_date:   z.string().optional(),
-  city:               z.string().optional(),
-  mother_tongue:      z.string().optional(),
+  mad_joining_date: z.string().optional(),
+  city: z.string().optional(),
+  mother_tongue: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -60,36 +57,40 @@ interface EditChildDrawerProps {
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
-const BORDER = '#E2E8F0';
-const MUTED  = '#94A3B8';
-const LABEL  = '#374151';
+const BORDER = "#E2E8F0";
+const MUTED = "#94A3B8";
+const LABEL = "#374151";
 const MAX_CAP = 5;
 
 const fieldSx = {
-  '& .MuiOutlinedInput-root': {
-    fontSize: '13px',
-    bgcolor: '#FAFAFA',
-    '& fieldset': { borderColor: BORDER },
-    '&:hover fieldset': { borderColor: '#CBD5E1' },
-    '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: '1.5px' },
+  "& .MuiOutlinedInput-root": {
+    fontSize: "13px",
+    bgcolor: "#FAFAFA",
+    "& fieldset": { borderColor: BORDER },
+    "&:hover fieldset": { borderColor: "#CBD5E1" },
+    "&.Mui-focused fieldset": { borderColor: "#2563EB", borderWidth: "1.5px" },
   },
-  '& .MuiFormHelperText-root': { fontSize: '11px', mt: 0.5 },
+  "& .MuiFormHelperText-root": { fontSize: "11px", mt: 0.5 },
 };
 
 function capacityColor(count: number): string {
-  if (count >= MAX_CAP)     return '#EF4444';
-  if (count >= MAX_CAP - 1) return '#F59E0B';
-  return '#22C55E';
+  if (count >= MAX_CAP) return "#EF4444";
+  if (count >= MAX_CAP - 1) return "#F59E0B";
+  return "#22C55E";
 }
 
 // ── FieldLabel ────────────────────────────────────────────────────────────────
 
 function FieldLabel({ children, required }: { children: string; required?: boolean }) {
   return (
-    <Typography sx={{ fontSize: '12px', fontWeight: 600, color: LABEL, mb: 0.625, letterSpacing: '0.01em' }}>
+    <Typography
+      sx={{ fontSize: "12px", fontWeight: 600, color: LABEL, mb: 0.625, letterSpacing: "0.01em" }}
+    >
       {children}
       {required && (
-        <Typography component="span" sx={{ color: '#EF4444', ml: 0.25, fontSize: '12px' }}>*</Typography>
+        <Typography component="span" sx={{ color: "#EF4444", ml: 0.25, fontSize: "12px" }}>
+          *
+        </Typography>
       )}
     </Typography>
   );
@@ -99,7 +100,16 @@ function FieldLabel({ children, required }: { children: string; required?: boole
 
 function SectionHeading({ children }: { children: string }) {
   return (
-    <Typography sx={{ fontSize: '10px', fontWeight: 700, color: MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', mb: 1.5 }}>
+    <Typography
+      sx={{
+        fontSize: "10px",
+        fontWeight: 700,
+        color: MUTED,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        mb: 1.5,
+      }}
+    >
       {children}
     </Typography>
   );
@@ -108,16 +118,32 @@ function SectionHeading({ children }: { children: string }) {
 // ── GenderPicker ──────────────────────────────────────────────────────────────
 
 const GENDER_OPTS = [
-  { value: 'female', label: 'Female', color: '#DB2777', bg: '#FDF2F8' },
-  { value: 'male',   label: 'Male',   color: '#2563EB', bg: '#EFF6FF' },
-  { value: 'other',  label: 'Other',  color: '#7C3AED', bg: '#F5F3FF' },
+  { value: "female", label: "Female", color: "#DB2777", bg: "#FDF2F8" },
+  { value: "male", label: "Male", color: "#2563EB", bg: "#EFF6FF" },
+  { value: "other", label: "Other", color: "#7C3AED", bg: "#F5F3FF" },
 ];
 
-function GenderPicker({ value, onChange, error }: { value: string | undefined; onChange: (v: string) => void; error?: boolean }) {
+function GenderPicker({
+  value,
+  onChange,
+  error,
+}: {
+  value: string | undefined;
+  onChange: (v: string) => void;
+  error?: boolean;
+}) {
   return (
     <Box>
       <FieldLabel required>Gender</FieldLabel>
-      <Box sx={{ display: 'flex', border: `1.5px solid ${error ? '#EF4444' : BORDER}`, borderRadius: '8px', overflow: 'hidden', bgcolor: '#FAFAFA' }}>
+      <Box
+        sx={{
+          display: "flex",
+          border: `1.5px solid ${error ? "#EF4444" : BORDER}`,
+          borderRadius: "8px",
+          overflow: "hidden",
+          bgcolor: "#FAFAFA",
+        }}
+      >
         {GENDER_OPTS.map((o, i) => {
           const active = value === o.value;
           return (
@@ -125,34 +151,62 @@ function GenderPicker({ value, onChange, error }: { value: string | undefined; o
               key={o.value}
               onClick={() => onChange(o.value)}
               sx={{
-                flex: 1, py: 0.875, textAlign: 'center', cursor: 'pointer', userSelect: 'none',
-                bgcolor: active ? o.color : 'transparent',
-                borderRight: i < GENDER_OPTS.length - 1 ? `1px solid ${active ? o.color : BORDER}` : 'none',
-                transition: 'background 0.12s ease',
-                '&:hover': { bgcolor: active ? o.color : o.bg },
+                flex: 1,
+                py: 0.875,
+                textAlign: "center",
+                cursor: "pointer",
+                userSelect: "none",
+                bgcolor: active ? o.color : "transparent",
+                borderRight:
+                  i < GENDER_OPTS.length - 1 ? `1px solid ${active ? o.color : BORDER}` : "none",
+                transition: "background 0.12s ease",
+                "&:hover": { bgcolor: active ? o.color : o.bg },
               }}
             >
-              <Typography sx={{ fontSize: '13px', fontWeight: active ? 700 : 500, color: active ? '#fff' : '#64748B', lineHeight: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  fontWeight: active ? 700 : 500,
+                  color: active ? "#fff" : "#64748B",
+                  lineHeight: 1,
+                }}
+              >
                 {o.label}
               </Typography>
             </Box>
           );
         })}
       </Box>
-      {error && <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>Required</Typography>}
+      {error && (
+        <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>Required</Typography>
+      )}
     </Box>
   );
 }
 
 // ── ClassPicker ───────────────────────────────────────────────────────────────
 
-function ClassPicker({ classes, value, onChange, error }: { classes: SchoolClassItem[]; value: number | undefined; onChange: (id: number) => void; error?: boolean }) {
+function ClassPicker({
+  classes,
+  value,
+  onChange,
+  error,
+}: {
+  classes: SchoolClassItem[];
+  value: number | undefined;
+  onChange: (id: number) => void;
+  error?: boolean;
+}) {
   if (classes.length === 0) {
     return (
       <Box>
         <FieldLabel required>Class</FieldLabel>
-        <Box sx={{ p: 2, borderRadius: '8px', border: `1px dashed ${BORDER}`, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '12px', color: MUTED }}>No classes added to this school yet.</Typography>
+        <Box
+          sx={{ p: 2, borderRadius: "8px", border: `1px dashed ${BORDER}`, textAlign: "center" }}
+        >
+          <Typography sx={{ fontSize: "12px", color: MUTED }}>
+            No classes added to this school yet.
+          </Typography>
         </Box>
       </Box>
     );
@@ -160,7 +214,7 @@ function ClassPicker({ classes, value, onChange, error }: { classes: SchoolClass
   return (
     <Box>
       <FieldLabel required>Class</FieldLabel>
-      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
         {classes.map((c) => {
           const selected = value === c.schoolClassId;
           return (
@@ -168,22 +222,36 @@ function ClassPicker({ classes, value, onChange, error }: { classes: SchoolClass
               key={c.schoolClassId}
               onClick={() => onChange(c.schoolClassId)}
               sx={{
-                px: 2, py: 1, borderRadius: '8px',
-                border: `1.5px solid ${selected ? '#2563EB' : BORDER}`,
-                bgcolor: selected ? '#EFF6FF' : '#FAFAFA',
-                cursor: 'pointer', transition: 'all 0.12s ease',
-                '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' },
+                px: 2,
+                py: 1,
+                borderRadius: "8px",
+                border: `1.5px solid ${selected ? "#2563EB" : BORDER}`,
+                bgcolor: selected ? "#EFF6FF" : "#FAFAFA",
+                cursor: "pointer",
+                transition: "all 0.12s ease",
+                "&:hover": { borderColor: "#93C5FD", bgcolor: "#F0F9FF" },
               }}
             >
-              <Typography sx={{ fontSize: '13px', fontWeight: selected ? 700 : 500, color: selected ? '#1D4ED8' : '#374151', lineHeight: 1.3 }}>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  fontWeight: selected ? 700 : 500,
+                  color: selected ? "#1D4ED8" : "#374151",
+                  lineHeight: 1.3,
+                }}
+              >
                 {c.className}
               </Typography>
-              <Typography sx={{ fontSize: '10px', color: MUTED, lineHeight: 1.3 }}>{c.programName}</Typography>
+              <Typography sx={{ fontSize: "10px", color: MUTED, lineHeight: 1.3 }}>
+                {c.programName}
+              </Typography>
             </Box>
           );
         })}
       </Box>
-      {error && <Typography sx={{ fontSize: '11px', color: '#EF4444', mt: 0.5 }}>Select a class</Typography>}
+      {error && (
+        <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>Select a class</Typography>
+      )}
     </Box>
   );
 }
@@ -193,68 +261,123 @@ function ClassPicker({ classes, value, onChange, error }: { classes: SchoolClass
 // class. Bucket assignment is optional — includes an "Unassigned" tile that
 // clears the selection (sends class_section_id: null on save).
 
-function BucketPicker({ buckets, loading, value, onChange }: { buckets: BucketItem[]; loading: boolean; value: number | null | undefined; onChange: (id: number | undefined) => void }) {
+function BucketPicker({
+  buckets,
+  loading,
+  value,
+  onChange,
+}: {
+  buckets: BucketItem[];
+  loading: boolean;
+  value: number | null | undefined;
+  onChange: (id: number | undefined) => void;
+}) {
   return (
     <Box>
       <FieldLabel>Bucket</FieldLabel>
       {loading ? (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
-          {[1, 2, 3, 4].map((i) => <Skeleton key={i} variant="rounded" height={80} sx={{ borderRadius: '8px' }} />)}
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1 }}>
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} variant="rounded" height={80} sx={{ borderRadius: "8px" }} />
+          ))}
         </Box>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 1 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))",
+            gap: 1,
+          }}
+        >
           {/* Unassigned tile */}
           <Box
             onClick={() => onChange(undefined)}
             sx={{
-              p: 1.25, borderRadius: '8px',
-              border: `1.5px solid ${!value ? '#2563EB' : BORDER}`,
-              bgcolor: !value ? '#EFF6FF' : '#FAFAFA',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80,
-              transition: 'all 0.12s ease',
-              ...(value && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
+              p: 1.25,
+              borderRadius: "8px",
+              border: `1.5px solid ${!value ? "#2563EB" : BORDER}`,
+              bgcolor: !value ? "#EFF6FF" : "#FAFAFA",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 80,
+              transition: "all 0.12s ease",
+              ...(value && { "&:hover": { borderColor: "#93C5FD", bgcolor: "#F0F9FF" } }),
             }}
           >
-            <Typography sx={{ fontSize: '11px', fontWeight: 600, color: !value ? '#1D4ED8' : MUTED, textAlign: 'center' }}>
+            <Typography
+              sx={{
+                fontSize: "11px",
+                fontWeight: 600,
+                color: !value ? "#1D4ED8" : MUTED,
+                textAlign: "center",
+              }}
+            >
               Unassigned
             </Typography>
           </Box>
 
           {buckets.map((b) => {
-            const count    = b.activeChildrenCount;
-            const full     = count >= MAX_CAP;
-            const pct      = Math.min((count / MAX_CAP) * 100, 100);
-            const color    = capacityColor(count);
+            const count = b.activeChildrenCount;
+            const full = count >= MAX_CAP;
+            const pct = Math.min((count / MAX_CAP) * 100, 100);
+            const color = capacityColor(count);
             const selected = value === b.classSectionId;
-            const name     = b.sectionDisplayName ?? b.sectionName;
+            const name = b.sectionDisplayName ?? b.sectionName;
             return (
               <Box
                 key={b.classSectionId}
                 onClick={() => !full && onChange(b.classSectionId)}
                 sx={{
-                  p: 1.25, borderRadius: '8px',
-                  border: `1.5px solid ${selected ? '#2563EB' : full ? '#FECACA' : BORDER}`,
-                  bgcolor: selected ? '#EFF6FF' : full ? '#FFF5F5' : '#FAFAFA',
-                  cursor: full ? 'not-allowed' : 'pointer',
+                  p: 1.25,
+                  borderRadius: "8px",
+                  border: `1.5px solid ${selected ? "#2563EB" : full ? "#FECACA" : BORDER}`,
+                  bgcolor: selected ? "#EFF6FF" : full ? "#FFF5F5" : "#FAFAFA",
+                  cursor: full ? "not-allowed" : "pointer",
                   opacity: full ? 0.55 : 1,
-                  transition: 'all 0.12s ease',
-                  ...(!full && !selected && { '&:hover': { borderColor: '#93C5FD', bgcolor: '#F0F9FF' } }),
+                  transition: "all 0.12s ease",
+                  ...(!full &&
+                    !selected && { "&:hover": { borderColor: "#93C5FD", bgcolor: "#F0F9FF" } }),
                 }}
               >
-                <Typography sx={{ fontSize: '12px', fontWeight: selected ? 700 : 600, color: selected ? '#1D4ED8' : '#374151', mb: 0.75, lineHeight: 1.2 }}>
+                <Typography
+                  sx={{
+                    fontSize: "12px",
+                    fontWeight: selected ? 700 : 600,
+                    color: selected ? "#1D4ED8" : "#374151",
+                    mb: 0.75,
+                    lineHeight: 1.2,
+                  }}
+                >
                   {name}
                 </Typography>
                 <LinearProgress
                   variant="determinate"
                   value={pct}
-                  sx={{ height: 4, borderRadius: 2, mb: 0.5, bgcolor: '#E2E8F0', '& .MuiLinearProgress-bar': { bgcolor: selected ? '#2563EB' : color, borderRadius: 2 } }}
+                  sx={{
+                    height: 4,
+                    borderRadius: 2,
+                    mb: 0.5,
+                    bgcolor: "#E2E8F0",
+                    "& .MuiLinearProgress-bar": {
+                      bgcolor: selected ? "#2563EB" : color,
+                      borderRadius: 2,
+                    },
+                  }}
                 />
-                <Typography sx={{ fontSize: '10px', fontWeight: 700, color: selected ? '#1D4ED8' : full ? '#EF4444' : '#374151', lineHeight: 1.4 }}>
-                  {full ? 'Full' : `${count}/${MAX_CAP}`}
+                <Typography
+                  sx={{
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: selected ? "#1D4ED8" : full ? "#EF4444" : "#374151",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {full ? "Full" : `${count}/${MAX_CAP}`}
                 </Typography>
-                <Typography sx={{ fontSize: '10px', color: MUTED, lineHeight: 1.4 }}>
-                  {full ? '0 open' : `${MAX_CAP - count} open`}
+                <Typography sx={{ fontSize: "10px", color: MUTED, lineHeight: 1.4 }}>
+                  {full ? "0 open" : `${MAX_CAP - count} open`}
                 </Typography>
               </Box>
             );
@@ -267,14 +390,20 @@ function BucketPicker({ buckets, loading, value, onChange }: { buckets: BucketIt
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: EditChildDrawerProps) {
-  const [classes, setClasses]               = useState<SchoolClassItem[]>([]);
-  const [buckets, setBuckets]               = useState<BucketItem[]>([]);
+export function EditChildDrawer({
+  open,
+  schoolId,
+  child,
+  onClose,
+  onSuccess,
+}: EditChildDrawerProps) {
+  const [classes, setClasses] = useState<SchoolClassItem[]>([]);
+  const [buckets, setBuckets] = useState<BucketItem[]>([]);
   const [classesLoading, setClassesLoading] = useState(false);
   const [bucketsLoading, setBucketsLoading] = useState(false);
-  const [submitting, setSubmitting]         = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const originalClassId  = child.currentSchoolClass?.schoolClassId;
+  const originalClassId = child.currentSchoolClass?.schoolClassId;
   const originalSectionId = child.currentSection?.classSectionId;
 
   // Pre-fill defaultValues from child prop on mount.
@@ -288,29 +417,29 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      first_name:         child.firstName,
-      last_name:          child.lastName,
-      gender:             child.gender,
-      age:                child.age ?? undefined,
-      school_class_id:    originalClassId ?? undefined,
-      class_section_id:   originalSectionId ?? undefined,
-      date_of_birth:      child.dateOfBirth ?? '',
-      date_of_enrollment: child.dateOfEnrollment ?? '',
-      mad_joining_date:   child.madJoiningDate ?? '',
-      city:               child.city ?? '',
-      mother_tongue:      child.motherTongue ?? '',
+      first_name: child.firstName,
+      last_name: child.lastName,
+      gender: child.gender,
+      age: child.age ?? undefined,
+      school_class_id: originalClassId ?? undefined,
+      class_section_id: originalSectionId ?? undefined,
+      date_of_birth: child.dateOfBirth ?? "",
+      date_of_enrollment: child.dateOfEnrollment ?? "",
+      mad_joining_date: child.madJoiningDate ?? "",
+      city: child.city ?? "",
+      mother_tongue: child.motherTongue ?? "",
     },
   });
 
-  const selectedSectionId = watch('class_section_id');
-  const bucketChanged      = (selectedSectionId ?? undefined) !== (originalSectionId ?? undefined);
+  const selectedSectionId = watch("class_section_id");
+  const bucketChanged = (selectedSectionId ?? undefined) !== (originalSectionId ?? undefined);
 
   // Load classes once on mount
   useEffect(() => {
     setClassesLoading(true);
     fetchSchoolClasses(schoolId)
       .then(setClasses)
-      .catch(() => toast.error('Could not load classes'))
+      .catch(() => toast.error("Could not load classes"))
       .finally(() => setClassesLoading(false));
   }, [schoolId]);
 
@@ -319,16 +448,16 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
     setBucketsLoading(true);
     fetchBuckets(schoolId)
       .then(setBuckets)
-      .catch(() => toast.error('Could not load buckets'))
+      .catch(() => toast.error("Could not load buckets"))
       .finally(() => setBucketsLoading(false));
   }, [schoolId]);
 
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     const payload: EditChildInput = {
-      first_name:       values.first_name.trim(),
-      last_name:        values.last_name.trim(),
-      gender:           values.gender,
+      first_name: values.first_name.trim(),
+      last_name: values.last_name.trim(),
+      gender: values.gender,
     };
     if (values.school_class_id !== originalClassId) {
       payload.school_class_id = values.school_class_id;
@@ -336,20 +465,20 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
     if (bucketChanged) {
       payload.class_section_id = values.class_section_id ?? null;
     }
-    if (values.age !== undefined)           payload.age              = values.age;
-    if (values.date_of_birth?.trim())       payload.date_of_birth      = values.date_of_birth;
-    if (values.date_of_enrollment?.trim())  payload.date_of_enrollment = values.date_of_enrollment;
-    if (values.mad_joining_date?.trim())    payload.mad_joining_date   = values.mad_joining_date;
-    if (values.city?.trim())                payload.city               = values.city!.trim();
-    if (values.mother_tongue?.trim())       payload.mother_tongue      = values.mother_tongue!.trim();
+    if (values.age !== undefined) payload.age = values.age;
+    if (values.date_of_birth?.trim()) payload.date_of_birth = values.date_of_birth;
+    if (values.date_of_enrollment?.trim()) payload.date_of_enrollment = values.date_of_enrollment;
+    if (values.mad_joining_date?.trim()) payload.mad_joining_date = values.mad_joining_date;
+    if (values.city?.trim()) payload.city = values.city!.trim();
+    if (values.mother_tongue?.trim()) payload.mother_tongue = values.mother_tongue!.trim();
 
     try {
       await updateChild(schoolId, child.childId, payload);
-      toast.success('Child updated successfully');
+      toast.success("Child updated successfully");
       onClose();
       onSuccess();
     } catch (err: unknown) {
-      const msg = (err as { message?: string })?.message ?? 'Update failed';
+      const msg = (err as { message?: string })?.message ?? "Update failed";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -364,55 +493,58 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: '14px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
-          maxHeight: '92vh',
+          borderRadius: "14px",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
+          maxHeight: "92vh",
         },
       }}
     >
       {/* ── Header ── */}
       <DialogTitle
         sx={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          pt: 2.5, pb: 1.5, px: 3,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          pt: 2.5,
+          pb: 1.5,
+          px: 3,
           borderBottom: `1px solid ${BORDER}`,
         }}
       >
         <Box>
-          <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>
+          <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#0F172A" }}>
             Edit Child
           </Typography>
-          <Typography sx={{ fontSize: '11px', color: MUTED, mt: 0.25 }}>
-            {child.firstName} {child.lastName} &middot; Fields marked{' '}
-            <Typography component="span" sx={{ color: '#EF4444', fontWeight: 700 }}>*</Typography>
-            {' '}are required
+          <Typography sx={{ fontSize: "11px", color: MUTED, mt: 0.25 }}>
+            {child.firstName} {child.lastName} &middot; Fields marked{" "}
+            <Typography component="span" sx={{ color: "#EF4444", fontWeight: 700 }}>
+              *
+            </Typography>{" "}
+            are required
           </Typography>
         </Box>
         <IconButton
           size="small"
           onClick={onClose}
-          sx={{ mt: 0.25, color: MUTED, '&:hover': { bgcolor: '#F1F5F9', color: '#475569' } }}
+          sx={{ mt: 0.25, color: MUTED, "&:hover": { bgcolor: "#F1F5F9", color: "#475569" } }}
         >
           <X size={16} />
         </IconButton>
       </DialogTitle>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1, overflowY: 'auto' }}>
+        <DialogContent sx={{ px: 3, pt: 2.5, pb: 1, overflowY: "auto" }}>
           {classesLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-              <CircularProgress size={28} sx={{ color: '#2563EB' }} />
+            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+              <CircularProgress size={28} sx={{ color: "#2563EB" }} />
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0 }}>
               {/* ── Personal Info ── */}
               <Box sx={{ mb: 2.5 }}>
                 <SectionHeading>Personal Info</SectionHeading>
 
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 1.75 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, mb: 1.75 }}>
                   <Box>
                     <FieldLabel required>First name</FieldLabel>
                     <Controller
@@ -454,12 +586,16 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                     name="gender"
                     control={control}
                     render={({ field }) => (
-                      <GenderPicker value={field.value} onChange={field.onChange} error={!!errors.gender} />
+                      <GenderPicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={!!errors.gender}
+                      />
                     )}
                   />
                 </Box>
 
-                <Box sx={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: 1.5, mb: 1.75 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 1.5, mb: 1.75 }}>
                   <Box>
                     <FieldLabel>Age</FieldLabel>
                     <Controller
@@ -470,8 +606,12 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                           size="small"
                           fullWidth
                           type="number"
-                          value={field.value ?? ''}
-                          onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === "" ? undefined : parseInt(e.target.value, 10)
+                            )
+                          }
                           onBlur={field.onBlur}
                           name={field.name}
                           inputProps={{ min: 3, max: 25 }}
@@ -488,20 +628,33 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                       name="date_of_birth"
                       control={control}
                       render={({ field }) => (
-                        <TextField {...field} size="small" fullWidth type="date" InputLabelProps={{ shrink: true }} sx={fieldSx} />
+                        <TextField
+                          {...field}
+                          size="small"
+                          fullWidth
+                          type="date"
+                          InputLabelProps={{ shrink: true }}
+                          sx={fieldSx}
+                        />
                       )}
                     />
                   </Box>
                 </Box>
 
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
                   <Box>
                     <FieldLabel>City</FieldLabel>
                     <Controller
                       name="city"
                       control={control}
                       render={({ field }) => (
-                        <TextField {...field} size="small" fullWidth placeholder="e.g. Hyderabad" sx={fieldSx} />
+                        <TextField
+                          {...field}
+                          size="small"
+                          fullWidth
+                          placeholder="e.g. Hyderabad"
+                          sx={fieldSx}
+                        />
                       )}
                     />
                   </Box>
@@ -511,7 +664,13 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                       name="mother_tongue"
                       control={control}
                       render={({ field }) => (
-                        <TextField {...field} size="small" fullWidth placeholder="e.g. Telugu" sx={fieldSx} />
+                        <TextField
+                          {...field}
+                          size="small"
+                          fullWidth
+                          placeholder="e.g. Telugu"
+                          sx={fieldSx}
+                        />
                       )}
                     />
                   </Box>
@@ -521,14 +680,21 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
               {/* ── Enrollment Dates ── */}
               <Box sx={{ mb: 2.5, pt: 2, borderTop: `1px solid ${BORDER}` }}>
                 <SectionHeading>Enrollment Dates</SectionHeading>
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
                   <Box>
                     <FieldLabel>Date of enrollment</FieldLabel>
                     <Controller
                       name="date_of_enrollment"
                       control={control}
                       render={({ field }) => (
-                        <TextField {...field} size="small" fullWidth type="date" InputLabelProps={{ shrink: true }} sx={fieldSx} />
+                        <TextField
+                          {...field}
+                          size="small"
+                          fullWidth
+                          type="date"
+                          InputLabelProps={{ shrink: true }}
+                          sx={fieldSx}
+                        />
                       )}
                     />
                   </Box>
@@ -538,7 +704,14 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                       name="mad_joining_date"
                       control={control}
                       render={({ field }) => (
-                        <TextField {...field} size="small" fullWidth type="date" InputLabelProps={{ shrink: true }} sx={fieldSx} />
+                        <TextField
+                          {...field}
+                          size="small"
+                          fullWidth
+                          type="date"
+                          InputLabelProps={{ shrink: true }}
+                          sx={fieldSx}
+                        />
                       )}
                     />
                   </Box>
@@ -553,7 +726,12 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                   <Alert
                     icon={<ArrowLeftRight size={14} />}
                     severity="info"
-                    sx={{ mb: 2, fontSize: '12px', py: 0.5, '& .MuiAlert-icon': { alignItems: 'center' } }}
+                    sx={{
+                      mb: 2,
+                      fontSize: "12px",
+                      py: 0.5,
+                      "& .MuiAlert-icon": { alignItems: "center" },
+                    }}
                   >
                     Moving to a different bucket will preserve full assignment history.
                   </Alert>
@@ -587,7 +765,6 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
                   )}
                 />
               </Box>
-
             </Box>
           )}
         </DialogContent>
@@ -599,9 +776,11 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
             size="small"
             disabled={submitting}
             sx={{
-              fontSize: '13px', fontWeight: 500,
-              borderColor: BORDER, color: '#64748B',
-              '&:hover': { borderColor: '#CBD5E1', bgcolor: '#F8FAFC' },
+              fontSize: "13px",
+              fontWeight: 500,
+              borderColor: BORDER,
+              color: "#64748B",
+              "&:hover": { borderColor: "#CBD5E1", bgcolor: "#F8FAFC" },
             }}
           >
             Cancel
@@ -612,13 +791,16 @@ export function EditChildDrawer({ open, schoolId, child, onClose, onSuccess }: E
             size="small"
             disabled={submitting || classesLoading}
             sx={{
-              fontSize: '13px', fontWeight: 600, minWidth: 96,
-              bgcolor: '#2563EB', boxShadow: 'none',
-              '&:hover': { bgcolor: '#1D4ED8', boxShadow: 'none' },
-              '&.Mui-disabled': { bgcolor: '#BFDBFE', color: '#fff' },
+              fontSize: "13px",
+              fontWeight: 600,
+              minWidth: 96,
+              bgcolor: "#2563EB",
+              boxShadow: "none",
+              "&:hover": { bgcolor: "#1D4ED8", boxShadow: "none" },
+              "&.Mui-disabled": { bgcolor: "#BFDBFE", color: "#fff" },
             }}
           >
-            {submitting ? <CircularProgress size={14} color="inherit" /> : 'Save changes'}
+            {submitting ? <CircularProgress size={14} color="inherit" /> : "Save changes"}
           </Button>
         </DialogActions>
       </form>

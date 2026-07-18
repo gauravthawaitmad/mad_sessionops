@@ -14,7 +14,7 @@
  * - ChangePasswordForm
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // ============================================
 // SHARED FIELD SCHEMAS
@@ -26,9 +26,9 @@ import { z } from 'zod';
  */
 export const emailSchema = z
   .string()
-  .min(1, 'Email is required')
-  .email('Invalid email address')
-  .max(255, 'Email is too long');
+  .min(1, "Email is required")
+  .email("Invalid email address")
+  .max(255, "Email is too long");
 
 /**
  * Password Schema (Strong)
@@ -36,38 +36,36 @@ export const emailSchema = z
  */
 export const passwordSchema = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
-  .max(128, 'Password is too long')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-  .regex(/[0-9]/, 'Password must contain at least one number')
-  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+  .min(8, "Password must be at least 8 characters")
+  .max(128, "Password is too long")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character");
 
 /**
  * Password Schema (Simple)
  * For login - less strict
  */
-export const passwordLoginSchema = z
-  .string()
-  .min(1, 'Password is required');
+export const passwordLoginSchema = z.string().min(1, "Password is required");
 
 /**
  * Name Schema
  */
 export const nameSchema = z
   .string()
-  .min(2, 'Name must be at least 2 characters')
-  .max(50, 'Name is too long')
-  .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces');
+  .min(2, "Name must be at least 2 characters")
+  .max(50, "Name is too long")
+  .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces");
 
 /**
  * Phone Schema
  */
 export const phoneSchema = z
   .string()
-  .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number')
+  .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
   .optional()
-  .or(z.literal(''));
+  .or(z.literal(""));
 
 // ============================================
 // FORM SCHEMAS
@@ -90,15 +88,15 @@ export const registerSchema = z
     name: nameSchema,
     email: emailSchema,
     password: passwordSchema,
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
     acceptTerms: z.boolean().refine((val) => val === true, {
-      message: 'You must accept the terms and conditions',
+      message: "You must accept the terms and conditions",
     }),
     phone: phoneSchema,
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
   });
 
 /**
@@ -113,13 +111,13 @@ export const forgotPasswordSchema = z.object({
  */
 export const resetPasswordSchema = z
   .object({
-    token: z.string().min(1, 'Reset token is required'),
+    token: z.string().min(1, "Reset token is required"),
     newPassword: passwordSchema,
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
   });
 
 /**
@@ -127,17 +125,17 @@ export const resetPasswordSchema = z
  */
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
+    currentPassword: z.string().min(1, "Current password is required"),
     newPassword: passwordSchema,
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
   })
   .refine((data) => data.currentPassword !== data.newPassword, {
-    message: 'New password must be different from current password',
-    path: ['newPassword'],
+    message: "New password must be different from current password",
+    path: ["newPassword"],
   });
 
 // ============================================
@@ -173,7 +171,7 @@ export function validateField<T extends z.ZodTypeAny>(
 
   return {
     success: false,
-    error: result.error.issues[0]?.message || 'Validation failed',
+    error: result.error.issues[0]?.message || "Validation failed",
   };
 }
 
@@ -202,8 +200,8 @@ export function calculatePasswordStrength(password: string): number {
  * @returns Label string
  */
 export function getPasswordStrengthLabel(strength: number): string {
-  const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
-  return labels[strength] || 'Very Weak';
+  const labels = ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
+  return labels[strength] || "Very Weak";
 }
 
 /**
@@ -213,6 +211,6 @@ export function getPasswordStrengthLabel(strength: number): string {
  * @returns Color hex code
  */
 export function getPasswordStrengthColor(strength: number): string {
-  const colors = ['#f44336', '#ff9800', '#ffc107', '#4caf50', '#2196f3'];
-  return colors[strength] || '#f44336';
+  const colors = ["#f44336", "#ff9800", "#ffc107", "#4caf50", "#2196f3"];
+  return colors[strength] || "#f44336";
 }

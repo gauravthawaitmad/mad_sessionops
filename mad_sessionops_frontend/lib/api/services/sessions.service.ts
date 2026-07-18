@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -6,8 +6,8 @@ export interface SessionOut {
   sessionId: number;
   schoolId: number;
   schoolAcademicYearId: number;
-  startDate: string;  // "YYYY-MM-DD"
-  endDate: string;    // "YYYY-MM-DD"
+  startDate: string; // "YYYY-MM-DD"
+  endDate: string; // "YYYY-MM-DD"
   createdAt: string;
 }
 
@@ -38,14 +38,14 @@ function mapSession(raw: RawSession): SessionOut {
 // ── Additional types ──────────────────────────────────────────────────────────
 
 export interface SessionDefaultsOut {
-  defaultStartDate: string | null;  // "YYYY-MM-DD" or null
-  defaultEndDate: string | null;    // "YYYY-MM-DD" or null
+  defaultStartDate: string | null; // "YYYY-MM-DD" or null
+  defaultEndDate: string | null; // "YYYY-MM-DD" or null
   academicYearLabel: string;
 }
 
 export interface SessionCreateIn {
-  startDate: string;  // "YYYY-MM-DD"
-  endDate: string;    // "YYYY-MM-DD"
+  startDate: string; // "YYYY-MM-DD"
+  endDate: string; // "YYYY-MM-DD"
 }
 
 interface RawSessionDefaults {
@@ -75,7 +75,7 @@ export async function fetchSchoolSession(schoolId: number): Promise<SessionOut |
     if (!raw) return null;
     return mapSession(raw);
   } catch (err: any) {
-    if (err?.status === 404 || err?.code === 'NOT_FOUND') return null;
+    if (err?.status === 404 || err?.code === "NOT_FOUND") return null;
     throw err;
   }
 }

@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -112,11 +112,8 @@ function mapSchedule(r: RawSchedule): SchoolSchedule {
 
 // ── API call ───────────────────────────────────────────────────────────────────
 
-export async function fetchSchedule(
-  schoolId: number,
-  dayOfWeek?: string,
-): Promise<SchoolSchedule> {
-  const params = dayOfWeek ? `?day_of_week=${dayOfWeek}` : '';
+export async function fetchSchedule(schoolId: number, dayOfWeek?: string): Promise<SchoolSchedule> {
+  const params = dayOfWeek ? `?day_of_week=${dayOfWeek}` : "";
   const raw = await api.get<RawSchedule>(`/schools/${schoolId}/schedule/${params}`);
   return mapSchedule(raw);
 }

@@ -1,16 +1,21 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export type DayOfWeek =
-  | 'monday' | 'tuesday' | 'wednesday' | 'thursday'
-  | 'friday' | 'saturday' | 'sunday';
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
 
 export interface SlotItem {
   slotId: number;
   slotName: string;
   dayOfWeek: DayOfWeek;
-  startTime: string;  // "HH:MM:SS" from backend
+  startTime: string; // "HH:MM:SS" from backend
   endTime: string;
   recurring: boolean;
   slotClassCount: number;
@@ -18,7 +23,7 @@ export interface SlotItem {
 
 export interface CreateSlotInput {
   day_of_week: DayOfWeek;
-  start_time: string;  // "HH:MM:SS"
+  start_time: string; // "HH:MM:SS"
   end_time: string;
 }
 
@@ -66,10 +71,7 @@ export async function fetchSlots(schoolId: number): Promise<SlotItem[]> {
   return raw.map(mapSlot);
 }
 
-export async function createSlot(
-  schoolId: number,
-  data: CreateSlotInput
-): Promise<SlotItem> {
+export async function createSlot(schoolId: number, data: CreateSlotInput): Promise<SlotItem> {
   const raw = await api.post<RawSlot>(`/schools/${schoolId}/slots/`, data);
   return mapSlot(raw);
 }
@@ -83,10 +85,7 @@ export async function updateSlot(
   return mapSlot(raw);
 }
 
-export async function deleteSlot(
-  schoolId: number,
-  slotId: number
-): Promise<DeleteSlotResponse> {
+export async function deleteSlot(schoolId: number, slotId: number): Promise<DeleteSlotResponse> {
   const raw = await api.delete<{ slot_id: number; deleted: boolean }>(
     `/schools/${schoolId}/slots/${slotId}/`
   );
