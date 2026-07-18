@@ -113,7 +113,14 @@
       "Bash(export NEXT_PUBLIC_APP_URL=http://localhost:3000)",
       "Bash(export NEXT_PUBLIC_APP_ENV=production)",
       "Bash(export NEXT_PUBLIC_APP_NAME=Session-Ops)",
-      "Bash(export NEXT_PUBLIC_APP_VERSION=ci)"
+      "Bash(export NEXT_PUBLIC_APP_VERSION=ci)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "PowerShell(gh *)",
+      "Bash(.venv/Scripts/python.exe -c \"import setuptools; print\\(setuptools.__version__\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import pkg_resources; print\\('ok'\\)\")",
+      "Bash(ENVIRONMENT=test PYTHONIOENCODING=utf-8 uv run pylint sessionops/ --exit-zero --disable=C0328)",
+      "Bash(ENVIRONMENT=test uv run mypy sessionops/)"
     ]
   }
 }
