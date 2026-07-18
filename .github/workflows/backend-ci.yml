@@ -1,0 +1,153 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mad_sessionops_backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'mad_sessionops_backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+defaults:
+  run:
+    working-directory: mad_sessionops_backend
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Black
+        run: uv run black --check sessionops/
+
+      - name: isort
+        run: uv run isort --check-only sessionops/
+
+      - name: Flake8
+        run: uv run flake8 sessionops/
+
+      - name: Pylint
+        run: uv run pylint sessionops/
+
+      - name: Mypy
+        run: uv run mypy sessionops/
+
+      - name: Bandit
+        run: uv run bandit -r sessionops/ -c .bandit
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DJANGOSECRET: test-secret-key-for-ci
+      DEBUG: "True"
+      ENVIRONMENT: test
+      DBNAME: test_db
+      DBHOST: localhost
+      DBPORT: 5432
+      DBUSER: postgres
+      DBPASSWORD: postgres
+      DBADMINUSER: postgres
+      DBADMINPASSWORD: postgres
+      JWT_SECRET_KEY: test-jwt-secret
+      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL_V2: http://localhost:3000
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Create logs directory
+        run: mkdir -p sessionops/logs
+
+      - name: Run tests
+        run: uv run pytest --cov=sessionops --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./mad_sessionops_backend/coverage.xml
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
+  quality:
+    name: Quality (informational)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Cyclomatic complexity (radon cc)
+        run: uv run radon cc sessionops/ -a -nb
+
+      - name: Maintainability index (radon mi)
+        run: uv run radon mi sessionops/ -nb
+
+      - name: Docstring coverage (interrogate)
+        run: uv run interrogate -v sessionops/
+
+      - name: Dependency vulnerability scan (safety)
+        run: uv run safety check
