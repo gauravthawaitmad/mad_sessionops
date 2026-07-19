@@ -175,7 +175,10 @@ def _make_legacy_slot_class(school_id: int, co: User, legacy_subject_name: str):
     slot = _make_slot(school_id, co)
     scs = create_slot_class(slot.slot_id, _payload(section, vol), co)
 
-    legacy_subject, _ = Subject.objects.get_or_create(subject_name=legacy_subject_name)
+    program, _ = Program.objects.get_or_create(program_name="Foundation Program")
+    legacy_subject, _ = Subject.objects.get_or_create(
+        subject_name=legacy_subject_name, defaults={"program_id": program}
+    )
     css = scs.class_section_subject_id
     css.subject_id = legacy_subject
     css.save(update_fields=["subject_id"])

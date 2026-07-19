@@ -4,8 +4,9 @@ F-M4-6: Incremental sync service unit tests.
 All Hasura calls are mocked — no network I/O.
 """
 
+from contextlib import contextmanager
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import DEFAULT, patch
 
 from django.utils import timezone as dj_timezone
 
@@ -46,14 +47,25 @@ CHAPTER_ROW = {
 }
 
 
+@contextmanager
 def _mock_all(users=None, partners=None, chapters=None):
-    """Patch all 3 Hasura fetch functions."""
-    return patch.multiple(
+    """Patch all 3 Hasura fetch functions.
+
+    Uses DEFAULT so patch.multiple's context-manager return value is populated —
+    passing pre-built Mock instances instead makes patch.multiple return {} (only
+    DEFAULT-valued attributes are included), which is why callers indexing
+    mocks["fetch_users_updated_after"] used to KeyError.
+    """
+    with patch.multiple(
         "sessionops.services.sync.incremental",
-        fetch_users_updated_after=MagicMock(return_value=users or []),
-        fetch_partners_updated_after=MagicMock(return_value=partners or []),
-        fetch_chapter_mapping=MagicMock(return_value=chapters or []),
-    )
+        fetch_users_updated_after=DEFAULT,
+        fetch_partners_updated_after=DEFAULT,
+        fetch_chapter_mapping=DEFAULT,
+    ) as mocks:
+        mocks["fetch_users_updated_after"].return_value = users or []
+        mocks["fetch_partners_updated_after"].return_value = partners or []
+        mocks["fetch_chapter_mapping"].return_value = chapters or []
+        yield mocks
 
 
 # ── Cursor tests ──────────────────────────────────────────────────────────────
@@ -71,14 +83,14 @@ def test_cursor_is_null_when_no_partners():
 
 @pytest.mark.django_db
 def test_cursor_advances_after_user_upsert():
-    uid = next(_UID)
-    User.objects.create(
-        user_id=uid,
-        user_login=f"u{uid}@t.com",
-        user_display_name="U",
-        email=f"u{uid}@t.com",
-        user_role="CO Full Time",
-        synced_at=dj_timezone.now(),
+    """_get_user_cursor() derives from SyncRun.cursor_end, not User.synced_at directly —
+    a successful sync_run must exist for the cursor to advance."""
+    ts = dj_timezone.now()
+    SyncRun.objects.create(
+        status=SyncRun.STATUS_SUCCESS,
+        entity_type=SyncRun.ENTITY_TYPE_USER,
+        entity_sync_type=SyncRun.ENTITY_SYNC_TYPE_USERS,
+        cursor_end=ts,
     )
     cursor = _get_user_cursor()
     assert cursor is not None
@@ -110,16 +122,13 @@ def test_first_sync_with_null_cursor_does_full_fetch():
 
 @pytest.mark.django_db
 def test_subsequent_runs_use_cursor_from_max_synced_at():
-    """Second run passes the cursor from the first run's synced_at."""
-    uid = next(_UID)
+    """Second run passes the cursor from the prior successful sync_run's cursor_end."""
     ts = datetime(2026, 6, 1, tzinfo=timezone.utc)
-    User.objects.create(
-        user_id=uid,
-        user_login=f"u{uid}@t.com",
-        user_display_name="U",
-        email=f"u{uid}@t.com",
-        user_role="CO Full Time",
-        synced_at=ts,
+    SyncRun.objects.create(
+        status=SyncRun.STATUS_SUCCESS,
+        entity_type=SyncRun.ENTITY_TYPE_USER,
+        entity_sync_type=SyncRun.ENTITY_SYNC_TYPE_USERS,
+        cursor_end=ts,
     )
 
     with _mock_all() as mocks:

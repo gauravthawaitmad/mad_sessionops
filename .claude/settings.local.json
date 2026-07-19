@@ -120,7 +120,22 @@
       "Bash(.venv/Scripts/python.exe -c \"import setuptools; print\\(setuptools.__version__\\)\")",
       "Bash(.venv/Scripts/python.exe -c \"import pkg_resources; print\\('ok'\\)\")",
       "Bash(ENVIRONMENT=test PYTHONIOENCODING=utf-8 uv run pylint sessionops/ --exit-zero --disable=C0328)",
-      "Bash(ENVIRONMENT=test uv run mypy sessionops/)"
+      "Bash(ENVIRONMENT=test uv run mypy sessionops/)",
+      "Bash(pg_isready -h localhost -p 5432)",
+      "Bash(powershell.exe -Command \"Get-Process 'Docker Desktop' -ErrorAction SilentlyContinue\")",
+      "Bash(where docker *)",
+      "Bash(powershell.exe -Command \"Start-Process 'C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe'\")",
+      "Bash(docker exec *)",
+      "Bash(tasklist //FI \"IMAGENAME eq python.exe\")",
+      "Bash(powershell.exe *)",
+      "Bash(uv python *)",
+      "Bash(.venv/Scripts/python.exe --version)",
+      "Bash(timeout 300 uv run pytest --cov=sessionops --cov-report=term-missing -q)",
+      "Bash(echo \"EXIT_CODE:$?\")",
+      "Bash(docker start *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(cd *)",
+      "Bash(cygpath -w /tmp/targeted2.log)"
     ]
   }
 }
