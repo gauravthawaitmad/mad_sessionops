@@ -303,11 +303,17 @@ def test_sync_is_idempotent():
 
 
 def _mock_hasura(users: list, partners: list):
-    """Patch both hasura client functions in sync.py."""
+    """Patch all 3 hasura client functions in sync.py.
+
+    run_sync() always runs all 3 phases (users, partners, partner_worknode) —
+    fetch_chapter_mapping must be mocked too, or the real implementation runs
+    and raises "HASURA_API_BASE_URL is not set" trying to make a real HTTP call.
+    """
     from unittest.mock import patch
 
     return patch.multiple(
         "sessionops.services.sync",
         fetch_users=MagicMock(return_value=users),
         fetch_partners=MagicMock(return_value=partners),
+        fetch_chapter_mapping=MagicMock(return_value=[]),
     )

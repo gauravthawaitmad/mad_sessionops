@@ -66,8 +66,12 @@ def test_admin_scope_sees_all(role):
 @pytest.mark.parametrize("role", ["CO Full Time", "CO Part Time"])
 def test_co_scope_filters_by_co_id(role):
     co_user_id = 2273058
-    Partner.objects.create(partner_id=10, partner_name="My School", co_id=co_user_id)
-    Partner.objects.create(partner_id=11, partner_name="Other School", co_id=9999999)
+    Partner.objects.create(
+        partner_id=10, partner_name="My School", co_id=co_user_id, converted=True
+    )
+    Partner.objects.create(
+        partner_id=11, partner_name="Other School", co_id=9999999, converted=True
+    )
     user = _make_user(co_user_id, role)
 
     qs = schools_visible_to(user)
