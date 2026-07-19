@@ -1,7 +1,6 @@
 import logging
 from typing import Callable
 
-from django.db import close_old_connections
 from django.utils import timezone as dj_timezone
 
 import sentry_sdk
@@ -11,6 +10,7 @@ from sessionops.services.hasura.client import fetch_chapter_mapping, fetch_partn
 from sessionops.services.sync.upsert import BATCH_SIZE as _BATCH_SIZE
 from sessionops.services.sync.upsert import bulk_upsert_partners as _bulk_upsert_partners
 from sessionops.services.sync.upsert import bulk_upsert_users as _bulk_upsert_users
+from sessionops.services.sync.upsert import close_old_connections
 from sessionops.services.sync.upsert import parse_date as _parse_date
 from sessionops.services.sync.upsert import parse_datetime as _parse_datetime
 from sessionops.services.sync.upsert import to_int as _int

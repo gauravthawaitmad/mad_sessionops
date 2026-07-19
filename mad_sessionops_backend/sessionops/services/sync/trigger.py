@@ -15,7 +15,6 @@ import threading
 import time
 from typing import Literal
 
-from django.db import close_old_connections
 from django.db import connection as django_connection
 from django.utils import timezone as dj_timezone
 
@@ -35,6 +34,7 @@ from sessionops.services.sync.upsert import (
     BATCH_SIZE,
     bulk_upsert_partners,
     bulk_upsert_users,
+    close_old_connections,
     upsert_partner_worknode_row,
 )
 

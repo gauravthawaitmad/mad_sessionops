@@ -10,13 +10,33 @@ import logging
 import time
 from datetime import date, datetime, timezone
 
-from django.db import IntegrityError, OperationalError, close_old_connections, transaction
+from django.db import IntegrityError, OperationalError
+from django.db import close_old_connections as _close_old_connections
+from django.db import connection, transaction
 
 from sessionops.models import Partner, PartnerWorknode, User
 
 logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 500
+
+
+def close_old_connections() -> None:
+    """
+    Refresh a stale DB connection between batches of a long-running sync.
+
+    Guarded on connection.in_atomic_block: this is meant for the real
+    background-thread/cron path, which isn't wrapped in an outer transaction.
+    Calling Django's close_old_connections() while inside one (as every
+    pytest-django @pytest.mark.django_db test is, since these same functions
+    are also called directly and synchronously in unit tests) can close the
+    connection pytest-django's rollback-based test isolation depends on,
+    surfacing as an unrelated "connection already closed" failure later in
+    the same test session.
+    """
+    if not connection.in_atomic_block:
+        _close_old_connections()
+
 
 USER_UPDATE_FIELDS = [
     "user_login",

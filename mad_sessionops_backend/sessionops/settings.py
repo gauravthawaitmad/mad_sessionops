@@ -14,6 +14,7 @@ import logging
 import os
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
 
 import sentry_sdk
 from corsheaders.defaults import default_headers
@@ -167,7 +168,10 @@ import sys as _sys
 
 _TESTING = any("pytest" in a for a in _sys.argv) or os.environ.get("PYTEST_CURRENT_TEST")
 
-DATABASES = {
+_conn_max_age_env = os.getenv("CONN_MAX_AGE")
+_CONN_MAX_AGE: int | None = int(_conn_max_age_env) if _conn_max_age_env else None
+
+DATABASES: dict[str, dict[str, Any]] = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("DBNAME"),
@@ -178,6 +182,17 @@ DATABASES = {
         else os.getenv("DBPASSWORD"),
         "PORT": os.getenv("DBPORT"),
         "OPTIONS": _DB_OPTIONS,
+        # Was unset (Django default: 0 — closes the connection after every
+        # request/command). That makes close_old_connections() calls in the sync
+        # services (a legitimate practice for long-running batch loops) tear down
+        # a connection that's only milliseconds old, which is harmless in
+        # production but breaks pytest-django's transaction-wrapped test
+        # connection when those same functions are called directly in tests.
+        # None (persistent, Django's is_usable() check reconnects on failure) —
+        # a fixed age like 60s just delays the same bug until the test SESSION
+        # (not any one test) runs past that age, since pytest-django keeps one
+        # connection alive across the whole run.
+        "CONN_MAX_AGE": _CONN_MAX_AGE,
     },
     # Used only for `just migrate` — needs DDL rights (table owner or superuser).
     # Set DBADMINUSER / DBADMINPASSWORD in your .env file.

@@ -16,7 +16,6 @@ import logging
 import time
 from datetime import datetime
 
-from django.db import close_old_connections
 from django.utils import timezone as dj_timezone
 
 from sessionops.exceptions import ConflictError
@@ -31,6 +30,7 @@ from sessionops.services.sync.upsert import (
     BATCH_SIZE,
     bulk_upsert_partners,
     bulk_upsert_users,
+    close_old_connections,
     parse_datetime,
     upsert_partner_worknode_row,
 )

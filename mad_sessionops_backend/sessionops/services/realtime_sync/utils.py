@@ -19,6 +19,10 @@ def apply_common_fields(user: User, payload: RealtimeSyncUserPayload, now) -> No
     user.contact = payload.user_phone  # User.contact ↔ payload.user_phone
     if payload.user_role is not None:
         user.user_role = payload.user_role
+    # user_active_status renamed from is_active — None means "not specified", not
+    # "inactive" (the schema's own comment documents this); the dedicated
+    # deactivate.py flow handles actual deactivation and never calls this function.
+    user.is_active = True if payload.user_active_status is None else payload.user_active_status
     user.synced_at = now
 
     # Location / org hierarchy
