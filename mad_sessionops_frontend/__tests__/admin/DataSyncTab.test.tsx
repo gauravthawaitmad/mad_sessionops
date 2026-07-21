@@ -66,7 +66,15 @@ describe("DataSyncTab — per-entity sync", () => {
     render(<DataSyncTab />);
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /sync users/i })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText("Partners"));
+    await waitFor(() => {
       expect(screen.getByRole("button", { name: /sync partners/i })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText("PW Nodes"));
+    await waitFor(() => {
       expect(screen.getByRole("button", { name: /sync partner worknodes/i })).toBeTruthy();
     });
   });
@@ -108,8 +116,12 @@ describe("DataSyncTab — per-entity sync", () => {
       // User button should show Syncing…
       expect(screen.getByRole("button", { name: /syncing/i })).toBeTruthy();
     });
-    // Partner button should still be enabled
-    expect(screen.getByRole("button", { name: /sync partners/i })).not.toBeDisabled();
+
+    // Switching to the Partners tab should show its own button, still enabled
+    fireEvent.click(screen.getByText("Partners"));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /sync partners/i })).not.toBeDisabled();
+    });
   });
 
   it("shows toast.error on 409", async () => {

@@ -640,18 +640,12 @@ class AuthService:
             user = User.objects.get(email=email, is_active=True)
         except User.DoesNotExist:
             logger.info(f"Password reset requested for unknown email: {email}")
-            raise AuthenticationError(
-                "No account found with this email address.",
-                error_code="EMAIL_NOT_FOUND",
-            )
+            return
 
         # Role gate — users without login access cannot reset their password.
         if not get_allowed_roles(user.user_role):
             logger.warning(f"Password reset denied — no allowed role for user_id={user.user_id}")
-            raise AuthenticationError(
-                "No account found with this email address.",
-                error_code="EMAIL_NOT_FOUND",
-            )
+            return
 
         # Supersede all previous unused tokens so only the newest link works.
         # Each voided token is stamped with invalidation_reason='superseded'

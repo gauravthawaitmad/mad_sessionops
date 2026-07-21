@@ -42,6 +42,7 @@ const BORDER = "#E2E8F0";
 interface TabConfig {
   key: SyncEntityType;
   label: string;
+  syncLabel: string;
   Icon: React.ElementType;
   color: string;
   bg: string;
@@ -49,10 +50,19 @@ interface TabConfig {
 }
 
 const TABS: TabConfig[] = [
-  { key: "user", label: "Users", Icon: Users, color: "#0284C7", bg: "#EFF6FF", statKey: "user" },
+  {
+    key: "user",
+    label: "Users",
+    syncLabel: "users",
+    Icon: Users,
+    color: "#0284C7",
+    bg: "#EFF6FF",
+    statKey: "user",
+  },
   {
     key: "partner",
     label: "Partners",
+    syncLabel: "partners",
     Icon: Building2,
     color: "#7C3AED",
     bg: "#F5F3FF",
@@ -61,6 +71,7 @@ const TABS: TabConfig[] = [
   {
     key: "partner_worknode",
     label: "PW Nodes",
+    syncLabel: "partner worknodes",
     Icon: Network,
     color: "#059669",
     bg: "#F0FDF4",
@@ -581,7 +592,7 @@ export function DataSyncTab() {
                 "&:hover": { borderColor: tab.color, bgcolor: tab.bg },
               }}
             >
-              {isActive ? "Syncing…" : `Sync ${tab.label.toLowerCase()}`}
+              {isActive ? "Syncing…" : `Sync ${tab.syncLabel}`}
             </Button>
           </Box>
 
