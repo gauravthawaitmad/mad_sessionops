@@ -278,7 +278,7 @@ class TestListChildren:
         section = _make_section(202, user, code="J")
 
         child = enroll_child(202, _payload(section, first_name="Mixed"), user)
-        Child.objects.filter(child_id=child.child_id).update(is_active=False, removed=True)
+        Child.objects.filter(child_id=child.child_id).update(is_active=False)
 
         assert list_children(202, status="all").count() == 1
         assert list_children(202, status="active").count() == 0
