@@ -4,11 +4,7 @@ import { api } from "../client";
 
 export type SetupStatus = "configured" | "partial" | "not_configured";
 export type FilterChip = "all" | "configured" | "partial" | "not_configured";
-export type SortOption =
-  | "updated_desc"
-  | "name_asc"
-  | "city_asc"
-  | "children_desc";
+export type SortOption = "updated_desc" | "name_asc" | "city_asc" | "children_desc";
 
 export interface SchoolListItem {
   partnerId: number;

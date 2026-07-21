@@ -2,6 +2,7 @@ from typing import List
 
 from ninja import Router
 
+from sessionops.models import SlotClassSection
 from sessionops.schemas.auth import ErrorResponseSchema
 from sessionops.schemas.slots import (
     SlotCreateSchema,
@@ -9,7 +10,6 @@ from sessionops.schemas.slots import (
     SlotReadSchema,
     SlotUpdateSchema,
 )
-from sessionops.models import SlotClassSection
 from sessionops.services.slots.create import create_slot, list_slots
 from sessionops.services.slots.delete import soft_delete_slot
 from sessionops.services.slots.edit import edit_slot

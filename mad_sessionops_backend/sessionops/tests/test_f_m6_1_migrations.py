@@ -3,13 +3,14 @@ Tests for F-M6-1: Schema migrations — nullable class_section fields,
 section_display_name, slug uniqueness, Foundation subject seed.
 """
 
-import pytest
 from django.db import IntegrityError, transaction
+
+import pytest
 
 from sessionops.models import ClassSection, Program, Subject, User
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> User:
     return User.objects.create(
@@ -22,6 +23,7 @@ def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> Us
 
 
 # ── ClassSection nullability (bucket-shape rows) ────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestClassSectionNullableFields:
@@ -70,13 +72,16 @@ class TestClassSectionNullableFields:
         user = _make_user()
         long_name = "a" * 100
         cs = ClassSection.objects.create(
-            school_id=1, section_name=long_name, created_by=user,
+            school_id=1,
+            section_name=long_name,
+            created_by=user,
         )
         cs.refresh_from_db()
         assert cs.section_name == long_name
 
 
 # ── uniq_section_per_school_class (updated condition) ───────────────────────────
+
 
 @pytest.mark.django_db
 class TestSectionCodeConstraint:
@@ -92,6 +97,7 @@ class TestSectionCodeConstraint:
 
 # ── class_section_slug_per_school (NEW) ─────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestSlugUniquePerSchool:
     def test_duplicate_slug_same_school_raises_integrity_error(self):
@@ -99,7 +105,9 @@ class TestSlugUniquePerSchool:
         ClassSection.objects.create(school_id=1, section_name="care_monster", created_by=user)
         with pytest.raises(IntegrityError):
             with transaction.atomic():
-                ClassSection.objects.create(school_id=1, section_name="care_monster", created_by=user)
+                ClassSection.objects.create(
+                    school_id=1, section_name="care_monster", created_by=user
+                )
 
     def test_same_slug_different_schools_is_allowed(self):
         user = _make_user()
@@ -108,8 +116,9 @@ class TestSlugUniquePerSchool:
         assert ClassSection.objects.filter(section_name="care_monster").count() == 2
 
     def test_soft_deleted_row_does_not_block_reuse_of_slug(self):
-        """The constraint is scoped to removed=False — a soft-deleted bucket's
-        slug can be reused by a new bucket in the same school."""
+        """The constraint is scoped to (is_active AND NOT removed) — a
+        soft-deleted bucket's slug can be reused by a new bucket in the same
+        school."""
         user = _make_user()
         cs = ClassSection.objects.create(school_id=1, section_name="care_monster", created_by=user)
         cs.removed = True
@@ -117,10 +126,28 @@ class TestSlugUniquePerSchool:
         cs.save()
         # Should not raise
         ClassSection.objects.create(school_id=1, section_name="care_monster", created_by=user)
+
+    def test_inactive_not_removed_row_does_not_block_reuse_of_slug(self):
+        """The actual bug this constraint fix addresses: Bubble's historical
+        rows can be is_active=False while removed=False (deactivated, not
+        soft-deleted). The old constraint (scoped to removed=False only)
+        incorrectly blocked a new active row from reusing that name. The
+        fixed constraint (is_active AND NOT removed) allows it."""
+        user = _make_user()
+        cs = ClassSection.objects.create(school_id=1, section_name="care_monster", created_by=user)
+        cs.is_active = False  # deactivated, but NOT removed
+        cs.save()
+        assert cs.removed is False
+        # Should not raise — this previously raised IntegrityError before the fix
+        new_cs = ClassSection.objects.create(
+            school_id=1, section_name="care_monster", created_by=user
+        )
+        assert new_cs.is_active is True
         assert ClassSection.objects.filter(school_id=1, section_name="care_monster").count() == 2
 
 
 # ── Foundation subject seed (0027) ──────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestFoundationSubjectSeed:
@@ -136,9 +163,7 @@ class TestFoundationSubjectSeed:
         program, _ = Program.objects.get_or_create(
             program_name="Foundation Program", defaults={"is_active": True}
         )
-        Subject.objects.get_or_create(
-            subject_name="Foundation", defaults={"program_id": program}
-        )
+        Subject.objects.get_or_create(subject_name="Foundation", defaults={"program_id": program})
         after = Subject.objects.filter(subject_name="Foundation").count()
         assert before == after == 1
 

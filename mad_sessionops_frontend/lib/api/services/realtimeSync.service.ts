@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -36,9 +36,9 @@ export interface ManualSyncResult {
   log_id: number;
   status: string;
   action_taken: string;
-  field_changes: RealtimeSyncLogEntry['field_changes'];
-  cascaded_changes: RealtimeSyncLogEntry['cascaded_changes'];
-  deferred_operations: RealtimeSyncLogEntry['deferred_operations'];
+  field_changes: RealtimeSyncLogEntry["field_changes"];
+  cascaded_changes: RealtimeSyncLogEntry["cascaded_changes"];
+  deferred_operations: RealtimeSyncLogEntry["deferred_operations"];
   error_details: string | null;
 }
 
@@ -54,15 +54,13 @@ export async function listRealtimeEvents(params: {
   date_from?: string;
   date_to?: string;
 }): Promise<RealtimeEventsListResponse> {
-  return api.get<RealtimeEventsListResponse>('/admin/realtime-events', { params });
+  return api.get<RealtimeEventsListResponse>("/admin/realtime-events", { params });
 }
 
 export async function getRealtimeEvent(logId: number): Promise<RealtimeSyncLogDetail> {
   return api.get<RealtimeSyncLogDetail>(`/admin/realtime-events/${logId}`);
 }
 
-export async function manualSyncUser(
-  payload: Record<string, unknown>,
-): Promise<ManualSyncResult> {
-  return api.post<ManualSyncResult>('/admin/realtime-events/sync-user', { payload });
+export async function manualSyncUser(payload: Record<string, unknown>): Promise<ManualSyncResult> {
+  return api.post<ManualSyncResult>("/admin/realtime-events/sync-user", { payload });
 }

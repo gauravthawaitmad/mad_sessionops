@@ -8,37 +8,43 @@ from pydantic import model_validator
 
 
 class ChildEnrollIn(Schema):
-    first_name:         str
-    last_name:          str
-    gender:             Literal["male", "female", "other"]
-    age:                int
-    school_class_id:    int
-    class_section_id:   int | None = None
-    date_of_birth:      date | None = None
-    city:               str | None = None
-    mother_tongue:      str | None = None
+    first_name: str
+    last_name: str
+    gender: Literal["male", "female", "other"]
+    age: int
+    school_class_id: int
+    class_section_id: int | None = None
+    date_of_birth: date | None = None
+    city: str | None = None
+    mother_tongue: str | None = None
     date_of_enrollment: date | None = None
-    mad_joining_date:   date | None = None
+    mad_joining_date: date | None = None
 
 
 class ChildEditIn(Schema):
-    first_name:         str | None = None
-    last_name:          str | None = None
-    gender:             Literal["male", "female", "other"] | None = None
-    age:                int | None = None
-    school_class_id:    int | None = None
-    class_section_id:   int | None = None
-    date_of_birth:      date | None = None
-    city:               str | None = None
-    mother_tongue:      str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    gender: Literal["male", "female", "other"] | None = None
+    age: int | None = None
+    school_class_id: int | None = None
+    class_section_id: int | None = None
+    date_of_birth: date | None = None
+    city: str | None = None
+    mother_tongue: str | None = None
     date_of_enrollment: date | None = None
-    mad_joining_date:   date | None = None
+    mad_joining_date: date | None = None
 
 
 class DeactivateIn(Schema):
     removed_reason: Literal[
-        "inactive", "duplicate_entry", "wrong_school_class", "transferred",
-        "dropped_out", "family_declined", "child_declined", "other",
+        "inactive",
+        "duplicate_entry",
+        "wrong_school_class",
+        "transferred",
+        "dropped_out",
+        "family_declined",
+        "child_declined",
+        "other",
     ]
     other_details: str | None = None
 
@@ -50,8 +56,8 @@ class DeactivateIn(Schema):
 
 
 class ReactivateIn(Schema):
-    school_class_id:   int
-    class_section_id:  int | None = None
+    school_class_id: int
+    class_section_id: int | None = None
 
 
 class CurrentSectionOut(Schema):
@@ -66,18 +72,18 @@ class CurrentSchoolClassOut(Schema):
 
 
 class ChildOut(Schema):
-    child_id:             int
-    first_name:           str
-    last_name:            str
-    gender:               str
-    age:                  int | None
-    city:                 str | None
-    mother_tongue:        str | None
-    date_of_birth:        date | None
-    date_of_enrollment:   date | None
-    mad_joining_date:     date | None
-    is_active:            bool
-    current_section:      CurrentSectionOut | None
+    child_id: int
+    first_name: str
+    last_name: str
+    gender: str
+    age: int | None
+    city: str | None
+    mother_tongue: str | None
+    date_of_birth: date | None
+    date_of_enrollment: date | None
+    mad_joining_date: date | None
+    is_active: bool
+    current_section: CurrentSectionOut | None
     current_school_class: CurrentSchoolClassOut | None
 
     @staticmethod

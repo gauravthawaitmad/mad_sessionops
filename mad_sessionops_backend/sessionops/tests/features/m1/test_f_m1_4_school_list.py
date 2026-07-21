@@ -18,14 +18,15 @@ from rest_framework_simplejwt.tokens import AccessToken
 from sessionops.models import Partner, User
 from sessionops.routes import api
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_user(role: str) -> User:
     """Create a real User in the test DB; user_id is auto-generated."""
     import uuid
+
     suffix = uuid.uuid4().hex[:8]
     return User.objects.create(
         user_login=f"{suffix}@test.com",
@@ -35,9 +36,11 @@ def _make_user(role: str) -> User:
     )
 
 
-def _make_partner(name: str, co_id: int | None = None,
-                  city: str | None = None, state: str | None = None) -> Partner:
+def _make_partner(
+    name: str, co_id: int | None = None, city: str | None = None, state: str | None = None
+) -> Partner:
     import random
+
     partner_id = random.randint(100_000, 999_999)
     return Partner.objects.create(
         partner_id=partner_id,
@@ -64,6 +67,7 @@ CLIENT = TestClient(api)
 # TC-M1-4-01  CO sees only own schools
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_list_returns_scope_filtered_for_co():
     co = _make_user("CO Full Time")
@@ -84,6 +88,7 @@ def test_school_list_returns_scope_filtered_for_co():
 # TC-M1-4-02  admin sees all schools
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_list_returns_all_for_admin():
     admin = _make_user("Function Lead")
@@ -103,6 +108,7 @@ def test_school_list_returns_all_for_admin():
 # TC-M1-4-03  CHO sees empty list
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_list_returns_empty_for_cho():
     cho = _make_user("CHO")
@@ -119,6 +125,7 @@ def test_school_list_returns_empty_for_cho():
 # ---------------------------------------------------------------------------
 # TC-M1-4-04  search by name
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_school_list_search_filters_by_name():
@@ -139,6 +146,7 @@ def test_school_list_search_filters_by_name():
 # TC-M1-4-05  search by city
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_list_search_filters_by_city():
     admin = _make_user("Project Lead")
@@ -157,6 +165,7 @@ def test_school_list_search_filters_by_city():
 # ---------------------------------------------------------------------------
 # TC-M1-4-06  search by state
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_school_list_search_filters_by_state():
@@ -177,6 +186,7 @@ def test_school_list_search_filters_by_state():
 # TC-M1-4-07  unauthenticated returns 401
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_list_requires_auth():
     resp = CLIENT.get("/api/schools/")
@@ -186,6 +196,7 @@ def test_school_list_requires_auth():
 # ---------------------------------------------------------------------------
 # TC-M1-4-08  summary totals match returned schools
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_school_list_summary_totals():

@@ -22,7 +22,10 @@ from sessionops.models import (
     Subject,
     User,
 )
-from sessionops.services.structure.bucket_children import add_child_to_bucket, remove_child_from_bucket
+from sessionops.services.structure.bucket_children import (
+    add_child_to_bucket,
+    remove_child_from_bucket,
+)
 from sessionops.services.structure.sections import create_bucket
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -57,7 +60,9 @@ def _make_subject(user: User, name: str = "Foundation") -> Subject:
     return subj
 
 
-def _make_class_section_subject(bucket: ClassSection, subject: Subject, user: User) -> ClassSectionSubject:
+def _make_class_section_subject(
+    bucket: ClassSection, subject: Subject, user: User
+) -> ClassSectionSubject:
     return ClassSectionSubject.objects.create(
         class_section_id=bucket, subject_id=subject, created_by=user
     )
@@ -65,10 +70,13 @@ def _make_class_section_subject(bucket: ClassSection, subject: Subject, user: Us
 
 def _make_slot(school_id: int, user: User) -> Slot:
     year, _ = AcademicYear.objects.get_or_create(
-        label="2026-2027", defaults={"is_active": True, "created_by": user},
+        label="2026-2027",
+        defaults={"is_active": True, "created_by": user},
     )
     say, _ = SchoolAcademicYear.objects.get_or_create(
-        school_id=school_id, academic_year_id=year, defaults={"created_by": user},
+        school_id=school_id,
+        academic_year_id=year,
+        defaults={"created_by": user},
     )
     return Slot.objects.create(
         school_id=school_id,
@@ -82,21 +90,31 @@ def _make_slot(school_id: int, user: User) -> Slot:
 
 
 def _make_slot_class_with_volunteers(
-    bucket: ClassSection, css: ClassSectionSubject, school_id: int, user: User, n_volunteers: int,
+    bucket: ClassSection,
+    css: ClassSectionSubject,
+    school_id: int,
+    user: User,
+    n_volunteers: int,
 ) -> SlotClassSection:
     slot = _make_slot(school_id, user)
     scs = SlotClassSection.objects.create(
-        slot_id=slot, class_section_id=bucket, class_section_subject_id=css, created_by=user,
+        slot_id=slot,
+        class_section_id=bucket,
+        class_section_subject_id=css,
+        created_by=user,
     )
     for i in range(n_volunteers):
         vol = _make_user(role="CHO")
         SlotClassSectionVolunteer.objects.create(
-            slot_class_section_id=scs, volunteer_id=vol, created_by=user,
+            slot_class_section_id=scs,
+            volunteer_id=vol,
+            created_by=user,
         )
     return scs
 
 
 # ── add_child_to_bucket ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestAddChildToBucket:
@@ -110,7 +128,10 @@ class TestAddChildToBucket:
         assert ccs.child_id_id == child.child_id
         assert ccs.class_section_id_id == bucket.class_section_id
         assert ChildClassSection.objects.filter(
-            child_id=child, class_section_id_id=bucket.class_section_id, is_active=True, removed=False
+            child_id=child,
+            class_section_id_id=bucket.class_section_id,
+            is_active=True,
+            removed=False,
         ).exists()
 
     def test_backfills_child_subject_for_existing_class_section_subjects(self):
@@ -158,9 +179,10 @@ class TestAddChildToBucket:
         second = add_child_to_bucket(405, bucket.class_section_id, child.child_id, user)
 
         assert first.child_class_section_id == second.child_class_section_id
-        assert ChildClassSection.objects.filter(
-            child_id=child, is_active=True, removed=False
-        ).count() == 1
+        assert (
+            ChildClassSection.objects.filter(child_id=child, is_active=True, removed=False).count()
+            == 1
+        )
 
     def test_bucket_not_found(self):
         user = _make_user()
@@ -183,6 +205,7 @@ class TestAddChildToBucket:
 
 
 # ── remove_child_from_bucket ───────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestRemoveChildFromBucket:

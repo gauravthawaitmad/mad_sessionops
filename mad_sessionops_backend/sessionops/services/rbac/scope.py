@@ -44,8 +44,7 @@ def schools_visible_to(user: User) -> QuerySet:
         if user.worknode_id is None:
             return Partner.objects.none()
         partner_ids = (
-            PartnerWorknode.objects
-            .filter(worknode_id=user.worknode_id)
+            PartnerWorknode.objects.filter(worknode_id=user.worknode_id)
             .exclude(partner_id__isnull=True)
             .exclude(partner_id="")
             .values_list("partner_id", flat=True)

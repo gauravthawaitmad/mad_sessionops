@@ -1,4 +1,4 @@
-from sessionops.exceptions import NotFound, ConflictError
+from sessionops.exceptions import ConflictError, NotFound
 from sessionops.models import AcademicYear, SchoolAcademicYear
 from sessionops.schemas.academic_year import AcademicYearCreateIn, AcademicYearUpdateIn
 
@@ -30,7 +30,11 @@ def update_academic_year(academic_year_id: int, payload: AcademicYearUpdateIn) -
     except AcademicYear.DoesNotExist:
         raise NotFound(f"Academic year {academic_year_id} not found.")
 
-    if AcademicYear.objects.filter(label=payload.label, removed=False).exclude(academic_year_id=academic_year_id).exists():
+    if (
+        AcademicYear.objects.filter(label=payload.label, removed=False)
+        .exclude(academic_year_id=academic_year_id)
+        .exists()
+    ):
         raise ConflictError(f"Academic year '{payload.label}' already exists.")
 
     year.label = payload.label

@@ -23,8 +23,8 @@ from sessionops.services.structure.sections import (
     soft_delete_section,
 )
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> User:
     return User.objects.create(
@@ -36,10 +36,9 @@ def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> Us
     )
 
 
-
-
-
-def _make_school_class(school_id: int, user: User, class_code: str = "5", class_name: str = "5th") -> SchoolClass:
+def _make_school_class(
+    school_id: int, user: User, class_code: str = "5", class_name: str = "5th"
+) -> SchoolClass:
     program, _ = Program.objects.get_or_create(program_name="Foundation Program")
     cls, _ = Class.objects.get_or_create(
         class_code=class_code,
@@ -63,6 +62,7 @@ def _make_school_class(school_id: int, user: User, class_code: str = "5", class_
 
 
 # ── Tests: add_section_to_class ────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestAddSection:
@@ -95,6 +95,7 @@ class TestAddSection:
 
 # ── Tests: available_section_codes ────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestAvailableSectionCodes:
     def test_all_codes_available_for_new_class(self):
@@ -123,6 +124,7 @@ class TestAvailableSectionCodes:
 
 # ── Tests: list_sections_for_class ────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestListSections:
     def test_list_returns_active_sections_ordered(self):
@@ -142,6 +144,7 @@ class TestListSections:
 
 
 # ── Tests: soft_delete_section ────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestSoftDeleteSection:
@@ -186,13 +189,21 @@ class TestSoftDeleteSection:
 
 # ── F-M3-7 extension: section delete blocked by slot-class assignments ────────
 
+
 @pytest.mark.django_db
 def test_section_delete_blocked_when_slot_classes_exist():
     """M3 extension: soft_delete_section raises ConflictError if active SlotClassSection rows exist."""
     from datetime import time
+
     from sessionops.models import (
-        AcademicYear, Partner, PartnerWorknode, SchoolAcademicYear, Slot,
-        SlotClassSection, ClassSectionSubject, Subject,
+        AcademicYear,
+        ClassSectionSubject,
+        Partner,
+        PartnerWorknode,
+        SchoolAcademicYear,
+        Slot,
+        SlotClassSection,
+        Subject,
     )
 
     user = _make_user("u_scs@t.com")
@@ -226,6 +237,7 @@ def test_section_delete_blocked_when_slot_classes_exist():
     )
 
     from sessionops.models import Program as _Prog
+
     prog, _ = _Prog.objects.get_or_create(program_name="Foundation Program")
     subj, _ = Subject.objects.get_or_create(
         subject_name="Foundation Day 1", defaults={"program_id": prog}

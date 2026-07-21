@@ -1,32 +1,36 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Chip from '@mui/material/Chip';
-import Skeleton from '@mui/material/Skeleton';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import { Plus, Search, X, User, Pencil, UserMinus, UserCheck } from 'lucide-react';
-import { fetchChildren, type ChildItem, type ListChildrenParams } from '@/lib/api/services/children.service';
-import { fetchSchoolClasses, type SchoolClassItem } from '@/lib/api/services/structure.service';
-import { fetchBuckets, type BucketItem } from '@/lib/api/services/buckets.service';
-import { EnrollChildModal } from './EnrollChildModal';
-import { EditChildDrawer } from './EditChildDrawer';
-import { DeactivateChildModal } from './DeactivateChildModal';
-import { ReactivateChildModal } from './ReactivateChildModal';
-import toast from 'react-hot-toast';
+import { useState, useEffect, useCallback } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Chip from "@mui/material/Chip";
+import Skeleton from "@mui/material/Skeleton";
+import InputAdornment from "@mui/material/InputAdornment";
+import IconButton from "@mui/material/IconButton";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import { Plus, Search, X, User, Pencil, UserMinus, UserCheck } from "lucide-react";
+import {
+  fetchChildren,
+  type ChildItem,
+  type ListChildrenParams,
+} from "@/lib/api/services/children.service";
+import { fetchSchoolClasses, type SchoolClassItem } from "@/lib/api/services/structure.service";
+import { fetchBuckets, type BucketItem } from "@/lib/api/services/buckets.service";
+import { EnrollChildModal } from "./EnrollChildModal";
+import { EditChildDrawer } from "./EditChildDrawer";
+import { DeactivateChildModal } from "./DeactivateChildModal";
+import { ReactivateChildModal } from "./ReactivateChildModal";
+import toast from "react-hot-toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -36,31 +40,31 @@ interface ChildrenTabProps {
   canModify?: boolean;
 }
 
-type StatusFilter = 'active' | 'inactive' | 'all';
+type StatusFilter = "active" | "inactive" | "all";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
-const BORDER    = '#E2E8F0';
-const TH_BG     = '#F8FAFC';
-const TH_TEXT   = '#64748B';
-const ROW_HOVER = '#F8FAFC';
-const MUTED     = '#94A3B8';
-const TEXT      = '#1E293B';
+const BORDER = "#E2E8F0";
+const TH_BG = "#F8FAFC";
+const TH_TEXT = "#64748B";
+const ROW_HOVER = "#F8FAFC";
+const MUTED = "#94A3B8";
+const TEXT = "#1E293B";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function genderColor(g: string): string {
-  if (g === 'female') return '#DB2777';
-  if (g === 'male')   return '#2563EB';
-  return '#7C3AED';
+  if (g === "female") return "#DB2777";
+  if (g === "male") return "#2563EB";
+  return "#7C3AED";
 }
 
 // ── Status pill tabs ──────────────────────────────────────────────────────────
 
 const STATUS_OPTS: { value: StatusFilter; label: string }[] = [
-  { value: 'active',   label: 'Active'   },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'all',      label: 'All'      },
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+  { value: "all", label: "All" },
 ];
 
 interface StatusTabsProps {
@@ -73,9 +77,9 @@ function StatusTabs({ value, counts, onChange }: StatusTabsProps) {
   return (
     <Box
       sx={{
-        display: 'inline-flex',
+        display: "inline-flex",
         bgcolor: TH_BG,
-        borderRadius: '8px',
+        borderRadius: "8px",
         border: `1px solid ${BORDER}`,
         p: 0.375,
         gap: 0.25,
@@ -83,30 +87,30 @@ function StatusTabs({ value, counts, onChange }: StatusTabsProps) {
     >
       {STATUS_OPTS.map((opt) => {
         const active = value === opt.value;
-        const count  = counts[opt.value];
+        const count = counts[opt.value];
         return (
           <Box
             key={opt.value}
             onClick={() => onChange(opt.value)}
             sx={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 0.75,
               px: 1.25,
               py: 0.5,
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.12s ease',
-              bgcolor: active ? '#fff' : 'transparent',
-              boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-              '&:hover': { bgcolor: active ? '#fff' : '#EFF6FF' },
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "all 0.12s ease",
+              bgcolor: active ? "#fff" : "transparent",
+              boxShadow: active ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              "&:hover": { bgcolor: active ? "#fff" : "#EFF6FF" },
             }}
           >
             <Typography
               sx={{
-                fontSize: '12px',
+                fontSize: "12px",
                 fontWeight: active ? 600 : 500,
-                color: active ? '#0F172A' : TH_TEXT,
+                color: active ? "#0F172A" : TH_TEXT,
                 lineHeight: 1,
               }}
             >
@@ -118,14 +122,21 @@ function StatusTabs({ value, counts, onChange }: StatusTabsProps) {
                   minWidth: 18,
                   height: 18,
                   px: 0.75,
-                  borderRadius: '5px',
-                  bgcolor: active ? '#2563EB' : '#E2E8F0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  borderRadius: "5px",
+                  bgcolor: active ? "#2563EB" : "#E2E8F0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <Typography sx={{ fontSize: '10px', fontWeight: 700, color: active ? '#fff' : TH_TEXT, lineHeight: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: active ? "#fff" : TH_TEXT,
+                    lineHeight: 1,
+                  }}
+                >
                   {count}
                 </Typography>
               </Box>
@@ -141,26 +152,28 @@ function StatusTabs({ value, counts, onChange }: StatusTabsProps) {
 
 function EmptyState({ onEnroll }: { onEnroll?: () => void }) {
   return (
-    <Box sx={{ mt: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
+    <Box sx={{ mt: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
       <Box
         sx={{
           width: 56,
           height: 56,
-          borderRadius: '50%',
-          bgcolor: '#EFF6FF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          borderRadius: "50%",
+          bgcolor: "#EFF6FF",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           mb: 0.5,
         }}
       >
         <User size={24} color="#2563EB" />
       </Box>
-      <Typography sx={{ fontSize: '15px', fontWeight: 600, color: '#0F172A' }}>
+      <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#0F172A" }}>
         No children enrolled yet.
       </Typography>
-      <Typography sx={{ fontSize: '13px', color: MUTED, textAlign: 'center', maxWidth: 280 }}>
-        {onEnroll ? "Click 'Enroll Child' to get started." : 'No children have been enrolled in this school.'}
+      <Typography sx={{ fontSize: "13px", color: MUTED, textAlign: "center", maxWidth: 280 }}>
+        {onEnroll
+          ? "Click 'Enroll Child' to get started."
+          : "No children have been enrolled in this school."}
       </Typography>
       {onEnroll && (
         <Button
@@ -168,7 +181,13 @@ function EmptyState({ onEnroll }: { onEnroll?: () => void }) {
           size="small"
           startIcon={<Plus size={14} />}
           onClick={onEnroll}
-          sx={{ mt: 1, bgcolor: '#2563EB', '&:hover': { bgcolor: '#1D4ED8' }, fontSize: '13px', fontWeight: 600 }}
+          sx={{
+            mt: 1,
+            bgcolor: "#2563EB",
+            "&:hover": { bgcolor: "#1D4ED8" },
+            fontSize: "13px",
+            fontWeight: 600,
+          }}
         >
           Enroll Child
         </Button>
@@ -181,15 +200,15 @@ function EmptyState({ onEnroll }: { onEnroll?: () => void }) {
 
 function NoResults({ onClear }: { onClear: () => void }) {
   return (
-    <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-      <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#475569' }}>
+    <Box sx={{ mt: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+      <Typography sx={{ fontSize: "14px", fontWeight: 500, color: "#475569" }}>
         No children match the selected filters.
       </Typography>
       <Button
         size="small"
         variant="text"
         onClick={onClear}
-        sx={{ fontSize: '12px', color: '#2563EB', textTransform: 'none' }}
+        sx={{ fontSize: "12px", color: "#2563EB", textTransform: "none" }}
       >
         Clear filters
       </Button>
@@ -205,7 +224,7 @@ function SkeletonRows() {
       {[1, 2, 3, 4, 5].map((i) => (
         <TableRow key={i}>
           <TableCell sx={{ py: 1.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Skeleton variant="circular" width={32} height={32} />
               <Box>
                 <Skeleton variant="text" width={120} height={14} />
@@ -226,7 +245,7 @@ function SkeletonRows() {
 
 // ── Child row ─────────────────────────────────────────────────────────────────
 
-const GENDER_LABELS: Record<string, string> = { male: 'Male', female: 'Female', other: 'Other' };
+const GENDER_LABELS: Record<string, string> = { male: "Male", female: "Female", other: "Other" };
 
 function ChildRow({
   child,
@@ -241,32 +260,35 @@ function ChildRow({
 }) {
   const gc = genderColor(child.gender);
   return (
-    <TableRow sx={{ '&:hover': { bgcolor: ROW_HOVER } }}>
+    <TableRow sx={{ "&:hover": { bgcolor: ROW_HOVER } }}>
       {/* Name cell */}
       <TableCell sx={{ py: 1.25 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Box
             sx={{
               width: 32,
               height: 32,
-              borderRadius: '50%',
+              borderRadius: "50%",
               bgcolor: `${gc}18`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               flexShrink: 0,
             }}
           >
-            <Typography sx={{ fontSize: '11px', fontWeight: 700, color: gc }}>
-              {child.firstName[0]}{child.lastName[0]}
+            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: gc }}>
+              {child.firstName[0]}
+              {child.lastName[0]}
             </Typography>
           </Box>
           <Box>
-            <Typography sx={{ fontSize: '13px', fontWeight: 500, color: TEXT, lineHeight: 1.3 }}>
+            <Typography sx={{ fontSize: "13px", fontWeight: 500, color: TEXT, lineHeight: 1.3 }}>
               {child.firstName} {child.lastName}
             </Typography>
             {child.city && (
-              <Typography sx={{ fontSize: '11px', color: MUTED, lineHeight: 1.3 }}>{child.city}</Typography>
+              <Typography sx={{ fontSize: "11px", color: MUTED, lineHeight: 1.3 }}>
+                {child.city}
+              </Typography>
             )}
           </Box>
         </Box>
@@ -274,8 +296,18 @@ function ChildRow({
 
       {/* Gender */}
       <TableCell sx={{ py: 1.25 }}>
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 0.875, py: 0.25, borderRadius: '4px', bgcolor: `${gc}14` }}>
-          <Typography sx={{ fontSize: '11px', fontWeight: 600, color: gc }}>
+        <Box
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 0.5,
+            px: 0.875,
+            py: 0.25,
+            borderRadius: "4px",
+            bgcolor: `${gc}14`,
+          }}
+        >
+          <Typography sx={{ fontSize: "11px", fontWeight: 600, color: gc }}>
             {GENDER_LABELS[child.gender] ?? child.gender}
           </Typography>
         </Box>
@@ -283,25 +315,34 @@ function ChildRow({
 
       {/* Age */}
       <TableCell sx={{ py: 1.25 }}>
-        <Typography sx={{ fontSize: '13px', color: '#475569' }}>{child.age ?? '—'}</Typography>
+        <Typography sx={{ fontSize: "13px", color: "#475569" }}>{child.age ?? "—"}</Typography>
       </TableCell>
 
       {/* Class */}
       <TableCell sx={{ py: 1.25 }}>
-        <Typography sx={{ fontSize: '13px', color: '#475569' }}>{child.currentSchoolClass?.className || '—'}</Typography>
+        <Typography sx={{ fontSize: "13px", color: "#475569" }}>
+          {child.currentSchoolClass?.className || "—"}
+        </Typography>
       </TableCell>
 
       {/* Bucket */}
       <TableCell sx={{ py: 1.25 }}>
         {child.currentSection ? (
-          <Typography sx={{ fontSize: '13px', color: '#475569' }}>
+          <Typography sx={{ fontSize: "13px", color: "#475569" }}>
             {child.currentSection.sectionDisplayName ?? child.currentSection.sectionName}
           </Typography>
         ) : (
           <Chip
             label="Unassigned"
             size="small"
-            sx={{ fontSize: '11px', fontWeight: 600, height: 20, borderRadius: '4px', bgcolor: '#F1F5F9', color: '#64748B' }}
+            sx={{
+              fontSize: "11px",
+              fontWeight: 600,
+              height: 20,
+              borderRadius: "4px",
+              bgcolor: "#F1F5F9",
+              color: "#64748B",
+            }}
           />
         )}
       </TableCell>
@@ -309,26 +350,26 @@ function ChildRow({
       {/* Status */}
       <TableCell sx={{ py: 1.25 }}>
         <Chip
-          label={child.isActive ? 'Active' : 'Inactive'}
+          label={child.isActive ? "Active" : "Inactive"}
           size="small"
           sx={{
-            fontSize: '11px',
+            fontSize: "11px",
             fontWeight: 600,
             height: 20,
-            borderRadius: '4px',
-            bgcolor: child.isActive ? '#DCFCE7' : '#FEE2E2',
-            color: child.isActive ? '#16A34A' : '#DC2626',
+            borderRadius: "4px",
+            bgcolor: child.isActive ? "#DCFCE7" : "#FEE2E2",
+            color: child.isActive ? "#16A34A" : "#DC2626",
           }}
         />
       </TableCell>
 
       {/* Actions */}
       <TableCell sx={{ py: 1.25 }}>
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Box sx={{ display: "flex", gap: 0.5 }}>
           <IconButton
             size="small"
             onClick={() => onEdit(child)}
-            sx={{ color: MUTED, '&:hover': { color: '#2563EB', bgcolor: '#EFF6FF' } }}
+            sx={{ color: MUTED, "&:hover": { color: "#2563EB", bgcolor: "#EFF6FF" } }}
           >
             <Pencil size={13} />
           </IconButton>
@@ -336,7 +377,7 @@ function ChildRow({
             <IconButton
               size="small"
               onClick={() => onDeactivate(child)}
-              sx={{ color: MUTED, '&:hover': { color: '#DC2626', bgcolor: '#FEF2F2' } }}
+              sx={{ color: MUTED, "&:hover": { color: "#DC2626", bgcolor: "#FEF2F2" } }}
             >
               <UserMinus size={13} />
             </IconButton>
@@ -345,7 +386,7 @@ function ChildRow({
             <IconButton
               size="small"
               onClick={() => onReactivate(child)}
-              sx={{ color: MUTED, '&:hover': { color: '#16A34A', bgcolor: '#F0FDF4' } }}
+              sx={{ color: MUTED, "&:hover": { color: "#16A34A", bgcolor: "#F0FDF4" } }}
             >
               <UserCheck size={13} />
             </IconButton>
@@ -359,24 +400,24 @@ function ChildRow({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ChildrenTab({ schoolId, activeYear, canModify = true }: ChildrenTabProps) {
-  const [allChildren, setAllChildren]   = useState<ChildItem[]>([]);
-  const [allActive, setAllActive]       = useState<number | null>(null);
-  const [allInactive, setAllInactive]   = useState<number | null>(null);
-  const [loading, setLoading]           = useState(true);
-  const [loadError, setLoadError]       = useState(false);
-  const [search, setSearch]             = useState('');
-  const [debouncedSearch, setDebounced] = useState('');
-  const [status, setStatus]             = useState<StatusFilter>('active');
-  const [classId, setClassId]           = useState<number | null>(null);
-  const [bucketFilter, setBucketFilter] = useState<'all' | 'unassigned' | number>('all');
-  const [classes, setClasses]           = useState<SchoolClassItem[]>([]);
-  const [buckets, setBuckets]           = useState<BucketItem[]>([]);
-  const [enrollOpen, setEnrollOpen]             = useState(false);
-  const [editChild, setEditChild]               = useState<ChildItem | null>(null);
-  const [deactivateChild, setDeactivateChild]   = useState<ChildItem | null>(null);
-  const [reactivateChild, setReactivateChild]   = useState<ChildItem | null>(null);
-  const [refreshKey, setRefreshKey]     = useState(0);
-  const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
+  const [allChildren, setAllChildren] = useState<ChildItem[]>([]);
+  const [allActive, setAllActive] = useState<number | null>(null);
+  const [allInactive, setAllInactive] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebounced] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("active");
+  const [classId, setClassId] = useState<number | null>(null);
+  const [bucketFilter, setBucketFilter] = useState<"all" | "unassigned" | number>("all");
+  const [classes, setClasses] = useState<SchoolClassItem[]>([]);
+  const [buckets, setBuckets] = useState<BucketItem[]>([]);
+  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [editChild, setEditChild] = useState<ChildItem | null>(null);
+  const [deactivateChild, setDeactivateChild] = useState<ChildItem | null>(null);
+  const [reactivateChild, setReactivateChild] = useState<ChildItem | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   function handleClassChange(id: number | null) {
     setClassId(id);
@@ -390,12 +431,16 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
 
   // Load school classes once for the filter dropdown
   useEffect(() => {
-    fetchSchoolClasses(schoolId).then(setClasses).catch(() => {});
+    fetchSchoolClasses(schoolId)
+      .then(setClasses)
+      .catch(() => {});
   }, [schoolId]);
 
   // Load buckets once for the filter dropdown — independent of class (buckets are class-agnostic)
   useEffect(() => {
-    fetchBuckets(schoolId).then(setBuckets).catch(() => {});
+    fetchBuckets(schoolId)
+      .then(setBuckets)
+      .catch(() => {});
   }, [schoolId]);
 
   // Main data load — status='all' so status tab changes are instant (client-side)
@@ -406,59 +451,64 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
       setLoading(true);
       setLoadError(false);
       try {
-        const params: ListChildrenParams = { status: 'all' };
+        const params: ListChildrenParams = { status: "all" };
         if (debouncedSearch) params.search = debouncedSearch;
-        if (classId)   params.class_id = classId;
-        if (bucketFilter === 'unassigned') params.unassigned = true;
-        else if (bucketFilter !== 'all')   params.section_id = bucketFilter;
+        if (classId) params.class_id = classId;
+        if (bucketFilter === "unassigned") params.unassigned = true;
+        else if (bucketFilter !== "all") params.section_id = bucketFilter;
         const data = await fetchChildren(schoolId, params);
         if (cancelled) return;
         setAllChildren(data);
-        setAllActive(data.filter(c => c.isActive).length);
-        setAllInactive(data.filter(c => !c.isActive).length);
+        setAllActive(data.filter((c) => c.isActive).length);
+        setAllInactive(data.filter((c) => !c.isActive).length);
       } catch {
         if (cancelled) return;
         setLoadError(true);
-        toast.error('Could not load children');
+        toast.error("Could not load children");
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [schoolId, debouncedSearch, classId, bucketFilter, refreshKey]);
 
   // Derived — status tab changes are instant (client-side)
   const displayChildren =
-    status === 'active'   ? allChildren.filter(c => c.isActive) :
-    status === 'inactive' ? allChildren.filter(c => !c.isActive) :
-    allChildren;
+    status === "active"
+      ? allChildren.filter((c) => c.isActive)
+      : status === "inactive"
+        ? allChildren.filter((c) => !c.isActive)
+        : allChildren;
 
-  const totalActive   = allActive ?? 0;
+  const totalActive = allActive ?? 0;
   const totalInactive = allInactive ?? 0;
 
   const counts: Record<StatusFilter, number | null> = {
-    active:   loading ? null : totalActive,
+    active: loading ? null : totalActive,
     inactive: loading ? null : totalInactive,
-    all:      loading ? null : totalActive + totalInactive,
+    all: loading ? null : totalActive + totalInactive,
   };
 
-  const hasFilters = !!debouncedSearch || !!classId || bucketFilter !== 'all';
-  const isEmpty    = !loading && !loadError && allChildren.length === 0 && !hasFilters;
-  const noResults  = !loading && !loadError && displayChildren.length === 0 && !isEmpty;
+  const hasFilters = !!debouncedSearch || !!classId || bucketFilter !== "all";
+  const isEmpty = !loading && !loadError && allChildren.length === 0 && !hasFilters;
+  const noResults = !loading && !loadError && displayChildren.length === 0 && !isEmpty;
 
   return (
     <>
       <Box sx={{ px: 4, pt: 3, pb: 6 }}>
-
         {/* ── Page header ── */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
+        <Box
+          sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 3 }}
+        >
           <Box>
-            <Typography sx={{ fontSize: '18px', fontWeight: 700, color: '#0F172A' }}>
+            <Typography sx={{ fontSize: "18px", fontWeight: 700, color: "#0F172A" }}>
               Children
             </Typography>
             {activeYear && (
-              <Typography sx={{ fontSize: '12px', color: MUTED, mt: 0.25 }}>
+              <Typography sx={{ fontSize: "12px", color: MUTED, mt: 0.25 }}>
                 Academic Year: {activeYear}
               </Typography>
             )}
@@ -470,11 +520,11 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
               startIcon={<Plus size={14} />}
               onClick={() => setEnrollOpen(true)}
               sx={{
-                bgcolor: '#2563EB',
-                '&:hover': { bgcolor: '#1D4ED8' },
-                fontSize: '13px',
+                bgcolor: "#2563EB",
+                "&:hover": { bgcolor: "#1D4ED8" },
+                fontSize: "13px",
                 fontWeight: 600,
-                boxShadow: 'none',
+                boxShadow: "none",
               }}
             >
               Enroll Child
@@ -486,11 +536,11 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
         {!isEmpty && !loadError && (
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 1.5,
               mb: 2.5,
-              flexWrap: 'wrap',
+              flexWrap: "wrap",
             }}
           >
             {/* Search */}
@@ -501,13 +551,13 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
               size="small"
               sx={{
                 width: 220,
-                '& .MuiOutlinedInput-root': {
-                  fontSize: '13px',
-                  borderRadius: '8px',
-                  bgcolor: '#FAFAFA',
-                  '& fieldset': { borderColor: BORDER },
-                  '&:hover fieldset': { borderColor: '#CBD5E1' },
-                  '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: '1.5px' },
+                "& .MuiOutlinedInput-root": {
+                  fontSize: "13px",
+                  borderRadius: "8px",
+                  bgcolor: "#FAFAFA",
+                  "& fieldset": { borderColor: BORDER },
+                  "&:hover fieldset": { borderColor: "#CBD5E1" },
+                  "&.Mui-focused fieldset": { borderColor: "#2563EB", borderWidth: "1.5px" },
                 },
               }}
               InputProps={{
@@ -520,7 +570,7 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
                   <InputAdornment position="end">
                     <IconButton
                       size="small"
-                      onClick={() => setSearch('')}
+                      onClick={() => setSearch("")}
                       edge="end"
                       sx={{ p: 0.25 }}
                     >
@@ -535,26 +585,31 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
             {classes.length > 0 && (
               <FormControl size="small">
                 <Select
-                  value={classId ?? ''}
-                  onChange={(e) => handleClassChange(e.target.value ? Number(e.target.value) : null)}
+                  value={classId ?? ""}
+                  onChange={(e) =>
+                    handleClassChange(e.target.value ? Number(e.target.value) : null)
+                  }
                   displayEmpty
                   sx={{
-                    fontSize: '13px',
-                    borderRadius: '8px',
+                    fontSize: "13px",
+                    borderRadius: "8px",
                     minWidth: 120,
-                    bgcolor: '#FAFAFA',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: BORDER },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563EB', borderWidth: '1.5px' },
-                    '& .MuiSelect-select': { py: '6.5px' },
+                    bgcolor: "#FAFAFA",
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: BORDER },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#CBD5E1" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#2563EB",
+                      borderWidth: "1.5px",
+                    },
+                    "& .MuiSelect-select": { py: "6.5px" },
                   }}
                 >
                   <MenuItem value="">
-                    <Typography sx={{ fontSize: '13px', color: MUTED }}>All classes</Typography>
+                    <Typography sx={{ fontSize: "13px", color: MUTED }}>All classes</Typography>
                   </MenuItem>
                   {classes.map((c) => (
                     <MenuItem key={c.schoolClassId} value={c.schoolClassId}>
-                      <Typography sx={{ fontSize: '13px' }}>{c.className}</Typography>
+                      <Typography sx={{ fontSize: "13px" }}>{c.className}</Typography>
                     </MenuItem>
                   ))}
                 </Select>
@@ -566,28 +621,39 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
               <FormControl size="small">
                 <Select
                   value={bucketFilter}
-                  onChange={(e) => setBucketFilter(e.target.value === 'all' || e.target.value === 'unassigned' ? e.target.value : Number(e.target.value))}
+                  onChange={(e) =>
+                    setBucketFilter(
+                      e.target.value === "all" || e.target.value === "unassigned"
+                        ? e.target.value
+                        : Number(e.target.value)
+                    )
+                  }
                   displayEmpty
                   sx={{
-                    fontSize: '13px',
-                    borderRadius: '8px',
+                    fontSize: "13px",
+                    borderRadius: "8px",
                     minWidth: 130,
-                    bgcolor: '#FAFAFA',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: BORDER },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#CBD5E1' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563EB', borderWidth: '1.5px' },
-                    '& .MuiSelect-select': { py: '6.5px' },
+                    bgcolor: "#FAFAFA",
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: BORDER },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#CBD5E1" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#2563EB",
+                      borderWidth: "1.5px",
+                    },
+                    "& .MuiSelect-select": { py: "6.5px" },
                   }}
                 >
                   <MenuItem value="all">
-                    <Typography sx={{ fontSize: '13px', color: MUTED }}>All buckets</Typography>
+                    <Typography sx={{ fontSize: "13px", color: MUTED }}>All buckets</Typography>
                   </MenuItem>
                   <MenuItem value="unassigned">
-                    <Typography sx={{ fontSize: '13px' }}>Unassigned</Typography>
+                    <Typography sx={{ fontSize: "13px" }}>Unassigned</Typography>
                   </MenuItem>
                   {buckets.map((b) => (
                     <MenuItem key={b.classSectionId} value={b.classSectionId}>
-                      <Typography sx={{ fontSize: '13px' }}>{b.sectionDisplayName ?? b.sectionName}</Typography>
+                      <Typography sx={{ fontSize: "13px" }}>
+                        {b.sectionDisplayName ?? b.sectionName}
+                      </Typography>
                     </MenuItem>
                   ))}
                 </Select>
@@ -599,8 +665,8 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
 
             {/* Result count — far right */}
             {!loading && (
-              <Typography sx={{ fontSize: '12px', color: MUTED, ml: 'auto' }}>
-                {displayChildren.length} {displayChildren.length === 1 ? 'result' : 'results'}
+              <Typography sx={{ fontSize: "12px", color: MUTED, ml: "auto" }}>
+                {displayChildren.length} {displayChildren.length === 1 ? "result" : "results"}
               </Typography>
             )}
           </Box>
@@ -608,11 +674,13 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
 
         {/* ── Load error ── */}
         {loadError && (
-          <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
-            <Typography sx={{ fontSize: '14px', color: '#EF4444' }}>
+          <Box
+            sx={{ mt: 8, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}
+          >
+            <Typography sx={{ fontSize: "14px", color: "#EF4444" }}>
               Failed to load children.
             </Typography>
-            <Button variant="outlined" size="small" onClick={refresh} sx={{ fontSize: '13px' }}>
+            <Button variant="outlined" size="small" onClick={refresh} sx={{ fontSize: "13px" }}>
               Retry
             </Button>
           </Box>
@@ -620,29 +688,37 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
 
         {/* ── States ── */}
         {isEmpty && <EmptyState onEnroll={canModify ? () => setEnrollOpen(true) : undefined} />}
-        {noResults && <NoResults onClear={() => { setSearch(''); handleClassChange(null); setBucketFilter('all'); }} />}
+        {noResults && (
+          <NoResults
+            onClear={() => {
+              setSearch("");
+              handleClassChange(null);
+              setBucketFilter("all");
+            }}
+          />
+        )}
 
         {/* ── Table ── */}
         {!isEmpty && !noResults && !loadError && (
           <TableContainer
             sx={{
               border: `1px solid ${BORDER}`,
-              borderRadius: '10px',
-              overflow: 'hidden',
+              borderRadius: "10px",
+              overflow: "hidden",
             }}
           >
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: TH_BG }}>
-                  {['Name', 'Gender', 'Age', 'Class', 'Bucket', 'Status', ''].map((h) => (
+                  {["Name", "Gender", "Age", "Class", "Bucket", "Status", ""].map((h) => (
                     <TableCell
                       key={h}
                       sx={{
-                        fontSize: '11px',
+                        fontSize: "11px",
                         fontWeight: 600,
                         color: TH_TEXT,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
                         py: 1.25,
                         borderBottom: `1px solid ${BORDER}`,
                       }}
@@ -653,9 +729,10 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
                 </TableRow>
               </TableHead>
               <TableBody>
-                {loading
-                  ? <SkeletonRows />
-                  : displayChildren.map((c) => (
+                {loading ? (
+                  <SkeletonRows />
+                ) : (
+                  displayChildren.map((c) => (
                     <ChildRow
                       key={c.childId}
                       child={c}
@@ -664,7 +741,7 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
                       onReactivate={setReactivateChild}
                     />
                   ))
-                }
+                )}
               </TableBody>
             </Table>
           </TableContainer>

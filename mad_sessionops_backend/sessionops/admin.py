@@ -156,7 +156,14 @@ class UserAuthAdmin(admin.ModelAdmin):
     ]
 
     exclude = ["password_hash"]
-    readonly_fields = ["auth_identifier", "created_at", "updated_at", "last_used_at", "deleted_at", "deleted_by"]
+    readonly_fields = [
+        "auth_identifier",
+        "created_at",
+        "updated_at",
+        "last_used_at",
+        "deleted_at",
+        "deleted_by",
+    ]
 
     @admin.display(description="User")
     def user_link(self, obj):

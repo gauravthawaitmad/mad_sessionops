@@ -9,8 +9,9 @@ TC-M1-5-05  Nonexistent partner_id returns 404
 TC-M1-5-06  Unauthenticated request returns 401
 """
 
-import uuid
 import random
+import uuid
+
 import pytest
 from ninja.testing import TestClient
 from rest_framework_simplejwt.tokens import AccessToken
@@ -24,6 +25,7 @@ CLIENT = TestClient(api)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_user(role: str) -> User:
     suffix = uuid.uuid4().hex[:8]
@@ -61,10 +63,13 @@ def _auth_header(user: User) -> dict:
 # TC-M1-5-01  CO views own school
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_detail_returns_full_data_for_co_owner():
     co = _make_user("CO Full Time")
-    school = _make_partner("Govt. HS Shaikpet", co_id=co.user_id, city="Hyderabad", state="Telangana")
+    school = _make_partner(
+        "Govt. HS Shaikpet", co_id=co.user_id, city="Hyderabad", state="Telangana"
+    )
 
     resp = CLIENT.get(f"/api/schools/{school.partner_id}", **_auth_header(co))
 
@@ -81,6 +86,7 @@ def test_school_detail_returns_full_data_for_co_owner():
 # TC-M1-5-02  CO gets 404 for school they don't own
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_detail_returns_404_for_co_not_owner():
     co = _make_user("CO Full Time")
@@ -94,6 +100,7 @@ def test_school_detail_returns_404_for_co_not_owner():
 # ---------------------------------------------------------------------------
 # TC-M1-5-03  Admin sees any school
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_school_detail_returns_data_for_admin():
@@ -110,6 +117,7 @@ def test_school_detail_returns_data_for_admin():
 # TC-M1-5-04  CHO gets 404
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_detail_returns_404_for_cho():
     cho = _make_user("CHO")
@@ -124,6 +132,7 @@ def test_school_detail_returns_404_for_cho():
 # TC-M1-5-05  Nonexistent partner_id → 404
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_school_detail_returns_404_for_nonexistent_id():
     admin = _make_user("Function Lead")
@@ -136,6 +145,7 @@ def test_school_detail_returns_404_for_nonexistent_id():
 # ---------------------------------------------------------------------------
 # TC-M1-5-06  Unauthenticated → 401
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_school_detail_requires_auth():

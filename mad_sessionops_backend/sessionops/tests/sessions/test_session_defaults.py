@@ -64,12 +64,13 @@ def _make_active_year(label="2026-2027") -> AcademicYear:
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_get_session_defaults_returns_mou_based_values():
     _make_active_year("2026-2027")
     co = _make_co()
     sign_date = date(2026, 5, 1)
-    end_date  = date(2027, 4, 30)
+    end_date = date(2027, 4, 30)
     school = _make_school(co, mou_sign_date=sign_date, mou_end_date=end_date)
 
     defaults = get_session_defaults(school.partner_id, co)

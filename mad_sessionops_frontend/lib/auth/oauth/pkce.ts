@@ -13,19 +13,19 @@
  * Generate a cryptographically secure random string
  */
 function generateRandomString(length: number): string {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
   const randomValues = new Uint8Array(length);
 
-  if (typeof window !== 'undefined' && window.crypto) {
+  if (typeof window !== "undefined" && window.crypto) {
     window.crypto.getRandomValues(randomValues);
   } else {
     // Fallback for non-browser environments (shouldn't happen in Next.js client)
-    throw new Error('Crypto API not available');
+    throw new Error("Crypto API not available");
   }
 
   return Array.from(randomValues)
     .map((value) => charset[value % charset.length])
-    .join('');
+    .join("");
 }
 
 /**
@@ -45,7 +45,7 @@ export async function generateCodeChallenge(codeVerifier: string): Promise<strin
   const data = encoder.encode(codeVerifier);
 
   // Hash using SHA-256
-  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
 
   // Convert to base64url encoding
   return base64UrlEncode(hashBuffer);
@@ -56,16 +56,13 @@ export async function generateCodeChallenge(codeVerifier: string): Promise<strin
  */
 function base64UrlEncode(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  let binary = '';
+  let binary = "";
 
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
 
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 /**

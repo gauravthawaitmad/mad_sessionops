@@ -22,22 +22,40 @@ MAX_CHILDREN_PER_BUCKET = 5  # same rule as MAX_CHILDREN_PER_SECTION in enroll.p
 
 
 @transaction.atomic
-def add_child_to_bucket(school_id: int, class_section_id: int, child_id: int, user) -> ChildClassSection:
-    bucket = ClassSection.objects.select_for_update().filter(
-        class_section_id=class_section_id, school_id=school_id, is_active=True, removed=False,
-    ).first()
+def add_child_to_bucket(
+    school_id: int, class_section_id: int, child_id: int, user
+) -> ChildClassSection:
+    bucket = (
+        ClassSection.objects.select_for_update()
+        .filter(
+            class_section_id=class_section_id,
+            school_id=school_id,
+            is_active=True,
+            removed=False,
+        )
+        .first()
+    )
     if not bucket:
         raise NotFound(f"Bucket {class_section_id} not found.")
 
-    child = Child.objects.select_for_update().filter(
-        child_id=child_id, school_id=school_id, is_active=True, removed=False,
-    ).first()
+    child = (
+        Child.objects.select_for_update()
+        .filter(
+            child_id=child_id,
+            school_id=school_id,
+            is_active=True,
+            removed=False,
+        )
+        .first()
+    )
     if not child:
         raise NotFound(f"Child {child_id} not found.")
 
-    existing = ChildClassSection.objects.filter(
-        child_id=child, is_active=True, removed=False
-    ).select_related("class_section_id").first()
+    existing = (
+        ChildClassSection.objects.filter(child_id=child.child_id, is_active=True, removed=False)
+        .select_related("class_section_id")
+        .first()
+    )
     if existing:
         if existing.class_section_id_id == class_section_id:
             return existing  # idempotent no-op
@@ -51,16 +69,20 @@ def add_child_to_bucket(school_id: int, class_section_id: int, child_id: int, us
         class_section_id=bucket, is_active=True, removed=False
     ).count()
     if occupied >= MAX_CHILDREN_PER_BUCKET:
-        raise ConflictError(f"Bucket is full ({MAX_CHILDREN_PER_BUCKET}/{MAX_CHILDREN_PER_BUCKET}).")
+        raise ConflictError(
+            f"Bucket is full ({MAX_CHILDREN_PER_BUCKET}/{MAX_CHILDREN_PER_BUCKET})."
+        )
 
     ccs = ChildClassSection.objects.create(child_id=child, class_section_id=bucket, created_by=user)
 
-    active_css = list(ClassSectionSubject.objects.filter(
-        class_section_id=bucket, is_active=True, removed=False
-    ))
+    active_css = list(
+        ClassSectionSubject.objects.filter(class_section_id=bucket, is_active=True, removed=False)
+    )
     for css in active_css:
         ChildSubject.objects.get_or_create(
-            child_id=child, class_section_subject_id=css, defaults={"created_by": user},
+            child_id=child,
+            class_section_subject_id=css,
+            defaults={"created_by": user},
         )
 
     return ccs
@@ -68,28 +90,54 @@ def add_child_to_bucket(school_id: int, class_section_id: int, child_id: int, us
 
 @transaction.atomic
 def remove_child_from_bucket(school_id: int, class_section_id: int, child_id: int, user) -> None:
-    bucket = ClassSection.objects.select_for_update().filter(
-        class_section_id=class_section_id, school_id=school_id, is_active=True, removed=False,
-    ).first()
+    bucket = (
+        ClassSection.objects.select_for_update()
+        .filter(
+            class_section_id=class_section_id,
+            school_id=school_id,
+            is_active=True,
+            removed=False,
+        )
+        .first()
+    )
     if not bucket:
         raise NotFound(f"Bucket {class_section_id} not found.")
 
-    ccs = ChildClassSection.objects.select_for_update().filter(
-        child_id=child_id, class_section_id=bucket, is_active=True, removed=False,
-    ).first()
+    ccs = (
+        ChildClassSection.objects.select_for_update()
+        .filter(
+            child_id=child_id,
+            class_section_id=bucket,
+            is_active=True,
+            removed=False,
+        )
+        .first()
+    )
     if not ccs:
         raise NotFound(f"Child {child_id} is not in this bucket.")
 
-    remaining_children = ChildClassSection.objects.filter(
-        class_section_id=bucket, is_active=True, removed=False,
-    ).exclude(child_class_section_id=ccs.child_class_section_id).count()
+    remaining_children = (
+        ChildClassSection.objects.filter(
+            class_section_id=bucket,
+            is_active=True,
+            removed=False,
+        )
+        .exclude(child_class_section_id=ccs.child_class_section_id)
+        .count()
+    )
 
     active_slot_classes = SlotClassSection.objects.filter(
-        class_section_id=bucket, is_active=True, removed=False,
-    ).annotate(vol_count=Count(
-        "slotclasssectionvolunteer",
-        filter=Q(slotclasssectionvolunteer__is_active=True, slotclasssectionvolunteer__removed=False),
-    ))
+        class_section_id=bucket,
+        is_active=True,
+        removed=False,
+    ).annotate(
+        vol_count=Count(
+            "slotclasssectionvolunteer",
+            filter=Q(
+                slotclasssectionvolunteer__is_active=True, slotclasssectionvolunteer__removed=False
+            ),
+        )
+    )
     for scs in active_slot_classes:
         if scs.vol_count > remaining_children:
             raise ConflictError(

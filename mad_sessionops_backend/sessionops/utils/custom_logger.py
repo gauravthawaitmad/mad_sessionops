@@ -17,7 +17,7 @@ class CustomLogger:
     def __init__(self, name: str):
         """
         Initialize the custom logger.
-        
+
         Args:
             name: The name of the logger (usually the module name)
         """
@@ -51,12 +51,11 @@ class CustomLogger:
 def get_logger(name: str) -> CustomLogger:
     """
     Get a custom logger instance.
-    
+
     Args:
         name: The name of the logger
-        
+
     Returns:
         CustomLogger instance
     """
     return CustomLogger(name)
-

@@ -2,18 +2,18 @@
 F-M8a-1: RealtimeSyncLog model tests.
 """
 
-import pytest
 from django.utils import timezone
 
+import pytest
+
 from sessionops.models import (
-    RealtimeSyncLog,
-    User,
-    SYNC_TYPES,
+    ACTIONS_TAKEN,
     EVENT_TYPES,
     SYNC_STATUSES,
-    ACTIONS_TAKEN,
+    SYNC_TYPES,
+    RealtimeSyncLog,
+    User,
 )
-
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -45,6 +45,7 @@ def _log(**kwargs) -> RealtimeSyncLog:
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_realtime_sync_log_insert_with_minimal_fields():

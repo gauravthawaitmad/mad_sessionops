@@ -9,7 +9,7 @@ from pydantic import Field
 
 class SyncRunListItemOut(Schema):
     sync_run_id: int
-    sync_type: Optional[str] = None    # model: run_type
+    sync_type: Optional[str] = None  # model: run_type
     entity_type: Optional[str] = None
     status: str
     started_at: datetime
@@ -18,11 +18,11 @@ class SyncRunListItemOut(Schema):
 
     @staticmethod
     def resolve_sync_run_id(obj) -> int:
-        return obj.id
+        return int(obj.id)
 
     @staticmethod
     def resolve_sync_type(obj) -> Optional[str]:
-        return obj.run_type
+        return None if obj.run_type is None else str(obj.run_type)
 
     @staticmethod
     def resolve_records_fetched(obj) -> int:
@@ -34,7 +34,7 @@ class SyncRunDetailOut(Schema):
     sync_type: Optional[str] = None
     entity_type: Optional[str] = None
     updated_after: Optional[datetime] = None
-    cursor_end:    Optional[datetime] = None
+    cursor_end: Optional[datetime] = None
     target_identifier: Optional[str] = None
     status: str
     started_at: datetime
@@ -54,11 +54,11 @@ class SyncRunDetailOut(Schema):
 
     @staticmethod
     def resolve_sync_run_id(obj) -> int:
-        return obj.id
+        return int(obj.id)
 
     @staticmethod
     def resolve_sync_type(obj) -> Optional[str]:
-        return obj.run_type
+        return None if obj.run_type is None else str(obj.run_type)
 
     @staticmethod
     def resolve_records_fetched(obj) -> int:
@@ -66,13 +66,13 @@ class SyncRunDetailOut(Schema):
 
     @staticmethod
     def resolve_error_details(obj) -> Optional[str]:
-        return obj.error_message
+        return None if obj.error_message is None else str(obj.error_message)
 
     @staticmethod
     def resolve_triggered_by_name(obj) -> Optional[str]:
         if obj.triggered_by_id is None:
             return None
-        return obj.triggered_by.user_display_name
+        return str(obj.triggered_by.user_display_name)
 
 
 class EntityStatOut(Schema):
@@ -113,6 +113,6 @@ class SyncUserByLoginOut(Schema):
 
 
 class SyncTriggerOut(Schema):
-    user_run_id:             Optional[int] = None
-    partner_run_id:          Optional[int] = None
+    user_run_id: Optional[int] = None
+    partner_run_id: Optional[int] = None
     partner_worknode_run_id: Optional[int] = None

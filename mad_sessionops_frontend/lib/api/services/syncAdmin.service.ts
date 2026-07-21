@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -134,47 +134,47 @@ interface RawAdminStats {
 
 function mapListItem(raw: RawSyncRunListItem): SyncRunListItem {
   return {
-    syncRunId:      raw.sync_run_id,
-    syncType:       raw.sync_type,
-    entityType:     raw.entity_type,
-    status:         raw.status,
-    startedAt:      raw.started_at,
-    completedAt:    raw.completed_at,
+    syncRunId: raw.sync_run_id,
+    syncType: raw.sync_type,
+    entityType: raw.entity_type,
+    status: raw.status,
+    startedAt: raw.started_at,
+    completedAt: raw.completed_at,
     recordsFetched: raw.records_fetched,
   };
 }
 
 function mapDetail(raw: RawSyncRunDetail): SyncRunDetail {
   return {
-    syncRunId:        raw.sync_run_id,
-    syncType:         raw.sync_type,
-    entityType:       raw.entity_type,
-    updatedAfter:     raw.updated_after,
-    cursorEnd:        raw.cursor_end,
+    syncRunId: raw.sync_run_id,
+    syncType: raw.sync_type,
+    entityType: raw.entity_type,
+    updatedAfter: raw.updated_after,
+    cursorEnd: raw.cursor_end,
     targetIdentifier: raw.target_identifier,
-    status:           raw.status,
-    startedAt:        raw.started_at,
-    completedAt:      raw.completed_at,
-    recordsFetched:   raw.records_fetched,
-    usersFetched:     raw.users_fetched ?? 0,
-    usersCreated:     raw.users_created ?? 0,
-    usersUpdated:     raw.users_updated ?? 0,
-    partnersFetched:  raw.partners_fetched ?? 0,
-    partnersCreated:  raw.partners_created ?? 0,
-    partnersUpdated:  raw.partners_updated ?? 0,
-    errorDetails:     raw.error_details,
-    triggeredByName:  raw.triggered_by_name,
-    userLogins:       raw.user_logins,
-    partnerIds:       raw.partner_ids,
+    status: raw.status,
+    startedAt: raw.started_at,
+    completedAt: raw.completed_at,
+    recordsFetched: raw.records_fetched,
+    usersFetched: raw.users_fetched ?? 0,
+    usersCreated: raw.users_created ?? 0,
+    usersUpdated: raw.users_updated ?? 0,
+    partnersFetched: raw.partners_fetched ?? 0,
+    partnersCreated: raw.partners_created ?? 0,
+    partnersUpdated: raw.partners_updated ?? 0,
+    errorDetails: raw.error_details,
+    triggeredByName: raw.triggered_by_name,
+    userLogins: raw.user_logins,
+    partnerIds: raw.partner_ids,
   };
 }
 
 function mapEntityStat(raw: RawEntityStat): EntityStat {
   return {
-    total:             raw.total,
-    active:            raw.active,
-    inactive:          raw.inactive,
-    removed:           raw.removed,
+    total: raw.total,
+    active: raw.active,
+    inactive: raw.inactive,
+    removed: raw.removed,
     lastSuccessfulSync: raw.last_successful_sync,
   };
 }
@@ -182,16 +182,16 @@ function mapEntityStat(raw: RawEntityStat): EntityStat {
 function mapStats(raw: RawAdminStats): AdminStats {
   return {
     entityStats: {
-      user:           mapEntityStat(raw.entity_stats.user),
-      partner:        mapEntityStat(raw.entity_stats.partner),
+      user: mapEntityStat(raw.entity_stats.user),
+      partner: mapEntityStat(raw.entity_stats.partner),
       partnerWorknode: mapEntityStat(raw.entity_stats.partner_worknode),
     },
     cronHealth: {
-      healthy:               raw.cron_health.healthy,
-      lastSuccessfulSyncAt:  raw.cron_health.last_successful_sync_at,
+      healthy: raw.cron_health.healthy,
+      lastSuccessfulSyncAt: raw.cron_health.last_successful_sync_at,
       hoursSinceLastSuccess: raw.cron_health.hours_since_last_success,
-      nextExpectedRun:       raw.cron_health.next_expected_run,
-      reason:                raw.cron_health.reason,
+      nextExpectedRun: raw.cron_health.next_expected_run,
+      reason: raw.cron_health.reason,
     },
   };
 }
@@ -213,43 +213,43 @@ interface RawSyncUserByLoginOut {
 }
 
 export async function syncUserByLogin(userLogin: string): Promise<SyncUserByLoginOut> {
-  const raw = await api.post<RawSyncUserByLoginOut>('/admin/sync/user-by-login/', {
+  const raw = await api.post<RawSyncUserByLoginOut>("/admin/sync/user-by-login/", {
     user_login: userLogin,
   });
   return {
     syncRunId: raw.sync_run_id,
     userLogin: raw.user_login,
-    userName:  raw.user_name,
+    userName: raw.user_name,
   };
 }
 
 // ── Trigger manual sync ────────────────────────────────────────────────────────
 
 export interface SyncTriggerOut {
-  userRunId:            number | null;
-  partnerRunId:         number | null;
+  userRunId: number | null;
+  partnerRunId: number | null;
   partnerWorknodeRunId: number | null;
 }
 
 interface RawSyncTriggerOut {
-  user_run_id?:             number | null;
-  partner_run_id?:          number | null;
+  user_run_id?: number | null;
+  partner_run_id?: number | null;
   partner_worknode_run_id?: number | null;
 }
 
 function mapTriggerOut(raw: RawSyncTriggerOut): SyncTriggerOut {
   return {
-    userRunId:            raw.user_run_id            ?? null,
-    partnerRunId:         raw.partner_run_id          ?? null,
+    userRunId: raw.user_run_id ?? null,
+    partnerRunId: raw.partner_run_id ?? null,
     partnerWorknodeRunId: raw.partner_worknode_run_id ?? null,
   };
 }
 
-export type SyncEntityType = 'user' | 'partner' | 'partner_worknode';
+export type SyncEntityType = "user" | "partner" | "partner_worknode";
 
 /** Trigger all 3 entities together (global concurrent guard). */
 export async function triggerManualSync(): Promise<SyncTriggerOut> {
-  const raw = await api.post<RawSyncTriggerOut>('/admin/sync/trigger/', {});
+  const raw = await api.post<RawSyncTriggerOut>("/admin/sync/trigger/", {});
   return mapTriggerOut(raw);
 }
 
@@ -262,7 +262,7 @@ export async function triggerEntitySync(entity: SyncEntityType): Promise<SyncTri
 // ── Existing read API calls ────────────────────────────────────────────────────
 
 export async function fetchSyncRuns(limit = 50): Promise<SyncRunListItem[]> {
-  const raw = await api.get<RawSyncRunListItem[]>('/admin/sync/runs/', { params: { limit } });
+  const raw = await api.get<RawSyncRunListItem[]>("/admin/sync/runs/", { params: { limit } });
   return raw.map(mapListItem);
 }
 
@@ -272,6 +272,6 @@ export async function fetchSyncRunDetail(runId: number): Promise<SyncRunDetail> 
 }
 
 export async function fetchAdminStats(): Promise<AdminStats> {
-  const raw = await api.get<RawAdminStats>('/admin/sync/stats/');
+  const raw = await api.get<RawAdminStats>("/admin/sync/stats/");
   return mapStats(raw);
 }

@@ -3,16 +3,14 @@ from django.db import models
 
 class AcademicYear(models.Model):
     academic_year_id = models.BigAutoField(primary_key=True)
-    label            = models.CharField(max_length=20, unique=True)  # "2026-2027"
-    is_active        = models.BooleanField(default=False)
-    removed          = models.BooleanField(default=False)
-    deleted_at       = models.DateTimeField(null=True, blank=True)
-    created_at       = models.DateTimeField(auto_now_add=True)
-    updated_at       = models.DateTimeField(auto_now=True)
-    created_by       = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
-    )
-    updated_by       = models.ForeignKey(
+    label = models.CharField(max_length=20, unique=True)  # "2026-2027"
+    is_active = models.BooleanField(default=False)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey("sessionops.User", on_delete=models.PROTECT, related_name="+")
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 
@@ -32,19 +30,17 @@ class AcademicYear(models.Model):
 
 class SchoolAcademicYear(models.Model):
     school_academic_year_id = models.BigAutoField(primary_key=True)
-    school_id               = models.BigIntegerField(db_index=True)
-    academic_year_id        = models.ForeignKey(
+    school_id = models.BigIntegerField(db_index=True)
+    academic_year_id = models.ForeignKey(
         AcademicYear, on_delete=models.PROTECT, db_column="academic_year_id"
     )
-    is_active               = models.BooleanField(default=True)
-    removed                 = models.BooleanField(default=False)
-    deleted_at              = models.DateTimeField(null=True, blank=True)
-    created_at              = models.DateTimeField(auto_now_add=True)
-    updated_at              = models.DateTimeField(auto_now=True)
-    created_by              = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
-    )
-    updated_by              = models.ForeignKey(
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey("sessionops.User", on_delete=models.PROTECT, related_name="+")
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 

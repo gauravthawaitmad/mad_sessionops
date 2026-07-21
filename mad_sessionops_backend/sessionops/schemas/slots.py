@@ -6,8 +6,13 @@ from ninja import Schema
 
 class SlotCreateSchema(Schema):
     day_of_week: Literal[
-        "monday", "tuesday", "wednesday", "thursday",
-        "friday", "saturday", "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
     ]
     start_time: time
     end_time: time
@@ -15,11 +20,16 @@ class SlotCreateSchema(Schema):
 
 class SlotUpdateSchema(Schema):
     day_of_week: Literal[
-        "monday", "tuesday", "wednesday", "thursday",
-        "friday", "saturday", "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
     ] | None = None
     start_time: time | None = None
-    end_time:   time | None = None
+    end_time: time | None = None
 
 
 class SlotDeleteResponseSchema(Schema):

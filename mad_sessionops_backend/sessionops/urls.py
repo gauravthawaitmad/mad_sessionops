@@ -5,8 +5,8 @@ Following Dalgo backend best practices for URL routing.
 """
 
 from django.contrib import admin
-from django.urls import include, path
 from django.http import HttpResponse
+from django.urls import include, path
 
 from sessionops.routes import api, public_api
 
@@ -18,7 +18,7 @@ def healthcheck(request):
 
 def trigger_error(request):
     """Endpoint to test Sentry error tracking"""
-    division_by_zero = 1 / 0
+    1 / 0  # noqa: B018 — intentional ZeroDivisionError to verify Sentry capture
     return HttpResponse("This should never be reached")
 
 
@@ -32,7 +32,6 @@ urlpatterns = [
 ]
 
 # WebSocket URL patterns (for future use)
-ws_urlpatterns = [
+ws_urlpatterns: list = [
     # Add websocket routes here
 ]
-

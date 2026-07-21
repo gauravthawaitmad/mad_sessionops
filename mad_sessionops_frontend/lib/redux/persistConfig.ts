@@ -19,9 +19,12 @@ const createNoopStorage = () => ({
 const storage =
   typeof window !== "undefined"
     ? // eslint-disable-next-line @typescript-eslint/no-var-requires
-      (require("redux-persist/lib/storage") as { default: typeof import("redux-persist/lib/storage").default }).default
+      (
+        require("redux-persist/lib/storage") as {
+          default: typeof import("redux-persist/lib/storage").default;
+        }
+      ).default
     : createNoopStorage();
-
 
 /**
  * ============================================

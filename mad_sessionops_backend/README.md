@@ -1,12 +1,14 @@
-# MAD Backend
+# Session-Ops Backend
 
-A Django backend application following Dalgo best practices.
+Django + Ninja backend for Session-Ops, MAD's school operations platform.
 
+[![Backend CI](https://github.com/gauravthawaitmad/mad_sessionops/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/gauravthawaitmad/mad_sessionops/actions/workflows/backend-ci.yml)
+[![codecov](https://codecov.io/gh/gauravthawaitmad/mad_sessionops/branch/main/graph/badge.svg?flag=backend)](https://codecov.io/gh/gauravthawaitmad/mad_sessionops)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
 
-This is a production-ready Django backend application that follows best practices observed in the Dalgo backend project. It includes:
+This is a production Django + Django Ninja backend, originally scaffolded from patterns observed in the Dalgo backend project. It includes:
 
 - **Django 4.2** with Django Ninja for API development
 - **JWT Authentication** with cookie support
@@ -57,7 +59,7 @@ This is a production-ready Django backend application that follows best practice
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.12+
 - PostgreSQL
 - UV package manager (recommended)
 

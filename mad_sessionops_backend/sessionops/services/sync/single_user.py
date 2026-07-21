@@ -58,9 +58,20 @@ def sync_user_by_login(user_login: str, triggered_by: User) -> dict:
         run.users_fetched = 1
         run.users_created = created
         run.users_updated = updated
-        run.user_logins = [{"user_login": synced_user.user_login, "user_name": synced_user.user_display_name}]
+        run.user_logins = [
+            {"user_login": synced_user.user_login, "user_name": synced_user.user_display_name}
+        ]
         run.completed_at = dj_timezone.now()
-        run.save(update_fields=["status", "users_fetched", "users_created", "users_updated", "user_logins", "completed_at"])
+        run.save(
+            update_fields=[
+                "status",
+                "users_fetched",
+                "users_created",
+                "users_updated",
+                "user_logins",
+                "completed_at",
+            ]
+        )
 
         return {"synced_user": synced_user, "sync_run_id": run.id}
 

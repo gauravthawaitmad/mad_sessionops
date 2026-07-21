@@ -8,17 +8,17 @@ import { forwardRef, ReactNode } from "react";
  * Extends MUI TextField with additional features
  */
 
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes } from "react";
 
-export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'color'> {
+export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size" | "color"> {
   label?: string;
   error?: string;
   helperText?: string;
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
   fullWidth?: boolean;
-  variant?: 'outlined' | 'filled' | 'standard';
-  size?: 'small' | 'medium';
+  variant?: "outlined" | "filled" | "standard";
+  size?: "small" | "medium";
   required?: boolean;
 }
 
@@ -31,8 +31,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       startIcon,
       endIcon,
       fullWidth = true,
-      variant = 'outlined',
-      size = 'medium',
+      variant = "outlined",
+      size = "medium",
       required,
       ...props
     },
@@ -62,6 +62,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   }
 );
 
-Input.displayName = 'Input';
+Input.displayName = "Input";
 
 export default Input;

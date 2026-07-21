@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Autocomplete from '@mui/material/Autocomplete';
-import TextField from '@mui/material/TextField';
-import Chip from '@mui/material/Chip';
-import CircularProgress from '@mui/material/CircularProgress';
-import Tooltip from '@mui/material/Tooltip';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { fetchVolunteers, type VolunteerCard } from '@/lib/api/services/volunteers.service';
+import { useEffect, useState } from "react";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
+import Chip from "@mui/material/Chip";
+import CircularProgress from "@mui/material/CircularProgress";
+import Tooltip from "@mui/material/Tooltip";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { fetchVolunteers, type VolunteerCard } from "@/lib/api/services/volunteers.service";
 
-const BORDER = '#E2E8F0';
-const MUTED  = '#94A3B8';
+const BORDER = "#E2E8F0";
+const MUTED = "#94A3B8";
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ export function VolunteerMultiSelect({
   busyVolunteerIds = new Set(),
 }: VolunteerMultiSelectProps) {
   const [volunteers, setVolunteers] = useState<VolunteerCard[]>([]);
-  const [loading, setLoading]       = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
@@ -65,11 +65,18 @@ export function VolunteerMultiSelect({
         const { key, ...rest } = props as typeof props & { key?: React.Key };
         return (
           <li key={key} {...rest}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-              <Typography sx={{ fontSize: '13px' }}>{option.userDisplayName}</Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <Typography sx={{ fontSize: "13px" }}>{option.userDisplayName}</Typography>
               {busy && (
                 <Tooltip title="Already assigned to another class in this slot">
-                  <Typography sx={{ fontSize: '10px', fontWeight: 600, color: '#EF4444' }}>
+                  <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#EF4444" }}>
                     In slot
                   </Typography>
                 </Tooltip>
@@ -87,7 +94,12 @@ export function VolunteerMultiSelect({
               {...rest}
               label={option.userDisplayName}
               size="small"
-              sx={{ fontSize: '12px', bgcolor: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE' }}
+              sx={{
+                fontSize: "12px",
+                bgcolor: "#EFF6FF",
+                color: "#1E40AF",
+                border: "1px solid #BFDBFE",
+              }}
             />
           );
         })
@@ -96,7 +108,11 @@ export function VolunteerMultiSelect({
         <TextField
           {...params}
           size="small"
-          placeholder={volunteers.length === 0 && !loading ? 'No volunteers found for this school' : 'Select volunteers'}
+          placeholder={
+            volunteers.length === 0 && !loading
+              ? "No volunteers found for this school"
+              : "Select volunteers"
+          }
           InputProps={{
             ...params.InputProps,
             endAdornment: (
@@ -107,17 +123,19 @@ export function VolunteerMultiSelect({
             ),
           }}
           sx={{
-            '& .MuiOutlinedInput-root': {
-              fontSize: '13px',
-              bgcolor: '#FAFAFA',
-              '& fieldset': { borderColor: BORDER },
-              '&:hover fieldset': { borderColor: '#CBD5E1' },
-              '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: '1.5px' },
+            "& .MuiOutlinedInput-root": {
+              fontSize: "13px",
+              bgcolor: "#FAFAFA",
+              "& fieldset": { borderColor: BORDER },
+              "&:hover fieldset": { borderColor: "#CBD5E1" },
+              "&.Mui-focused fieldset": { borderColor: "#2563EB", borderWidth: "1.5px" },
             },
           }}
         />
       )}
-      noOptionsText={<Typography sx={{ fontSize: '12px', color: MUTED }}>No volunteers found.</Typography>}
+      noOptionsText={
+        <Typography sx={{ fontSize: "12px", color: MUTED }}>No volunteers found.</Typography>
+      }
     />
   );
 }

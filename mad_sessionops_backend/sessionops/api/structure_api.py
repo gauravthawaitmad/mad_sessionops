@@ -23,7 +23,10 @@ from sessionops.schemas.structure import (
     SectionOut,
 )
 from sessionops.services.rbac.scope import get_school_or_403
-from sessionops.services.structure.bucket_children import add_child_to_bucket, remove_child_from_bucket
+from sessionops.services.structure.bucket_children import (
+    add_child_to_bucket,
+    remove_child_from_bucket,
+)
 from sessionops.services.structure.queries import (
     add_class_to_school,
     list_classes_for_school,
@@ -45,6 +48,7 @@ classes_catalog_router = Router(tags=["Classes Catalog"])
 
 # ── Global class catalog (no auth required) ────────────────────────────────────
 
+
 @classes_catalog_router.get("/", response=list[ClassCatalogItemOut], auth=None)
 def list_class_catalog(request):
     return Class.objects.filter(is_active=True, removed=False).select_related("program_id")
@@ -56,6 +60,7 @@ def list_section_codes(request):
 
 
 # ── School-scoped class endpoints ──────────────────────────────────────────────
+
 
 @structure_router.get("/{school_id}/classes/", response=list[SchoolClassOut])
 def list_school_classes(request, school_id: int):
@@ -77,6 +82,7 @@ def remove_class(request, school_id: int, school_class_id: int):
 
 
 # ── Section endpoints ──────────────────────────────────────────────────────────
+
 
 @structure_router.get("/{school_id}/classes/{school_class_id}/sections/", response=list[SectionOut])
 def list_sections(request, school_id: int, school_class_id: int):
@@ -113,6 +119,7 @@ def remove_section(request, school_id: int, class_section_id: int):
 # Class-agnostic containers, additive alongside the class-scoped section
 # endpoints above. Both operate on the same ClassSection table.
 
+
 @structure_router.get("/{school_id}/sections/", response=list[BucketOut])
 def list_buckets(request, school_id: int):
     get_school_or_403(request.auth, school_id)
@@ -132,6 +139,7 @@ def edit_bucket_view(request, school_id: int, class_section_id: int, payload: Bu
 
 
 # ── Bucket-children membership (F-M6-3) ─────────────────────────────────────────
+
 
 @structure_router.post(
     "/{school_id}/sections/{section_id}/children/",

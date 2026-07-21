@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -60,7 +60,9 @@ export async function fetchBuckets(schoolId: number): Promise<BucketItem[]> {
 }
 
 export async function createBucket(schoolId: number, displayName: string): Promise<BucketItem> {
-  const raw = await api.post<RawBucket>(`/schools/${schoolId}/sections/`, { display_name: displayName });
+  const raw = await api.post<RawBucket>(`/schools/${schoolId}/sections/`, {
+    display_name: displayName,
+  });
   return mapBucket(raw);
 }
 
@@ -69,10 +71,9 @@ export async function editBucket(
   classSectionId: number,
   displayName: string
 ): Promise<BucketItem> {
-  const raw = await api.patch<RawBucket>(
-    `/schools/${schoolId}/sections/${classSectionId}/`,
-    { display_name: displayName }
-  );
+  const raw = await api.patch<RawBucket>(`/schools/${schoolId}/sections/${classSectionId}/`, {
+    display_name: displayName,
+  });
   return mapBucket(raw);
 }
 

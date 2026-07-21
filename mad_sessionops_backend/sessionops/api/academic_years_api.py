@@ -6,9 +6,9 @@ from sessionops.schemas.academic_year import (
     AcademicYearUpdateIn,
 )
 from sessionops.services.academic_year.queries import (
+    create_academic_year,
     get_active_academic_year,
     get_all_academic_years,
-    create_academic_year,
     update_academic_year,
 )
 from sessionops.services.rbac.scope import require_admin_scope

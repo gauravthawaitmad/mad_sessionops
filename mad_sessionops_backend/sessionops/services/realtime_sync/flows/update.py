@@ -21,9 +21,7 @@ def handle_update(
     now = timezone.now()
 
     if diff.worknode_action != "none":
-        from sessionops.services.realtime_sync.flows.cascade import (
-            handle_worknode_change,
-        )
+        from sessionops.services.realtime_sync.flows.cascade import handle_worknode_change
 
         return handle_worknode_change(local_user, payload, diff, now)
 

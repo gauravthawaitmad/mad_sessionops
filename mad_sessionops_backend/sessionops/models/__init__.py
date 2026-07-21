@@ -38,49 +38,48 @@ Usage:
 # looks for models in the 'sessionops' app, it checks sessionops.models.__init__.py.
 # =============================================================================
 
-from sessionops.models.base import SoftDeleteBaseModel, SoftDeleteManager
-from sessionops.models.user import User
-from sessionops.models.user_auth import UserAuth
-from sessionops.models.password_reset_token import PasswordResetToken
-from sessionops.models.partner import Partner
-from sessionops.models.sync_run import SyncRun
-
-# M3 models
-from sessionops.models.partner_worknode import PartnerWorknode
-from sessionops.models.subject import Subject
-from sessionops.models.school_volunteer import SchoolVolunteer
-from sessionops.models.slot import Slot
-from sessionops.models.class_section_subject import ClassSectionSubject
-from sessionops.models.child_subject import ChildSubject
-from sessionops.models.slot_class_section import SlotClassSection
-from sessionops.models.slot_class_section_volunteer import SlotClassSectionVolunteer
-
-# M4 models
-from sessionops.models.session_details import SchoolSessionDetails
-from sessionops.models.school_holiday import SchoolHoliday, HOLIDAY_REASONS
-
-# M8a models
-from sessionops.models.realtime_sync_log import (
-    RealtimeSyncLog,
-    SYNC_TYPES,
-    EVENT_TYPES,
-    SYNC_STATUSES,
-    ACTIONS_TAKEN,
-)
-
 # M2 models
 from sessionops.models.academic_year import AcademicYear, SchoolAcademicYear
-from sessionops.models.program import Program
-from sessionops.models.grade_class import Class, SchoolClass
-from sessionops.models.class_section import ClassSection
+from sessionops.models.base import SoftDeleteBaseModel, SoftDeleteManager
 from sessionops.models.child import (
+    BatchChild,
     Child,
     ChildClass,
     ChildClassSection,
-    BatchChild,
     ChildProgram,
     ChildRemovalLog,
 )
+from sessionops.models.child_subject import ChildSubject
+from sessionops.models.class_section import ClassSection
+from sessionops.models.class_section_subject import ClassSectionSubject
+from sessionops.models.grade_class import Class, SchoolClass
+from sessionops.models.partner import Partner
+
+# M3 models
+from sessionops.models.partner_worknode import PartnerWorknode
+from sessionops.models.password_reset_token import PasswordResetToken
+from sessionops.models.program import Program
+
+# M8a models
+from sessionops.models.realtime_sync_log import (
+    ACTIONS_TAKEN,
+    EVENT_TYPES,
+    SYNC_STATUSES,
+    SYNC_TYPES,
+    RealtimeSyncLog,
+)
+from sessionops.models.school_holiday import HOLIDAY_REASONS, SchoolHoliday
+from sessionops.models.school_volunteer import SchoolVolunteer
+
+# M4 models
+from sessionops.models.session_details import SchoolSessionDetails
+from sessionops.models.slot import Slot
+from sessionops.models.slot_class_section import SlotClassSection
+from sessionops.models.slot_class_section_volunteer import SlotClassSectionVolunteer
+from sessionops.models.subject import Subject
+from sessionops.models.sync_run import SyncRun
+from sessionops.models.user import User
+from sessionops.models.user_auth import UserAuth
 
 __all__ = [
     "SchoolSessionDetails",

@@ -21,7 +21,6 @@ EXPIRY_MINUTES = 30
 
 
 class PasswordResetToken(models.Model):
-
     class InvalidationReason(models.TextChoices):
         CONSUMED = "consumed", "Used by user"
         SUPERSEDED = "superseded", "Voided — newer link was requested"
@@ -67,9 +66,7 @@ class PasswordResetToken(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return (
-            f"PasswordResetToken(user_id={self.user_id}, status={self.status})"
-        )
+        return f"PasswordResetToken(user_id={self.user_id}, status={self.status})"
 
     def save(self, *args, **kwargs):
         if not self.expires_at:

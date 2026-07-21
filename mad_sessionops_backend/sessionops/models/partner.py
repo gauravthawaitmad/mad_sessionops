@@ -1,4 +1,5 @@
 from django.db import models
+
 from sessionops.models.base import SoftDeleteBaseModel
 
 
@@ -82,7 +83,7 @@ class Partner(SoftDeleteBaseModel):
     # -----------------------------------------------------------------------
     partner_created_date = models.DateTimeField(null=True, blank=True)  # from Hasura
     partner_updated_date = models.DateTimeField(null=True, blank=True)  # from Hasura
-    synced_at = models.DateTimeField(null=True, blank=True)             # our sync time
+    synced_at = models.DateTimeField(null=True, blank=True)  # our sync time
 
     class Meta:
         db_table = "partner"

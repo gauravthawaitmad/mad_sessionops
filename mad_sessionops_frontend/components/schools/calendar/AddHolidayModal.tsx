@@ -1,55 +1,60 @@
-'use client';
+"use client";
 
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import MenuItem from '@mui/material/MenuItem';
-import IconButton from '@mui/material/IconButton';
-import CircularProgress from '@mui/material/CircularProgress';
-import { X } from 'lucide-react';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
-import { createHoliday, type HolidayOut } from '@/lib/api/services/holidays.service';
-import { type SessionOut } from '@/lib/api/services/sessions.service';
-import { colors } from '@/config/design-tokens';
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import MenuItem from "@mui/material/MenuItem";
+import IconButton from "@mui/material/IconButton";
+import CircularProgress from "@mui/material/CircularProgress";
+import { X } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { createHoliday, type HolidayOut } from "@/lib/api/services/holidays.service";
+import { type SessionOut } from "@/lib/api/services/sessions.service";
+import { colors } from "@/config/design-tokens";
 
 const REASONS = [
-  { value: 'mad_event',               label: 'MAD event (eg: YEC, etc)' },
-  { value: 'holidays',                label: 'Holidays' },
-  { value: 'cancelled_from_school_end', label: "Cancelled from school's end" },
+  { value: "mad_event", label: "MAD event (eg: YEC, etc)" },
+  { value: "holidays", label: "Holidays" },
+  { value: "cancelled_from_school_end", label: "Cancelled from school's end" },
 ] as const;
 
-const schema = z.object({
-  holiday_reason:      z.enum(['mad_event', 'holidays', 'cancelled_from_school_end'], { error: 'Select a reason' }),
-  start_date:          z.string().min(1, 'Required'),
-  end_date:            z.string().min(1, 'Required'),
-  holiday_description: z.string().optional(),
-  remarks:             z.string().optional(),
-}).refine((d) => !d.start_date || !d.end_date || d.start_date <= d.end_date, {
-  message: 'Start date must be on or before end date',
-  path: ['end_date'],
-});
+const schema = z
+  .object({
+    holiday_reason: z.enum(["mad_event", "holidays", "cancelled_from_school_end"], {
+      error: "Select a reason",
+    }),
+    start_date: z.string().min(1, "Required"),
+    end_date: z.string().min(1, "Required"),
+    holiday_description: z.string().optional(),
+    remarks: z.string().optional(),
+  })
+  .refine((d) => !d.start_date || !d.end_date || d.start_date <= d.end_date, {
+    message: "Start date must be on or before end date",
+    path: ["end_date"],
+  });
 
 type Form = z.infer<typeof schema>;
 
-const BORDER = '#E2E8F0';
-const LABEL  = '#374151';
+const BORDER = "#E2E8F0";
+const LABEL = "#374151";
 
 const fieldSx = {
-  '& .MuiOutlinedInput-root': {
-    fontSize: '13px', bgcolor: '#FAFAFA',
-    '& fieldset': { borderColor: BORDER },
-    '&:hover fieldset': { borderColor: '#CBD5E1' },
-    '&.Mui-focused fieldset': { borderColor: colors.primary[600], borderWidth: '1.5px' },
+  "& .MuiOutlinedInput-root": {
+    fontSize: "13px",
+    bgcolor: "#FAFAFA",
+    "& fieldset": { borderColor: BORDER },
+    "&:hover fieldset": { borderColor: "#CBD5E1" },
+    "&.Mui-focused fieldset": { borderColor: colors.primary[600], borderWidth: "1.5px" },
   },
-  '& .MuiFormHelperText-root': { fontSize: '11px', mt: 0.5 },
+  "& .MuiFormHelperText-root": { fontSize: "11px", mt: 0.5 },
 };
 
 interface AddHolidayModalProps {
@@ -60,67 +65,130 @@ interface AddHolidayModalProps {
   onCreated: (holiday: HolidayOut) => void;
 }
 
-export function AddHolidayModal({ open, schoolId, session, onClose, onCreated }: AddHolidayModalProps) {
+export function AddHolidayModal({
+  open,
+  schoolId,
+  session,
+  onClose,
+  onCreated,
+}: AddHolidayModalProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const { control, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<Form>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<Form>({
     resolver: zodResolver(schema),
-    defaultValues: { holiday_reason: 'holidays', start_date: '', end_date: '', holiday_description: '', remarks: '' },
+    defaultValues: {
+      holiday_reason: "holidays",
+      start_date: "",
+      end_date: "",
+      holiday_description: "",
+      remarks: "",
+    },
   });
 
-  const watchedStart = watch('start_date');
-  const watchedEnd   = watch('end_date');
+  const watchedStart = watch("start_date");
+  const watchedEnd = watch("end_date");
 
-  const handleClose = () => { if (isSubmitting) return; reset(); setSubmitError(null); onClose(); };
+  const handleClose = () => {
+    if (isSubmitting) return;
+    reset();
+    setSubmitError(null);
+    onClose();
+  };
 
   const onSubmit = async (values: Form) => {
     setSubmitError(null);
     try {
       const h = await createHoliday(schoolId, {
-        holidayReason:      values.holiday_reason,
-        startDate:          values.start_date,
-        endDate:            values.end_date,
+        holidayReason: values.holiday_reason,
+        startDate: values.start_date,
+        endDate: values.end_date,
         holidayDescription: values.holiday_description || null,
-        remarks:            values.remarks || null,
+        remarks: values.remarks || null,
       });
-      reset(); onCreated(h);
+      reset();
+      onCreated(h);
     } catch (err: any) {
-      if (err?.status === 409 || err?.code === 'CONFLICT') {
-        setSubmitError(err?.data?.error?.message || 'This holiday overlaps with an existing one. Remove it first.');
+      if (err?.status === 409 || err?.code === "CONFLICT") {
+        setSubmitError(
+          err?.data?.error?.message ||
+            "This holiday overlaps with an existing one. Remove it first."
+        );
       } else {
-        setSubmitError(err?.message || 'Failed to save holiday. Please try again.');
+        setSubmitError(err?.message || "Failed to save holiday. Please try again.");
       }
     }
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth
-      PaperProps={{ sx: { borderRadius: '14px', boxShadow: '0 20px 60px rgba(0,0,0,0.12)' } }}
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: "14px", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" } }}
     >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', pt: 2.5, pb: 1.5, px: 3, borderBottom: `1px solid ${BORDER}` }}>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          pt: 2.5,
+          pb: 1.5,
+          px: 3,
+          borderBottom: `1px solid ${BORDER}`,
+        }}
+      >
         <Box>
-          <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>Add Holiday</Typography>
-          <Typography sx={{ fontSize: '11px', color: '#94A3B8', mt: 0.25 }}>Select a reason and date range within the session window</Typography>
+          <Typography sx={{ fontSize: "16px", fontWeight: 700, color: "#0F172A" }}>
+            Add Holiday
+          </Typography>
+          <Typography sx={{ fontSize: "11px", color: "#94A3B8", mt: 0.25 }}>
+            Select a reason and date range within the session window
+          </Typography>
         </Box>
-        <IconButton size="small" onClick={handleClose} disabled={isSubmitting}
-          sx={{ mt: 0.25, color: '#94A3B8', '&:hover': { bgcolor: '#F1F5F9', color: '#475569' } }}>
+        <IconButton
+          size="small"
+          onClick={handleClose}
+          disabled={isSubmitting}
+          sx={{ mt: 0.25, color: "#94A3B8", "&:hover": { bgcolor: "#F1F5F9", color: "#475569" } }}
+        >
           <X size={16} />
         </IconButton>
       </DialogTitle>
 
       <DialogContent sx={{ px: 3, pt: 2.5, pb: 0 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {/* Reason */}
           <Box>
-            <Typography sx={{ fontSize: '12px', fontWeight: 600, color: LABEL, mb: 0.75 }}>
-              Reason <Typography component="span" sx={{ color: '#EF4444', fontSize: '12px' }}>*</Typography>
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: LABEL, mb: 0.75 }}>
+              Reason{" "}
+              <Typography component="span" sx={{ color: "#EF4444", fontSize: "12px" }}>
+                *
+              </Typography>
             </Typography>
-            <Controller name="holiday_reason" control={control}
+            <Controller
+              name="holiday_reason"
+              control={control}
               render={({ field }) => (
-                <TextField {...field} select size="small" fullWidth error={!!errors.holiday_reason}
-                  helperText={errors.holiday_reason?.message} sx={fieldSx}>
+                <TextField
+                  {...field}
+                  select
+                  size="small"
+                  fullWidth
+                  error={!!errors.holiday_reason}
+                  helperText={errors.holiday_reason?.message}
+                  sx={fieldSx}
+                >
                   {REASONS.map((r) => (
-                    <MenuItem key={r.value} value={r.value} sx={{ fontSize: '13px' }}>{r.label}</MenuItem>
+                    <MenuItem key={r.value} value={r.value} sx={{ fontSize: "13px" }}>
+                      {r.label}
+                    </MenuItem>
                   ))}
                 </TextField>
               )}
@@ -128,67 +196,162 @@ export function AddHolidayModal({ open, schoolId, session, onClose, onCreated }:
           </Box>
 
           {/* Dates — side by side */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
             <Box>
-              <Typography sx={{ fontSize: '12px', fontWeight: 600, color: LABEL, mb: 0.75 }}>
-                Start date <Typography component="span" sx={{ color: '#EF4444', fontSize: '12px' }}>*</Typography>
+              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: LABEL, mb: 0.75 }}>
+                Start date{" "}
+                <Typography component="span" sx={{ color: "#EF4444", fontSize: "12px" }}>
+                  *
+                </Typography>
               </Typography>
-              <Controller name="start_date" control={control}
+              <Controller
+                name="start_date"
+                control={control}
                 render={({ field }) => (
-                  <TextField {...field} type="date" size="small" fullWidth
-                    error={!!errors.start_date} helperText={errors.start_date?.message}
-                    inputProps={{ min: session.startDate, max: watchedEnd || session.endDate, 'data-testid': 'holiday-start-date' }}
-                    sx={fieldSx} />
-                )} />
+                  <TextField
+                    {...field}
+                    type="date"
+                    size="small"
+                    fullWidth
+                    error={!!errors.start_date}
+                    helperText={errors.start_date?.message}
+                    inputProps={{
+                      min: session.startDate,
+                      max: watchedEnd || session.endDate,
+                      "data-testid": "holiday-start-date",
+                    }}
+                    sx={fieldSx}
+                  />
+                )}
+              />
             </Box>
             <Box>
-              <Typography sx={{ fontSize: '12px', fontWeight: 600, color: LABEL, mb: 0.75 }}>
-                End date <Typography component="span" sx={{ color: '#EF4444', fontSize: '12px' }}>*</Typography>
+              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: LABEL, mb: 0.75 }}>
+                End date{" "}
+                <Typography component="span" sx={{ color: "#EF4444", fontSize: "12px" }}>
+                  *
+                </Typography>
               </Typography>
-              <Controller name="end_date" control={control}
+              <Controller
+                name="end_date"
+                control={control}
                 render={({ field }) => (
-                  <TextField {...field} type="date" size="small" fullWidth
-                    error={!!errors.end_date} helperText={errors.end_date?.message}
-                    inputProps={{ min: watchedStart || session.startDate, max: session.endDate, 'data-testid': 'holiday-end-date' }}
-                    sx={fieldSx} />
-                )} />
+                  <TextField
+                    {...field}
+                    type="date"
+                    size="small"
+                    fullWidth
+                    error={!!errors.end_date}
+                    helperText={errors.end_date?.message}
+                    inputProps={{
+                      min: watchedStart || session.startDate,
+                      max: session.endDate,
+                      "data-testid": "holiday-end-date",
+                    }}
+                    sx={fieldSx}
+                  />
+                )}
+              />
             </Box>
           </Box>
 
           {/* Description */}
           <Box>
-            <Typography sx={{ fontSize: '12px', fontWeight: 600, color: LABEL, mb: 0.75 }}>Description <Typography component="span" sx={{ fontSize: '11px', color: colors.gray[400] }}>(optional)</Typography></Typography>
-            <Controller name="holiday_description" control={control}
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: LABEL, mb: 0.75 }}>
+              Description{" "}
+              <Typography component="span" sx={{ fontSize: "11px", color: colors.gray[400] }}>
+                (optional)
+              </Typography>
+            </Typography>
+            <Controller
+              name="holiday_description"
+              control={control}
               render={({ field }) => (
-                <TextField {...field} size="small" fullWidth multiline rows={2} placeholder="e.g. Independence Day" sx={fieldSx} />
-              )} />
+                <TextField
+                  {...field}
+                  size="small"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  placeholder="e.g. Independence Day"
+                  sx={fieldSx}
+                />
+              )}
+            />
           </Box>
 
           {/* Remarks */}
           <Box>
-            <Typography sx={{ fontSize: '12px', fontWeight: 600, color: LABEL, mb: 0.75 }}>Remarks <Typography component="span" sx={{ fontSize: '11px', color: colors.gray[400] }}>(optional)</Typography></Typography>
-            <Controller name="remarks" control={control}
+            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: LABEL, mb: 0.75 }}>
+              Remarks{" "}
+              <Typography component="span" sx={{ fontSize: "11px", color: colors.gray[400] }}>
+                (optional)
+              </Typography>
+            </Typography>
+            <Controller
+              name="remarks"
+              control={control}
               render={({ field }) => (
-                <TextField {...field} size="small" fullWidth multiline rows={2} placeholder="Internal notes" sx={fieldSx} />
-              )} />
+                <TextField
+                  {...field}
+                  size="small"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  placeholder="Internal notes"
+                  sx={fieldSx}
+                />
+              )}
+            />
           </Box>
 
           {submitError && (
-            <Box sx={{ px: 1.5, py: 1, borderRadius: '7px', bgcolor: '#FEF2F2', border: '1px solid #FECACA' }}>
-              <Typography sx={{ fontSize: '12px', color: '#DC2626' }}>{submitError}</Typography>
+            <Box
+              sx={{
+                px: 1.5,
+                py: 1,
+                borderRadius: "7px",
+                bgcolor: "#FEF2F2",
+                border: "1px solid #FECACA",
+              }}
+            >
+              <Typography sx={{ fontSize: "12px", color: "#DC2626" }}>{submitError}</Typography>
             </Box>
           )}
         </Box>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2.25, gap: 1, borderTop: `1px solid ${colors.gray[100]}` }}>
-        <Button onClick={handleClose} disabled={isSubmitting} variant="outlined"
-          sx={{ textTransform: 'none', fontSize: '13px', fontWeight: 500, borderColor: BORDER, color: colors.gray[700], '&:hover': { borderColor: '#CBD5E1', bgcolor: colors.gray[50] } }}>
+        <Button
+          onClick={handleClose}
+          disabled={isSubmitting}
+          variant="outlined"
+          sx={{
+            textTransform: "none",
+            fontSize: "13px",
+            fontWeight: 500,
+            borderColor: BORDER,
+            color: colors.gray[700],
+            "&:hover": { borderColor: "#CBD5E1", bgcolor: colors.gray[50] },
+          }}
+        >
           Cancel
         </Button>
-        <Button onClick={handleSubmit(onSubmit)} disabled={isSubmitting} variant="contained"
-          sx={{ textTransform: 'none', fontSize: '13px', fontWeight: 600, bgcolor: '#2563EB', boxShadow: 'none', '&:hover': { bgcolor: '#1D4ED8', boxShadow: 'none' }, minWidth: 90 }}>
-          {isSubmitting ? <CircularProgress size={15} sx={{ color: '#fff' }} /> : 'Save'}
+        <Button
+          onClick={handleSubmit(onSubmit)}
+          disabled={isSubmitting}
+          variant="contained"
+          sx={{
+            textTransform: "none",
+            fontSize: "13px",
+            fontWeight: 600,
+            bgcolor: "#2563EB",
+            boxShadow: "none",
+            "&:hover": { bgcolor: "#1D4ED8", boxShadow: "none" },
+            minWidth: 90,
+          }}
+        >
+          {isSubmitting ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : "Save"}
         </Button>
       </DialogActions>
     </Dialog>

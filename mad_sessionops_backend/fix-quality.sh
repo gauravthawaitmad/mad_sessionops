@@ -17,20 +17,20 @@ fi
 
 # 1. Black - Format code
 echo "1/3 Formatting code with Black..."
-black madui/
+black sessionops/
 echo "✓ Black formatting complete"
 echo ""
 
 # 2. isort - Sort imports
 echo "2/3 Sorting imports with isort..."
-isort madui/
+isort sessionops/
 echo "✓ Import sorting complete"
 echo ""
 
 # 3. Remove unused imports (if autopep8 is installed)
 echo "3/3 Cleaning up code..."
 if command -v autopep8 &> /dev/null; then
-    autopep8 --in-place --recursive madui/
+    autopep8 --in-place --recursive sessionops/
     echo "✓ Code cleanup complete"
 else
     echo "⚠ autopep8 not installed, skipping cleanup"

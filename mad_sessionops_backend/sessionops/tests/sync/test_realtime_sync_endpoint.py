@@ -10,9 +10,10 @@ import json
 import threading
 from unittest.mock import patch
 
-import pytest
 from django.test import Client
 from django.utils import timezone
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import RealtimeSyncLog, User
@@ -150,9 +151,7 @@ def test_endpoint_accepts_function_lead_jwt(client):
 def test_endpoint_accepts_service_token(client):
     TEST_TOKEN = "test-service-secret-abc"
     uid = next(_UID)
-    with patch(
-        "sessionops.services.realtime_sync.auth.INTERNAL_SERVICE_TOKEN", TEST_TOKEN
-    ):
+    with patch("sessionops.services.realtime_sync.auth.INTERNAL_SERVICE_TOKEN", TEST_TOKEN):
         resp = client.post(
             _url(uid),
             data=json.dumps(_payload()),
@@ -167,9 +166,7 @@ def test_endpoint_accepts_service_token(client):
 @pytest.mark.django_db
 def test_endpoint_rejects_wrong_service_token(client):
     uid = next(_UID)
-    with patch(
-        "sessionops.services.realtime_sync.auth.INTERNAL_SERVICE_TOKEN", "correct-token"
-    ):
+    with patch("sessionops.services.realtime_sync.auth.INTERNAL_SERVICE_TOKEN", "correct-token"):
         resp = client.post(
             _url(uid),
             data=json.dumps(_payload()),

@@ -38,6 +38,5 @@ export type { ConfirmDialogProps } from "./ConfirmDialog";
 export { FileUpload } from "./FileUpload";
 export type { FileUploadProps } from "./FileUpload";
 
-
 export { Label } from "./Label";
 export type { LabelProps } from "./Label";

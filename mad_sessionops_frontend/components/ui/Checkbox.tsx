@@ -17,7 +17,7 @@ import { forwardRef } from "react";
  * Reusable checkbox with label and validation.
  */
 
-export interface CheckboxProps extends Omit<MuiCheckboxProps, 'color'> {
+export interface CheckboxProps extends Omit<MuiCheckboxProps, "color"> {
   /** Checkbox label */
   label?: string;
   /** Error message */
@@ -29,23 +29,8 @@ export interface CheckboxProps extends Omit<MuiCheckboxProps, 'color'> {
 }
 
 export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
-  (
-    {
-      label,
-      error,
-      helperText,
-      color = "primary",
-      ...props
-    },
-    ref
-  ) => {
-    const checkbox = (
-      <MuiCheckbox
-        ref={ref}
-        color={color}
-        {...props}
-      />
-    );
+  ({ label, error, helperText, color = "primary", ...props }, ref) => {
+    const checkbox = <MuiCheckbox ref={ref} color={color} {...props} />;
 
     // If no label, return just checkbox
     if (!label) {
@@ -53,9 +38,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
         <Box>
           {checkbox}
           {(error || helperText) && (
-            <FormHelperText error={!!error}>
-              {error || helperText}
-            </FormHelperText>
+            <FormHelperText error={!!error}>{error || helperText}</FormHelperText>
           )}
         </Box>
       );
@@ -69,7 +52,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
           label={label}
           sx={{
             ...(error && {
-              color: 'error.main',
+              color: "error.main",
             }),
           }}
         />

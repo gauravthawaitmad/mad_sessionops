@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -75,13 +75,8 @@ function mapSlotClass(raw: RawSlotClass): SlotClassItem {
 
 // ── API calls ──────────────────────────────────────────────────────────────────
 
-export async function fetchSlotClasses(
-  schoolId: number,
-  slotId: number
-): Promise<SlotClassItem[]> {
-  const raw = await api.get<RawSlotClass[]>(
-    `/schools/${schoolId}/slots/${slotId}/slot-classes/`
-  );
+export async function fetchSlotClasses(schoolId: number, slotId: number): Promise<SlotClassItem[]> {
+  const raw = await api.get<RawSlotClass[]>(`/schools/${schoolId}/slots/${slotId}/slot-classes/`);
   return raw.map(mapSlotClass);
 }
 

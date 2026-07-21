@@ -1,27 +1,27 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { ManageBucketChildrenModal } from '@/components/schools/structure/ManageBucketChildrenModal';
-import type { BucketItem } from '@/lib/api/services/buckets.service';
-import type { ChildItem } from '@/lib/api/services/children.service';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { ManageBucketChildrenModal } from "@/components/schools/structure/ManageBucketChildrenModal";
+import type { BucketItem } from "@/lib/api/services/buckets.service";
+import type { ChildItem } from "@/lib/api/services/children.service";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('@/lib/api/services/buckets.service', () => ({
+vi.mock("@/lib/api/services/buckets.service", () => ({
   addChildToBucket: vi.fn(),
   removeChildFromBucket: vi.fn(),
 }));
 
-vi.mock('@/lib/api/services/children.service', () => ({
+vi.mock("@/lib/api/services/children.service", () => ({
   fetchChildren: vi.fn(),
 }));
 
-vi.mock('@/lib/toast/toast', () => ({
+vi.mock("@/lib/toast/toast", () => ({
   showSuccess: vi.fn(),
 }));
 
-import { addChildToBucket, removeChildFromBucket } from '@/lib/api/services/buckets.service';
-import { fetchChildren } from '@/lib/api/services/children.service';
+import { addChildToBucket, removeChildFromBucket } from "@/lib/api/services/buckets.service";
+import { fetchChildren } from "@/lib/api/services/children.service";
 
 const noop = () => {};
 
@@ -29,8 +29,8 @@ function makeChild(id: number, firstName: string, currentSectionId: number | nul
   return {
     childId: id,
     firstName,
-    lastName: 'Test',
-    gender: 'other',
+    lastName: "Test",
+    gender: "other",
     age: 10,
     city: null,
     motherTongue: null,
@@ -38,33 +38,33 @@ function makeChild(id: number, firstName: string, currentSectionId: number | nul
     dateOfEnrollment: null,
     madJoiningDate: null,
     isActive: true,
-    currentSchoolClass: { schoolClassId: 1, className: 'Class 1' },
+    currentSchoolClass: { schoolClassId: 1, className: "Class 1" },
     currentSection: currentSectionId
-      ? { classSectionId: currentSectionId, sectionDisplayName: 'Bucket', sectionName: 'bucket' }
+      ? { classSectionId: currentSectionId, sectionDisplayName: "Bucket", sectionName: "bucket" }
       : null,
   };
 }
 
 const BUCKET_2_CHILDREN: BucketItem = {
   classSectionId: 10,
-  sectionName: 'group_1',
-  sectionDisplayName: 'Group 1',
+  sectionName: "group_1",
+  sectionDisplayName: "Group 1",
   activeChildrenCount: 2,
 };
 
 const BUCKET_5_CHILDREN: BucketItem = {
   classSectionId: 10,
-  sectionName: 'group_1',
-  sectionDisplayName: 'Group 1',
+  sectionName: "group_1",
+  sectionDisplayName: "Group 1",
   activeChildrenCount: 5,
 };
 
-describe('ManageBucketChildrenModal — UX polish', () => {
+describe("ManageBucketChildrenModal — UX polish", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('test_renders_as_centered_dialog_not_side_drawer', async () => {
+  it("test_renders_as_centered_dialog_not_side_drawer", async () => {
     vi.mocked(fetchChildren).mockResolvedValue([]);
 
     render(
@@ -79,11 +79,11 @@ describe('ManageBucketChildrenModal — UX polish', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
   });
 
-  it('test_search_field_has_visible_label', async () => {
+  it("test_search_field_has_visible_label", async () => {
     vi.mocked(fetchChildren).mockResolvedValue([]);
 
     render(
@@ -98,13 +98,13 @@ describe('ManageBucketChildrenModal — UX polish', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Search children')).toBeInTheDocument();
+      expect(screen.getByText("Search children")).toBeInTheDocument();
     });
   });
 
-  it('test_renders_roster_and_available_children', async () => {
-    const roster = [makeChild(1, 'Asha', 10)];
-    const allActive = [makeChild(1, 'Asha', 10), makeChild(2, 'Kiran', null)];
+  it("test_renders_roster_and_available_children", async () => {
+    const roster = [makeChild(1, "Asha", 10)];
+    const allActive = [makeChild(1, "Asha", 10), makeChild(2, "Kiran", null)];
     vi.mocked(fetchChildren).mockImplementation((_schoolId, params) => {
       if (params?.section_id) return Promise.resolve(roster);
       return Promise.resolve(allActive);
@@ -122,22 +122,26 @@ describe('ManageBucketChildrenModal — UX polish', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Asha Test')).toBeInTheDocument();
-      expect(screen.getByText('Kiran Test')).toBeInTheDocument();
+      expect(screen.getByText("Asha Test")).toBeInTheDocument();
+      expect(screen.getByText("Kiran Test")).toBeInTheDocument();
     });
   });
 
-  it('test_add_child_calls_addChildToBucket_and_shows_success_toast', async () => {
+  it("test_add_child_calls_addChildToBucket_and_shows_success_toast", async () => {
     const roster: ChildItem[] = [];
-    const allActive = [makeChild(2, 'Kiran', null)];
+    const allActive = [makeChild(2, "Kiran", null)];
     vi.mocked(fetchChildren).mockImplementation((_schoolId, params) => {
       if (params?.section_id) return Promise.resolve(roster);
       return Promise.resolve(allActive);
     });
-    vi.mocked(addChildToBucket).mockResolvedValue({ childClassSectionId: 1, childId: 2, classSectionId: 10 });
+    vi.mocked(addChildToBucket).mockResolvedValue({
+      childClassSectionId: 1,
+      childId: 2,
+      classSectionId: 10,
+    });
     const onChildAdded = vi.fn();
 
-    const { showSuccess } = await import('@/lib/toast/toast');
+    const { showSuccess } = await import("@/lib/toast/toast");
 
     render(
       <ManageBucketChildrenModal
@@ -150,19 +154,19 @@ describe('ManageBucketChildrenModal — UX polish', () => {
       />
     );
 
-    await waitFor(() => expect(screen.getByText('Kiran Test')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Kiran Test")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add child' }));
+    await userEvent.click(screen.getByRole("button", { name: "Add child" }));
 
     await waitFor(() => {
       expect(addChildToBucket).toHaveBeenCalledWith(580, 10, 2);
       expect(onChildAdded).toHaveBeenCalled();
-      expect(showSuccess).toHaveBeenCalledWith('Kiran added to Group 1');
+      expect(showSuccess).toHaveBeenCalledWith("Kiran added to Group 1");
     });
   });
 
-  it('test_remove_child_calls_removeChildFromBucket', async () => {
-    const roster = [makeChild(1, 'Asha', 10)];
+  it("test_remove_child_calls_removeChildFromBucket", async () => {
+    const roster = [makeChild(1, "Asha", 10)];
     vi.mocked(fetchChildren).mockImplementation((_schoolId, params) => {
       if (params?.section_id) return Promise.resolve(roster);
       return Promise.resolve([]);
@@ -181,9 +185,9 @@ describe('ManageBucketChildrenModal — UX polish', () => {
       />
     );
 
-    await waitFor(() => expect(screen.getByText('Asha Test')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Asha Test")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remove child' }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove child" }));
 
     await waitFor(() => {
       expect(removeChildFromBucket).toHaveBeenCalledWith(580, 10, 1);
@@ -191,8 +195,8 @@ describe('ManageBucketChildrenModal — UX polish', () => {
     });
   });
 
-  it('test_add_disabled_at_5_children', async () => {
-    const allActive = [makeChild(2, 'Kiran', null)];
+  it("test_add_disabled_at_5_children", async () => {
+    const allActive = [makeChild(2, "Kiran", null)];
     vi.mocked(fetchChildren).mockImplementation((_schoolId, params) => {
       if (params?.section_id) return Promise.resolve([]);
       return Promise.resolve(allActive);
@@ -209,20 +213,20 @@ describe('ManageBucketChildrenModal — UX polish', () => {
       />
     );
 
-    await waitFor(() => expect(screen.getByText('Kiran Test')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Kiran Test")).toBeInTheDocument());
 
-    expect(screen.getByRole('button', { name: 'Add child' })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add child" })).toBeDisabled();
   });
 
-  it('test_server_409_already_in_another_bucket_shown_inline', async () => {
-    const allActive = [makeChild(2, 'Kiran', null)];
+  it("test_server_409_already_in_another_bucket_shown_inline", async () => {
+    const allActive = [makeChild(2, "Kiran", null)];
     vi.mocked(fetchChildren).mockImplementation((_schoolId, params) => {
       if (params?.section_id) return Promise.resolve([]);
       return Promise.resolve(allActive);
     });
     vi.mocked(addChildToBucket).mockRejectedValue({
       status: 409,
-      code: 'CONFLICT',
+      code: "CONFLICT",
       message: 'Kiran Test is already in bucket "Group 2". Remove them from that bucket first.',
     });
 
@@ -237,13 +241,15 @@ describe('ManageBucketChildrenModal — UX polish', () => {
       />
     );
 
-    await waitFor(() => expect(screen.getByText('Kiran Test')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Kiran Test")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add child' }));
+    await userEvent.click(screen.getByRole("button", { name: "Add child" }));
 
     await waitFor(() => {
       expect(
-        screen.getByText('Kiran Test is already in bucket "Group 2". Remove them from that bucket first.')
+        screen.getByText(
+          'Kiran Test is already in bucket "Group 2". Remove them from that bucket first.'
+        )
       ).toBeInTheDocument();
     });
   });

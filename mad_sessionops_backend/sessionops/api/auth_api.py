@@ -251,13 +251,13 @@ def google_auth(request, data: GoogleAuthSchema):
             code_verifier=data.codeVerifier,
             redirect_uri=data.redirectUri,
         )
-        logger.info(f"=== AuthService.login_with_google returned successfully ===")
+        logger.info("=== AuthService.login_with_google returned successfully ===")
         logger.info(f"Result type: {type(result)}")
         logger.info(f"Result user email: {result.user.email}")
         logger.info(f"Result tokens.access_token exists: {bool(result.tokens.access_token)}")
         logger.info(f"Result tokens.refresh_token exists: {bool(result.tokens.refresh_token)}")
         logger.info(f"Access token (first 50 chars): {result.tokens.access_token[:50]}...")
-        logger.info(f"=== Returning result to frontend ===")
+        logger.info("=== Returning result to frontend ===")
         return result
     except AuthenticationError as e:
         logger.error(f"AuthenticationError: {e.message} (code: {e.error_code})")

@@ -1,9 +1,4 @@
-import axios, {
-  AxiosInstance,
-  AxiosError,
-  InternalAxiosRequestConfig,
-  AxiosResponse,
-} from "axios";
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { getAccessToken, getRefreshToken, storeDispatch } from "@/lib/redux/storeAccessor";
 import { setAuthCookie, clearAuthCookie } from "@/lib/auth/cookieUtils";
 
@@ -11,8 +6,7 @@ import { setAuthCookie, clearAuthCookie } from "@/lib/auth/cookieUtils";
 // CONFIGURATION
 // ============================================================================
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 const REQUEST_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || "30000", 10);
 
 // Prevent multiple simultaneous refresh calls — queue waiting requests.
@@ -71,17 +65,14 @@ apiClient.interceptors.request.use(
       config.headers["X-Request-ID"] = generateRequestId();
       config.headers["X-Client-Version"] = "1.0.0";
       config.headers["X-Client-Platform"] = "web";
-      config.headers["X-Timezone"] =
-        Intl.DateTimeFormat().resolvedOptions().timeZone;
+      config.headers["X-Timezone"] = Intl.DateTimeFormat().resolvedOptions().timeZone;
       config.headers["Accept-Language"] = navigator.language;
     }
 
     (config as any).metadata = { startTime: Date.now() };
 
     if (process.env.NODE_ENV === "development") {
-      console.group(
-        `🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`
-      );
+      console.group(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
       console.log("URL:", `${config.baseURL}${config.url}`);
       console.log("Data:", config.data);
       console.groupEnd();
@@ -108,12 +99,9 @@ apiClient.interceptors.response.use(
     const config = response.config as any;
     if (config.metadata?.startTime) {
       const duration = Date.now() - config.metadata.startTime;
-      if (duration > 3000)
-        console.warn(`⚠️ Slow API request (${duration}ms):`, config.url);
+      if (duration > 3000) console.warn(`⚠️ Slow API request (${duration}ms):`, config.url);
       if (process.env.NODE_ENV === "development") {
-        console.group(
-          `✅ API Response: ${config.method?.toUpperCase()} ${config.url}`
-        );
+        console.group(`✅ API Response: ${config.method?.toUpperCase()} ${config.url}`);
         console.log("Status:", response.status, "Duration:", `${duration}ms`);
         console.groupEnd();
       }
@@ -127,9 +115,7 @@ apiClient.interceptors.response.use(
 
     if (process.env.NODE_ENV === "development" && config?.metadata?.startTime) {
       const duration = Date.now() - config.metadata.startTime;
-      console.group(
-        `❌ API Error: ${config.method?.toUpperCase()} ${config.url}`
-      );
+      console.group(`❌ API Error: ${config.method?.toUpperCase()} ${config.url}`);
       console.log("Status:", response?.status, "Duration:", `${duration}ms`);
       console.groupEnd();
     }
@@ -202,13 +188,11 @@ apiClient.interceptors.response.use(
           const refreshToken = getRefreshToken();
           if (!refreshToken) throw new Error("No refresh token available");
 
-          const refreshResponse = await axios.post(
-            `${API_BASE_URL}/auth/refresh`,
-            { refresh_token: refreshToken }
-          );
+          const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+            refresh_token: refreshToken,
+          });
 
-          const { accessToken, refreshToken: newRefreshToken } =
-            refreshResponse.data;
+          const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data;
 
           storeDispatch({
             type: "auth/updateTokens",
@@ -344,27 +328,15 @@ export async function get<T = any>(url: string, config?: any): Promise<T> {
   return (await apiClient.get<T>(url, config)).data;
 }
 
-export async function post<T = any>(
-  url: string,
-  data?: any,
-  config?: any
-): Promise<T> {
+export async function post<T = any>(url: string, data?: any, config?: any): Promise<T> {
   return (await apiClient.post<T>(url, data, config)).data;
 }
 
-export async function put<T = any>(
-  url: string,
-  data?: any,
-  config?: any
-): Promise<T> {
+export async function put<T = any>(url: string, data?: any, config?: any): Promise<T> {
   return (await apiClient.put<T>(url, data, config)).data;
 }
 
-export async function patch<T = any>(
-  url: string,
-  data?: any,
-  config?: any
-): Promise<T> {
+export async function patch<T = any>(url: string, data?: any, config?: any): Promise<T> {
   return (await apiClient.patch<T>(url, data, config)).data;
 }
 

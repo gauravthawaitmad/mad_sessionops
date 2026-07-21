@@ -4,8 +4,9 @@ F-M4-4: Sync dashboard service unit tests.
 
 from datetime import datetime, timedelta, timezone
 
-import pytest
 from django.utils import timezone as dj_timezone
+
+import pytest
 
 from sessionops.models import Partner, PartnerWorknode, SyncRun, User
 from sessionops.services.sync.dashboard import (
@@ -58,7 +59,7 @@ def test_list_recent_runs_returns_last_50_descending():
 
 @pytest.mark.django_db
 def test_entity_stats_counts_correctly():
-    u1 = _user()
+    _user()
     u2 = _user()
     u2.is_active = False
     u2.save()

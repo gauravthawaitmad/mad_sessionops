@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import sessionops.services.slot_classes.helpers as slot_class_helpers
 from sessionops.exceptions import PermissionDenied
 from sessionops.models import (
     AcademicYear,
@@ -28,7 +29,6 @@ from sessionops.models import (
 )
 from sessionops.services.slot_classes.create import create_slot_class
 from sessionops.services.slot_classes.schedule import get_school_schedule
-import sessionops.services.slot_classes.helpers as slot_class_helpers
 
 # ── Counters ───────────────────────────────────────────────────────────────────
 
@@ -45,6 +45,7 @@ def _reset_foundation_subject_cache():
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def _make_admin() -> User:
     uid = next(_UID)
@@ -96,7 +97,9 @@ def _make_say(school_id: int, user: User, year: AcademicYear) -> SchoolAcademicY
     return say
 
 
-def _make_section(school_id: int, user: User, class_code: str = "5", display_name: str | None = None) -> ClassSection:
+def _make_section(
+    school_id: int, user: User, class_code: str = "5", display_name: str | None = None
+) -> ClassSection:
     program, _ = Program.objects.get_or_create(program_name="Foundation Program")
     cls, _ = Class.objects.get_or_create(
         class_code=class_code,
@@ -110,13 +113,19 @@ def _make_section(school_id: int, user: User, class_code: str = "5", display_nam
         school_id=school_id, academic_year_id=year, defaults={"created_by": user}
     )
     sc = SchoolClass.objects.create(
-        school_id=school_id, school_academic_year_id=say,
-        class_id_id=cls.class_id, created_by=user,
+        school_id=school_id,
+        school_academic_year_id=say,
+        class_id_id=cls.class_id,
+        created_by=user,
     )
     return ClassSection.objects.create(
-        school_class_id=sc, school_id=school_id, section_code="A",
-        section_name=f"{class_code}th - A", section_display_name=display_name,
-        is_active=True, created_by=user,
+        school_class_id=sc,
+        school_id=school_id,
+        section_code="A",
+        section_name=f"{class_code}th - A",
+        section_display_name=display_name,
+        is_active=True,
+        created_by=user,
     )
 
 
@@ -156,10 +165,13 @@ def _make_volunteer(school_id: int, user: User) -> User:
     return vol
 
 
-def _make_slot(school_id: int, user: User,
-               day: str = "monday",
-               start: time = time(9, 0),
-               end: time = time(10, 0)) -> Slot:
+def _make_slot(
+    school_id: int,
+    user: User,
+    day: str = "monday",
+    start: time = time(9, 0),
+    end: time = time(10, 0),
+) -> Slot:
     year, _ = AcademicYear.objects.get_or_create(
         label="2026-2027", defaults={"is_active": True, "created_by": user}
     )
@@ -167,10 +179,15 @@ def _make_slot(school_id: int, user: User,
         school_id=school_id, academic_year_id=year, defaults={"created_by": user}
     )
     return Slot.objects.create(
-        school_id=school_id, school_academic_year_id=say,
+        school_id=school_id,
+        school_academic_year_id=say,
         slot_name=f"{day.capitalize()} {start.strftime('%H:%M')}",
-        day_of_week=day, start_time=start, end_time=end,
-        recurring=True, is_active=True, created_by=user,
+        day_of_week=day,
+        start_time=start,
+        end_time=end,
+        recurring=True,
+        is_active=True,
+        created_by=user,
     )
 
 
@@ -182,6 +199,7 @@ def _payload(section, *volunteers):
 
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_schedule_view_returns_full_structure():

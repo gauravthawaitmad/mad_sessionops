@@ -12,13 +12,19 @@ from django.core.management.base import BaseCommand
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
-
 SEP = "-" * 62
 
 
-def _ok(msg):   return f"  [OK]   {msg}"
-def _warn(msg): return f"  [WARN] {msg}"
-def _fail(msg): return f"  [FAIL] {msg}"
+def _ok(msg):
+    return f"  [OK]   {msg}"
+
+
+def _warn(msg):
+    return f"  [WARN] {msg}"
+
+
+def _fail(msg):
+    return f"  [FAIL] {msg}"
 
 
 class Command(BaseCommand):
@@ -29,7 +35,7 @@ class Command(BaseCommand):
         self._print_db_info()
 
         migration_ok = self._run_migrations()
-        seed_ok      = self._run_seed()
+        seed_ok = self._run_seed()
 
         self._print_footer(migration_ok and seed_ok)
 
@@ -54,7 +60,7 @@ class Command(BaseCommand):
                 cur.execute("SELECT current_database(), current_schema()")
                 pg_db, pg_schema = cur.fetchone()
         except Exception:
-            pg_db, pg_schema = cfg['NAME'], "unknown"
+            pg_db, pg_schema = cfg["NAME"], "unknown"
 
         self.stdout.write(f"  Database : {pg_db}")
         self.stdout.write(f"  Schema   : {pg_schema}")
@@ -77,8 +83,9 @@ class Command(BaseCommand):
                 for migration, _ in plan:
                     self.stdout.write(f"    -> {migration.app_label}.{migration.name}")
                 self.stdout.write("  Applying...")
-                call_command("migrate", "--noinput", "--database", "migrate",
-                             verbosity=0, stdout=self.stdout)
+                call_command(
+                    "migrate", "--noinput", "--database", "migrate", verbosity=0, stdout=self.stdout
+                )
                 self.stdout.write(_ok(f"Applied {pending_count} migration(s)"))
             else:
                 self.stdout.write(_ok("Up to date -- no pending migrations"))
@@ -118,11 +125,12 @@ class Command(BaseCommand):
             return
 
         system_user = (
-            User.objects.filter(user_login="system@makeadiff.in").first()
-            or User.objects.first()
+            User.objects.filter(user_login="system@makeadiff.in").first() or User.objects.first()
         )
         if system_user is None:
-            self.stdout.write(_warn("AcademicYear -- no users in DB, skipping. Run user setup first."))
+            self.stdout.write(
+                _warn("AcademicYear -- no users in DB, skipping. Run user setup first.")
+            )
             return
 
         AcademicYear.objects.create(label="2026-2027", is_active=True, created_by=system_user)
@@ -150,7 +158,9 @@ class Command(BaseCommand):
 
         existing = len(catalog) - created_count
         if created_count:
-            self.stdout.write(_ok(f"Classes 5th-8th  ({created_count} created, {existing} already existed)"))
+            self.stdout.write(
+                _ok(f"Classes 5th-8th  ({created_count} created, {existing} already existed)")
+            )
         else:
             self.stdout.write(_ok("Classes 5th-8th  (already seeded)"))
 
@@ -170,7 +180,9 @@ class Command(BaseCommand):
 
         existing = len(catalog) - created_count
         if created_count:
-            self.stdout.write(_ok(f"Subjects  ({created_count} created, {existing} already existed)"))
+            self.stdout.write(
+                _ok(f"Subjects  ({created_count} created, {existing} already existed)")
+            )
         else:
             self.stdout.write(_ok("Subjects  (already seeded)"))
 

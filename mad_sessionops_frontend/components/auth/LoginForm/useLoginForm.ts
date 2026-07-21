@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { loginSchema, type LoginFormData } from '../validation/authValidation';
-import { useAuth } from '@/hooks/useAuth';
+import { useState, useCallback } from "react";
+import { loginSchema, type LoginFormData } from "../validation/authValidation";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * ============================================
@@ -23,8 +23,8 @@ export function useLoginForm() {
 
   // Form state
   const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
     rememberMe: false,
   });
 
@@ -37,43 +37,46 @@ export function useLoginForm() {
   /**
    * Handle field change
    */
-  const handleChange = useCallback((
-    field: keyof LoginFormData,
-    value: string | boolean
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleChange = useCallback(
+    (field: keyof LoginFormData, value: string | boolean) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
 
-    // Clear field error
-    setFieldErrors(prev => ({
-      ...prev,
-      [field]: undefined,
-    }));
+      // Clear field error
+      setFieldErrors((prev) => ({
+        ...prev,
+        [field]: undefined,
+      }));
 
-    // Clear auth error
-    resetError();
-  }, [resetError]);
+      // Clear auth error
+      resetError();
+    },
+    [resetError]
+  );
 
   /**
    * Handle field blur
    */
-  const handleBlur = useCallback((field: keyof LoginFormData) => {
-    // Mark as touched
-    setTouchedFields(prev => new Set(prev).add(field));
+  const handleBlur = useCallback(
+    (field: keyof LoginFormData) => {
+      // Mark as touched
+      setTouchedFields((prev) => new Set(prev).add(field));
 
-    // Validate field
-    const fieldSchema = loginSchema.shape[field];
-    const result = fieldSchema.safeParse(formData[field]);
+      // Validate field
+      const fieldSchema = loginSchema.shape[field];
+      const result = fieldSchema.safeParse(formData[field]);
 
-    if (!result.success) {
-      setFieldErrors(prev => ({
-        ...prev,
-        [field]: result.error.issues[0]?.message,
-      }));
-    }
-  }, [formData]);
+      if (!result.success) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          [field]: result.error.issues[0]?.message,
+        }));
+      }
+    },
+    [formData]
+  );
 
   /**
    * Validate entire form
@@ -84,7 +87,7 @@ export function useLoginForm() {
     if (!result.success) {
       const errors: Partial<Record<keyof LoginFormData, string>> = {};
 
-      result.error.issues.forEach(err => {
+      result.error.issues.forEach((err) => {
         const field = err.path[0] as keyof LoginFormData;
         if (!errors[field]) {
           errors[field] = err.message;
@@ -92,7 +95,7 @@ export function useLoginForm() {
       });
 
       setFieldErrors(errors);
-      setTouchedFields(new Set(['email', 'password', 'rememberMe']));
+      setTouchedFields(new Set(["email", "password", "rememberMe"]));
 
       return false;
     }
@@ -104,28 +107,31 @@ export function useLoginForm() {
   /**
    * Handle form submit
    */
-  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
+  const handleSubmit = useCallback(
+    async (e?: React.FormEvent) => {
+      if (e) {
+        e.preventDefault();
+      }
 
-    // Validate
-    if (!validate()) {
-      return { success: false };
-    }
-    // Submit
-    const result = await login(formData);
+      // Validate
+      if (!validate()) {
+        return { success: false };
+      }
+      // Submit
+      const result = await login(formData);
 
-    return result;
-  }, [formData, validate, login]);
+      return result;
+    },
+    [formData, validate, login]
+  );
 
   /**
    * Reset form
    */
   const resetForm = useCallback(() => {
     setFormData({
-      email: '',
-      password: '',
+      email: "",
+      password: "",
       rememberMe: false,
     });
     setFieldErrors({});
@@ -136,12 +142,15 @@ export function useLoginForm() {
   /**
    * Get field error (only if touched)
    */
-  const getFieldError = useCallback((field: keyof LoginFormData): string | undefined => {
-    if (!touchedFields.has(field)) {
-      return undefined;
-    }
-    return fieldErrors[field];
-  }, [fieldErrors, touchedFields]);
+  const getFieldError = useCallback(
+    (field: keyof LoginFormData): string | undefined => {
+      if (!touchedFields.has(field)) {
+        return undefined;
+      }
+      return fieldErrors[field];
+    },
+    [fieldErrors, touchedFields]
+  );
 
   return {
     // Form state

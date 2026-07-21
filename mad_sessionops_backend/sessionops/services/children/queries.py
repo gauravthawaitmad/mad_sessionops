@@ -13,7 +13,7 @@ def list_children(
     status: str = "active",
     search: str | None = None,
     unassigned: bool = False,
-) -> QuerySet:
+) -> QuerySet[Child]:
     qs = Child.objects.filter(school_id=school_id)
 
     if status == "active":
@@ -26,30 +26,30 @@ def list_children(
     # Annotate current section name and class name from active assignments
     qs = qs.annotate(
         current_section_name=Subquery(
-            ChildClassSection.objects
-            .filter(child_id=OuterRef("pk"), is_active=True, removed=False)
-            .values("class_section_id__section_name")[:1]
+            ChildClassSection.objects.filter(
+                child_id=OuterRef("pk"), is_active=True, removed=False
+            ).values("class_section_id__section_name")[:1]
         ),
         current_section_display_name=Subquery(
-            ChildClassSection.objects
-            .filter(child_id=OuterRef("pk"), is_active=True, removed=False)
-            .values("class_section_id__section_display_name")[:1]
+            ChildClassSection.objects.filter(
+                child_id=OuterRef("pk"), is_active=True, removed=False
+            ).values("class_section_id__section_display_name")[:1]
         ),
         current_class_name=Subquery(
-            ChildClass.objects
-            .filter(child_id=OuterRef("pk"), is_active=True, removed=False)
-            .values("school_class_id__class_id__class_name")[:1]
+            ChildClass.objects.filter(
+                child_id=OuterRef("pk"), is_active=True, removed=False
+            ).values("school_class_id__class_id__class_name")[:1]
         ),
         # IDs needed for filtering
         _current_section_id=Subquery(
-            ChildClassSection.objects
-            .filter(child_id=OuterRef("pk"), is_active=True, removed=False)
-            .values("class_section_id")[:1]
+            ChildClassSection.objects.filter(
+                child_id=OuterRef("pk"), is_active=True, removed=False
+            ).values("class_section_id")[:1]
         ),
         _current_school_class_id=Subquery(
-            ChildClass.objects
-            .filter(child_id=OuterRef("pk"), is_active=True, removed=False)
-            .values("school_class_id")[:1]
+            ChildClass.objects.filter(
+                child_id=OuterRef("pk"), is_active=True, removed=False
+            ).values("school_class_id")[:1]
         ),
     )
 

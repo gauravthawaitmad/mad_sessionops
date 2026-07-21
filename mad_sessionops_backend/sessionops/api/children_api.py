@@ -8,7 +8,13 @@ from typing import Optional
 
 from ninja import Router
 
-from sessionops.schemas.children import ChildEditIn, ChildEnrollIn, ChildOut, DeactivateIn, ReactivateIn
+from sessionops.schemas.children import (
+    ChildEditIn,
+    ChildEnrollIn,
+    ChildOut,
+    DeactivateIn,
+    ReactivateIn,
+)
 from sessionops.services.children.deactivate import deactivate_child
 from sessionops.services.children.edit import edit_child
 from sessionops.services.children.enroll import enroll_child
@@ -30,14 +36,16 @@ def list_children_view(
     unassigned: bool = False,
 ):
     get_school_or_403(request.auth, school_id)
-    return list(list_children(
-        school_id,
-        section_id=section_id,
-        class_id=class_id,
-        status=status,
-        search=search,
-        unassigned=unassigned,
-    ))
+    return list(
+        list_children(
+            school_id,
+            section_id=section_id,
+            class_id=class_id,
+            status=status,
+            search=search,
+            unassigned=unassigned,
+        )
+    )
 
 
 @children_router.post("/{school_id}/children/", response={201: ChildOut})

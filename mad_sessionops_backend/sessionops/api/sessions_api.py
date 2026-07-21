@@ -18,6 +18,7 @@ sessions_router = Router(tags=["Sessions"])
 def get_session(request, school_id: int):
     """Return the active session for a school, or null if not configured."""
     from sessionops.services.rbac.scope import get_school_or_403
+
     get_school_or_403(request.auth, school_id)
     session = get_active_session(school_id)
     return 200, session
@@ -35,7 +36,12 @@ def get_session_defaults_api(request, school_id: int):
 
 @sessions_router.post(
     "/{school_id}/session/",
-    response={200: SessionOut, 400: ErrorResponseSchema, 403: ErrorResponseSchema, 409: ErrorResponseSchema},
+    response={
+        200: SessionOut,
+        400: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        409: ErrorResponseSchema,
+    },
 )
 def create_session(request, school_id: int, payload: SessionCreateIn):
     """Create a one-time immutable academic session for the school."""

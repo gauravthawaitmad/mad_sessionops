@@ -1,0 +1,50 @@
+coverage:
+  status:
+    project:
+      default: false
+      backend:
+        target: auto
+        threshold: 1%
+        flags:
+          - backend
+      frontend:
+        target: auto
+        threshold: 1%
+        flags:
+          - frontend
+    patch:
+      default: false
+      backend:
+        target: 80%
+        flags:
+          - backend
+      frontend:
+        target: 80%
+        flags:
+          - frontend
+
+component_management:
+  individual_components:
+    - component_id: backend
+      name: Backend
+      paths:
+        - mad_sessionops_backend/sessionops/**
+    - component_id: frontend
+      name: Frontend
+      paths:
+        - mad_sessionops_frontend/**
+
+flags:
+  backend:
+    paths:
+      - mad_sessionops_backend/sessionops/
+    carryforward: false
+  frontend:
+    paths:
+      - mad_sessionops_frontend/
+    carryforward: false
+
+comment:
+  layout: "header, diff, flags, components, files"
+  behavior: default
+  require_changes: false

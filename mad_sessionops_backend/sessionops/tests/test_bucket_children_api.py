@@ -4,8 +4,9 @@ F-M6-3: Bucket-children API integration tests.
 
 import json
 
-import pytest
 from django.test import Client
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import Child, Partner, User
@@ -40,7 +41,11 @@ def _make_school(co: User | None = None) -> Partner:
 
 def _make_child(school_id: int, user: User) -> Child:
     return Child.objects.create(
-        school_id=school_id, first_name="Test", last_name="Child", gender="other", created_by=user,
+        school_id=school_id,
+        first_name="Test",
+        last_name="Child",
+        gender="other",
+        created_by=user,
     )
 
 
@@ -74,6 +79,7 @@ def _create_bucket(client, school_id, co, display_name="Bucket"):
 
 
 # ── POST /sections/{id}/children/ ─────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_post_bucket_child_adds_membership(client):
@@ -180,6 +186,7 @@ def test_post_bucket_child_403_for_co_of_other_school(client):
 
 
 # ── DELETE /sections/{id}/children/{child_id}/ ────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_delete_bucket_child_removes_membership(client):

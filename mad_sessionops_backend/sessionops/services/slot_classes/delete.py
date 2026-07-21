@@ -2,12 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from sessionops.exceptions import NotFound, PermissionDenied
-from sessionops.models import (
-    ClassSectionSubject,
-    SlotClassSection,
-    SlotClassSectionVolunteer,
-    User,
-)
+from sessionops.models import ClassSectionSubject, SlotClassSection, SlotClassSectionVolunteer, User
 from sessionops.services.rbac.scope import can_modify_school, get_school_or_403
 from sessionops.services.slot_classes.helpers import reconcile_school_volunteer
 
@@ -23,8 +18,7 @@ def delete_slot_class(scs_id: int, user: User) -> None:
     """
     try:
         scs = (
-            SlotClassSection.objects
-            .select_for_update()
+            SlotClassSection.objects.select_for_update()
             .select_related("slot_id")
             .get(slot_class_section_id=scs_id, is_active=True, removed=False)
         )
@@ -39,9 +33,9 @@ def delete_slot_class(scs_id: int, user: User) -> None:
 
     # 1. Collect volunteer IDs before soft-deleting
     volunteer_ids = list(
-        SlotClassSectionVolunteer.objects
-        .filter(slot_class_section_id=scs, is_active=True, removed=False)
-        .values_list("volunteer_id_id", flat=True)
+        SlotClassSectionVolunteer.objects.filter(
+            slot_class_section_id=scs, is_active=True, removed=False
+        ).values_list("volunteer_id_id", flat=True)
     )
 
     # 2. Soft-delete SlotClassSectionVolunteer rows

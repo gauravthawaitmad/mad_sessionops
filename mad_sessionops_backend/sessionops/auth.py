@@ -8,9 +8,7 @@ from functools import wraps
 from ninja.errors import HttpError
 from ninja.security import HttpBearer
 from rest_framework.authtoken.models import Token
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import AccessToken
-from django.contrib.auth.models import User as DjangoUser
 
 from sessionops.models import User as MadUser
 from sessionops.utils.custom_logger import CustomLogger
@@ -24,19 +22,20 @@ UNAUTHORIZED = "unauthorized"
 def has_permission(permission_slugs: list):
     """
     Decorator to check if a user has the required permissions.
-    
+
     Args:
         permission_slugs: List of permission slugs required for the endpoint
-    
+
     Returns:
         Decorated function that checks permissions
     """
+
     def decorator(api_endpoint):
         @wraps(api_endpoint)
         def wrapper(*args, **kwargs):
             request = args[0]
             try:
-                if not hasattr(request, 'permissions') or not request.permissions:
+                if not hasattr(request, "permissions") or not request.permissions:
                     raise HttpError(403, "not allowed")
 
                 if not set(request.permissions).issuperset(set(permission_slugs)):
@@ -122,42 +121,3 @@ class CustomJwtAuthMiddleware(HttpBearer):
 
 # Public alias used by F01a endpoints.
 JwtAuth = CustomJwtAuthMiddleware
-
-
-class CustomTokenObtainSerializer(TokenObtainPairSerializer):
-    """
-    Custom token serializer for JWT authentication.
-    Adds custom claims to the token payload.
-    """
-
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        
-        # TODO: Implement role-based logic when needed
-        # For now, we'll just add basic user info
-        token["username"] = user.username
-        token["email"] = user.email
-        
-        return token
-
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        return {"access": data["access"], "refresh": data["refresh"]}
-
-
-class CustomTokenRefreshSerializer(TokenRefreshSerializer):
-    """Custom token refresh serializer"""
-
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        # Get the user from the refresh token
-        refresh = self.token_class(attrs["refresh"])
-        user_id = refresh.payload.get("user_id")
-        user = DjangoUser.objects.filter(id=user_id).first()
-        if user:
-            # Generate a new refresh token with custom claims
-            refresh_token = CustomTokenObtainSerializer.get_token(user)
-            access_token = refresh_token.access_token
-            data["access"] = str(access_token)
-        return data

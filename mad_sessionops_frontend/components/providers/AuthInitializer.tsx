@@ -1,11 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useAppDispatch } from '@/lib/redux';
-import {
-  initializeAuth,
-  checkSessionTimeout,
-} from '@/lib/redux/features/auth/authSlice';
+import { useEffect } from "react";
+import { useAppDispatch } from "@/lib/redux";
+import { initializeAuth, checkSessionTimeout } from "@/lib/redux/features/auth/authSlice";
 
 const SESSION_CHECK_INTERVAL_MS = 60_000; // 1 minute
 

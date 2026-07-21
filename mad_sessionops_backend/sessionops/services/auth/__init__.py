@@ -9,6 +9,7 @@ import logging
 
 from django.db import transaction
 from django.utils import timezone
+
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.exceptions import AuthenticationError

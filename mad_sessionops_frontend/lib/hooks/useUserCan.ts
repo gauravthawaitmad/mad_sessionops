@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { fetchPermissions } from '@/lib/api/services/permissions.service';
+import { useEffect, useRef, useState } from "react";
+import { fetchPermissions } from "@/lib/api/services/permissions.service";
 
 interface UseUserCanResult {
   canView: boolean;

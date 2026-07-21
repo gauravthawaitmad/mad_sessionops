@@ -1,18 +1,12 @@
 """
 F-M3-5: Slot creation unit tests.
 """
-from datetime import time, datetime, timezone
+from datetime import datetime, time, timezone
 
 import pytest
 
 from sessionops.exceptions import ConflictError, PermissionDenied, ValidationError
-from sessionops.models import (
-    AcademicYear,
-    Partner,
-    SchoolAcademicYear,
-    Slot,
-    User,
-)
+from sessionops.models import AcademicYear, Partner, SchoolAcademicYear, Slot, User
 from sessionops.services.slots.create import create_slot, list_slots
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -69,6 +63,7 @@ def _make_active_year() -> AcademicYear:
 
 # ── TC-M3-5-01  Happy path: slot created successfully ─────────────────────────
 
+
 @pytest.mark.django_db
 def test_create_slot_succeeds():
     _make_active_year()
@@ -94,6 +89,7 @@ def test_create_slot_succeeds():
 
 # ── TC-M3-5-02  recurring is always True ──────────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_create_slot_recurring_always_true():
     _make_active_year()
@@ -113,6 +109,7 @@ def test_create_slot_recurring_always_true():
 
 # ── TC-M3-5-03  slot_name is computed from day + start_time ───────────────────
 
+
 @pytest.mark.django_db
 def test_create_slot_name_computed():
     _make_active_year()
@@ -131,6 +128,7 @@ def test_create_slot_name_computed():
 
 
 # ── TC-M3-5-04  R7: overlapping slot raises ConflictError ─────────────────────
+
 
 @pytest.mark.django_db
 def test_create_overlapping_slot_returns_409():
@@ -160,6 +158,7 @@ def test_create_overlapping_slot_returns_409():
 
 # ── TC-M3-5-05  Touching slots are NOT overlapping ────────────────────────────
 
+
 @pytest.mark.django_db
 def test_adjacent_slots_do_not_overlap():
     _make_active_year()
@@ -185,6 +184,7 @@ def test_adjacent_slots_do_not_overlap():
 
 
 # ── TC-M3-5-06  start_time >= end_time raises ValidationError ────────────────
+
 
 @pytest.mark.django_db
 def test_create_slot_start_after_end_returns_400():
@@ -220,6 +220,7 @@ def test_create_slot_equal_times_returns_400():
 
 # ── TC-M3-5-07  SchoolAcademicYear is created if missing ──────────────────────
 
+
 @pytest.mark.django_db
 def test_create_slot_creates_school_academic_year_if_missing():
     _make_active_year()
@@ -241,6 +242,7 @@ def test_create_slot_creates_school_academic_year_if_missing():
 
 # ── TC-M3-5-08  CO cannot create slot in another CO's school ──────────────────
 
+
 @pytest.mark.django_db
 def test_co_cannot_create_slot_in_other_school():
     _make_active_year()
@@ -259,6 +261,7 @@ def test_co_cannot_create_slot_in_other_school():
 
 
 # ── TC-M3-5-09  Admin can create slot in any school ───────────────────────────
+
 
 @pytest.mark.django_db
 def test_admin_can_create_slot_in_any_school():
@@ -279,6 +282,7 @@ def test_admin_can_create_slot_in_any_school():
 
 # ── TC-M3-5-10  list_slots ordered by day then start_time ────────────────────
 
+
 @pytest.mark.django_db
 def test_list_slots_ordered_by_day_and_time():
     _make_active_year()
@@ -286,9 +290,23 @@ def test_list_slots_ordered_by_day_and_time():
     school = _make_school(co)
     sid = school.partner_id
 
-    create_slot(school_id=sid, day_of_week="wednesday", start_time=time(14, 0), end_time=time(15, 0), user=co)
-    create_slot(school_id=sid, day_of_week="monday",    start_time=time(9, 0),  end_time=time(10, 0), user=co)
-    create_slot(school_id=sid, day_of_week="wednesday", start_time=time(10, 0), end_time=time(11, 0), user=co)
+    create_slot(
+        school_id=sid,
+        day_of_week="wednesday",
+        start_time=time(14, 0),
+        end_time=time(15, 0),
+        user=co,
+    )
+    create_slot(
+        school_id=sid, day_of_week="monday", start_time=time(9, 0), end_time=time(10, 0), user=co
+    )
+    create_slot(
+        school_id=sid,
+        day_of_week="wednesday",
+        start_time=time(10, 0),
+        end_time=time(11, 0),
+        user=co,
+    )
 
     slots = list_slots(sid, co)
 
@@ -300,15 +318,26 @@ def test_list_slots_ordered_by_day_and_time():
 
 # ── TC-M3-5-11  Overlap check is day-specific ────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_overlap_does_not_block_different_day():
     _make_active_year()
     co = _make_co()
     school = _make_school(co)
 
-    create_slot(school_id=school.partner_id, day_of_week="monday",
-                start_time=time(10, 0), end_time=time(11, 0), user=co)
+    create_slot(
+        school_id=school.partner_id,
+        day_of_week="monday",
+        start_time=time(10, 0),
+        end_time=time(11, 0),
+        user=co,
+    )
     # Same time, different day — should not conflict
-    slot2 = create_slot(school_id=school.partner_id, day_of_week="tuesday",
-                        start_time=time(10, 0), end_time=time(11, 0), user=co)
+    slot2 = create_slot(
+        school_id=school.partner_id,
+        day_of_week="tuesday",
+        start_time=time(10, 0),
+        end_time=time(11, 0),
+        user=co,
+    )
     assert slot2.slot_id is not None

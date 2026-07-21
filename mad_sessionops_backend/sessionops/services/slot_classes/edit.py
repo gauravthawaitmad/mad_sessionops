@@ -12,6 +12,7 @@ from sessionops.models import (
     SlotClassSectionVolunteer,
     User,
 )
+from sessionops.services.academic_year.queries import get_or_create_school_academic_year
 from sessionops.services.rbac.scope import can_modify_school, get_school_or_403
 from sessionops.services.slot_classes.helpers import (
     check_r4_volunteer,
@@ -21,7 +22,6 @@ from sessionops.services.slot_classes.helpers import (
     reconcile_school_volunteer,
     validate_volunteer_worknode_match,
 )
-from sessionops.services.academic_year.queries import get_or_create_school_academic_year
 
 
 @transaction.atomic
@@ -38,8 +38,7 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
     """
     try:
         scs = (
-            SlotClassSection.objects
-            .select_for_update()
+            SlotClassSection.objects.select_for_update()
             .select_related("slot_id", "class_section_id", "class_section_subject_id")
             .get(slot_class_section_id=scs_id, is_active=True, removed=False)
         )
@@ -56,11 +55,11 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
 
     # ── Determine what is changing ────────────────────────────────────────────
 
-    new_section_id     = payload.class_section_id
-    new_volunteer_ids  = payload.volunteer_ids  # None = no change
+    new_section_id = payload.class_section_id
+    new_volunteer_ids = payload.volunteer_ids  # None = no change
 
     section_changing = new_section_id is not None and new_section_id != scs.class_section_id_id
-    vols_changing    = new_volunteer_ids is not None
+    vols_changing = new_volunteer_ids is not None
 
     if not any([section_changing, vols_changing]):
         return scs  # nothing to do
@@ -85,9 +84,9 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
         new_subject = get_foundation_subject()
 
         old_vol_ids = list(
-            SlotClassSectionVolunteer.objects
-            .filter(slot_class_section_id=scs, is_active=True, removed=False)
-            .values_list("volunteer_id_id", flat=True)
+            SlotClassSectionVolunteer.objects.filter(
+                slot_class_section_id=scs, is_active=True, removed=False
+            ).values_list("volunteer_id_id", flat=True)
         )
 
         # R-bucket: check against whichever volunteer set will end up on the new
@@ -105,7 +104,8 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
         # Soft-delete old CSS
         ClassSectionSubject.objects.filter(
             class_section_subject_id=scs.class_section_subject_id_id,
-            is_active=True, removed=False,
+            is_active=True,
+            removed=False,
         ).update(is_active=False, removed=True, deleted_at=now, updated_at=now)
 
         # Create new CSS
@@ -124,20 +124,29 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
             )
         )
         if active_ccs:
-            ChildSubject.objects.bulk_create([
-                ChildSubject(
-                    child_id=ccs.child_id,
-                    class_section_subject_id=new_css,
-                    created_by=user,
-                )
-                for ccs in active_ccs
-            ])
+            ChildSubject.objects.bulk_create(
+                [
+                    ChildSubject(
+                        child_id=ccs.child_id,
+                        class_section_subject_id=new_css,
+                        created_by=user,
+                    )
+                    for ccs in active_ccs
+                ]
+            )
 
         # Update SlotClassSection
         scs.class_section_id = new_section
         scs.class_section_subject_id = new_css
         scs.updated_by = user
-        scs.save(update_fields=["class_section_id", "class_section_subject_id", "updated_by", "updated_at"])
+        scs.save(
+            update_fields=[
+                "class_section_id",
+                "class_section_subject_id",
+                "updated_by",
+                "updated_at",
+            ]
+        )
 
         # Reconcile old volunteers
         for vol_id in old_vol_ids:
@@ -167,9 +176,9 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
         check_r_bucket_capacity(scs.class_section_id_id, len(new_volunteer_ids))
 
         old_vol_ids = list(
-            SlotClassSectionVolunteer.objects
-            .filter(slot_class_section_id=scs, is_active=True, removed=False)
-            .values_list("volunteer_id_id", flat=True)
+            SlotClassSectionVolunteer.objects.filter(
+                slot_class_section_id=scs, is_active=True, removed=False
+            ).values_list("volunteer_id_id", flat=True)
         )
 
         SlotClassSectionVolunteer.objects.filter(
@@ -190,9 +199,9 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
     return scs
 
 
-def _replace_volunteers(scs: SlotClassSection, vol_ids: list[int],
-                        slot: Slot, school_id: int, say,
-                        user: User, now) -> None:
+def _replace_volunteers(
+    scs: SlotClassSection, vol_ids: list[int], slot: Slot, school_id: int, say, user: User, now
+) -> None:
     """Validate and create new SCSV rows + ensure SchoolVolunteer.
 
     Uniqueness (R3) is enforced by the schema validator before this runs.
@@ -205,15 +214,20 @@ def _replace_volunteers(scs: SlotClassSection, vol_ids: list[int],
             raise NotFound(f"Volunteer {vid} not found.")
         validate_volunteer_worknode_match(school_id, vol)
         # R6: exclude the scs itself from the in-slot check
-        if SlotClassSectionVolunteer.objects.filter(
-            volunteer_id=vol,
-            is_active=True,
-            removed=False,
-            slot_class_section_id__slot_id=slot,
-            slot_class_section_id__is_active=True,
-            slot_class_section_id__removed=False,
-        ).exclude(slot_class_section_id=scs).exists():
+        if (
+            SlotClassSectionVolunteer.objects.filter(
+                volunteer_id=vol,
+                is_active=True,
+                removed=False,
+                slot_class_section_id__slot_id=slot.slot_id,
+                slot_class_section_id__is_active=True,
+                slot_class_section_id__removed=False,
+            )
+            .exclude(slot_class_section_id=scs)
+            .exists()
+        ):
             from sessionops.exceptions import ConflictError
+
             raise ConflictError(
                 f"{vol.user_display_name} is already assigned to another class in this slot."
             )

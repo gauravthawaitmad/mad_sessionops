@@ -77,12 +77,7 @@ export function ConfirmDialog({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       {/* Content */}
       <DialogContent sx={{ pt: 4, textAlign: "center" }}>
         {/* Icon */}
@@ -103,20 +98,12 @@ export function ConfirmDialog({
         </Typography>
 
         {/* Message */}
-        <DialogContentText sx={{ mt: 1 }}>
-          {message}
-        </DialogContentText>
+        <DialogContentText sx={{ mt: 1 }}>{message}</DialogContentText>
       </DialogContent>
 
       {/* Actions */}
       <DialogActions sx={{ p: 2, pt: 0 }}>
-        <Button
-          onClick={onClose}
-          disabled={loading}
-          fullWidth
-          variant="outlined"
-          color="inherit"
-        >
+        <Button onClick={onClose} disabled={loading} fullWidth variant="outlined" color="inherit">
           {cancelText}
         </Button>
         <Button

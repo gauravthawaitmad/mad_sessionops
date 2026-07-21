@@ -47,6 +47,7 @@ from typing import Optional
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -268,7 +269,9 @@ class AuthService:
 
     @staticmethod
     @transaction.atomic
-    def login_with_google(*, code: str, code_verifier: str, redirect_uri: str) -> AuthResponseSchema:
+    def login_with_google(
+        *, code: str, code_verifier: str, redirect_uri: str
+    ) -> AuthResponseSchema:
         """
         Authenticate or register user with Google OAuth.
 
@@ -304,7 +307,6 @@ class AuthService:
         8. Return JWT tokens
         """
 
-        
         # Exchange code for tokens and get ID token
         token_data = GoogleOAuthService.exchange_code_for_tokens(
             code=code,
@@ -312,7 +314,7 @@ class AuthService:
             redirect_uri=redirect_uri,
         )
 
-        id_token_str = token_data["id_token"]
+        id_token_str = token_data.get("id_token") if token_data else None
 
         if not id_token_str:
             raise AuthenticationError(
@@ -423,7 +425,7 @@ class AuthService:
             redirect_uri=redirect_uri,
         )
 
-        id_token_str = token_data.get("id_token")
+        id_token_str = token_data.get("id_token") if token_data else None
         if not id_token_str:
             raise AuthenticationError(
                 "Google did not return id_token",
@@ -498,17 +500,17 @@ class AuthService:
         """
         try:
             # Parse and validate refresh token
-            token = RefreshToken(refresh_token)
+            token = RefreshToken(refresh_token)  # type: ignore[arg-type]  # simplejwt's stub mistypes the raw-JWT-string constructor arg
 
             # Get access token expiry from settings
-            access_lifetime = getattr(
-                settings, "SIMPLE_JWT", {}
-            ).get("ACCESS_TOKEN_LIFETIME", timedelta(hours=12))
+            access_lifetime = getattr(settings, "SIMPLE_JWT", {}).get(
+                "ACCESS_TOKEN_LIFETIME", timedelta(hours=12)
+            )
 
             return TokenResponseSchema(
                 access_token=str(token.access_token),
                 refresh_token=str(token),  # May be rotated
-                token_type="Bearer",
+                token_type="Bearer",  # nosec B106 — OAuth token_type constant, not a password
                 expires_in=int(access_lifetime.total_seconds()),
             )
 
@@ -551,7 +553,7 @@ class AuthService:
         can adjust in settings.py SIMPLE_JWT.ACCESS_TOKEN_LIFETIME
         """
         try:
-            token = RefreshToken(refresh_token)
+            token = RefreshToken(refresh_token)  # type: ignore[arg-type]  # simplejwt's stub mistypes the raw-JWT-string constructor arg
             # Add to blacklist
             token.blacklist()
             logger.info("User logged out, token blacklisted")
@@ -638,18 +640,12 @@ class AuthService:
             user = User.objects.get(email=email, is_active=True)
         except User.DoesNotExist:
             logger.info(f"Password reset requested for unknown email: {email}")
-            raise AuthenticationError(
-                "No account found with this email address.",
-                error_code="EMAIL_NOT_FOUND",
-            )
+            return
 
         # Role gate — users without login access cannot reset their password.
         if not get_allowed_roles(user.user_role):
             logger.warning(f"Password reset denied — no allowed role for user_id={user.user_id}")
-            raise AuthenticationError(
-                "No account found with this email address.",
-                error_code="EMAIL_NOT_FOUND",
-            )
+            return
 
         # Supersede all previous unused tokens so only the newest link works.
         # Each voided token is stamped with invalidation_reason='superseded'
@@ -686,6 +682,7 @@ class AuthService:
           'not_found'    — token UUID does not exist
         """
         import uuid as _uuid
+
         try:
             token_obj = PasswordResetToken.objects.get(token=_uuid.UUID(str(token)))
             s = token_obj.status
@@ -712,6 +709,7 @@ class AuthService:
         """
         try:
             import uuid as _uuid
+
             token_obj = PasswordResetToken.objects.select_related("user").get(
                 token=_uuid.UUID(str(token))
             )
@@ -878,25 +876,27 @@ class AuthService:
         # Create refresh token WITHOUT linking to Django's User model
         # This avoids the "must be a User instance" error
         refresh = RefreshToken()
-        logger.info(f"RefreshToken created successfully")
+        logger.info("RefreshToken created successfully")
 
         # Add user identifier to token payload
         # This is what identifies the user when the token is verified
         refresh["user_id"] = user.user_id
         refresh["email"] = user.email
         refresh["role"] = user.user_role
-        logger.info(f"Added claims to refresh token: user_id={user.user_id}, email={user.email}, role={user.user_role}")
+        logger.info(
+            f"Added claims to refresh token: user_id={user.user_id}, email={user.email}, role={user.user_role}"
+        )
 
         # Add same claims to access token
         refresh.access_token["user_id"] = user.user_id
         refresh.access_token["email"] = user.email
         refresh.access_token["role"] = user.user_role
-        logger.info(f"Added claims to access token")
+        logger.info("Added claims to access token")
 
         # Get access token lifetime for expires_in
-        access_lifetime = getattr(
-            settings, "SIMPLE_JWT", {}
-        ).get("ACCESS_TOKEN_LIFETIME", timedelta(hours=12))
+        access_lifetime = getattr(settings, "SIMPLE_JWT", {}).get(
+            "ACCESS_TOKEN_LIFETIME", timedelta(hours=12)
+        )
 
         access_token_str = str(refresh.access_token)
         refresh_token_str = str(refresh)
@@ -908,11 +908,11 @@ class AuthService:
         token_response = TokenResponseSchema(
             access_token=access_token_str,
             refresh_token=refresh_token_str,
-            token_type="Bearer",
+            token_type="Bearer",  # nosec B106 — OAuth token_type constant, not a password
             expires_in=int(access_lifetime.total_seconds()),
         )
 
-        logger.info(f"TokenResponseSchema created successfully")
-        logger.info(f"=== _generate_tokens END ===")
+        logger.info("TokenResponseSchema created successfully")
+        logger.info("=== _generate_tokens END ===")
 
         return token_response

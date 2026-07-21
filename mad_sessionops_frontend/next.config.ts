@@ -1,15 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: "standalone",
   // ✅ Add security headers
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: [
           {
-            key: 'Referrer-Policy',
-            value: 'no-referrer-when-downgrade',
+            key: "Referrer-Policy",
+            value: "no-referrer-when-downgrade",
           },
         ],
       },

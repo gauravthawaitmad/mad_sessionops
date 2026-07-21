@@ -1,6 +1,7 @@
-import os
 import logging
+import os
 from datetime import datetime, timezone
+from typing import cast
 
 import requests
 
@@ -56,7 +57,7 @@ def fetch_users() -> list[dict]:
         if "user_id" in row and row["user_id"] is not None:
             row["user_id"] = _parse_user_id(str(row["user_id"]))
 
-    return rows
+    return cast(list, rows)
 
 
 def fetch_chapter_mapping() -> list[dict]:
@@ -76,7 +77,7 @@ def fetch_chapter_mapping() -> list[dict]:
             f"Hasura /chapter_mapping returned {response.status_code}: {response.text[:500]}"
         )
 
-    return response.json().get("prod_external_apps_chapter_mapping", [])
+    return cast(list, response.json().get("prod_external_apps_chapter_mapping", []))
 
 
 def _fmt_cursor(ts: datetime) -> str:
@@ -87,6 +88,7 @@ def _fmt_cursor(ts: datetime) -> str:
     Timezone suffix is omitted — Hasura REST treats it inconsistently.
     """
     from datetime import timezone as _tz
+
     utc = ts.astimezone(_tz.utc)
     ms = utc.microsecond // 1000
     return utc.strftime("%Y-%m-%dT%H:%M:%S") + f".{ms:03d}"
@@ -117,12 +119,15 @@ def fetch_users_updated_after(timestamp=None) -> list[dict]:
     logger.info("fetch_users_updated_after response keys=%s", list(body.keys()))
     rows = body.get("prod_external_apps_user_data", [])
     if not rows:
-        logger.warning("fetch_users_updated_after: 'prod_external_apps_user_data' key returned empty — full keys: %s", list(body.keys()))
+        logger.warning(
+            "fetch_users_updated_after: 'prod_external_apps_user_data' key returned empty — full keys: %s",
+            list(body.keys()),
+        )
     for row in rows:
         if "user_id" in row and row["user_id"] is not None:
             row["user_id"] = _parse_user_id(str(row["user_id"]))
     logger.info("fetch_users_updated_after returning %d rows", len(rows))
-    return rows
+    return cast(list, rows)
 
 
 def fetch_partners_updated_after(timestamp=None) -> list[dict]:
@@ -137,7 +142,9 @@ def fetch_partners_updated_after(timestamp=None) -> list[dict]:
     url = f"{_base_url()}/api/rest/partner_data"
     effective_ts = timestamp if timestamp is not None else datetime(2006, 1, 1, tzinfo=timezone.utc)
     params = {"updated_after": _fmt_cursor(effective_ts)}
-    logger.info("fetch_partners_updated_after cursor=%s (original=%s)", params["updated_after"], timestamp)
+    logger.info(
+        "fetch_partners_updated_after cursor=%s (original=%s)", params["updated_after"], timestamp
+    )
 
     response = requests.get(url, headers=_headers(), params=params, timeout=30)
     if response.status_code != 200:
@@ -149,9 +156,11 @@ def fetch_partners_updated_after(timestamp=None) -> list[dict]:
     logger.info("fetch_partners_updated_after response keys=%s", list(body.keys()))
     rows = body.get("prod_external_apps_partner_data", [])
     if not rows:
-        logger.warning("fetch_partners_updated_after: key returned empty — full keys: %s", list(body.keys()))
+        logger.warning(
+            "fetch_partners_updated_after: key returned empty — full keys: %s", list(body.keys())
+        )
     logger.info("fetch_partners_updated_after returning %d rows", len(rows))
-    return rows
+    return cast(list, rows)
 
 
 def fetch_user_by_login(user_login: str) -> dict | None:
@@ -192,4 +201,4 @@ def fetch_partners(updated_after: datetime | None = None) -> list[dict]:
             f"Hasura /partner_data returned {response.status_code}: {response.text[:500]}"
         )
 
-    return response.json().get("prod_external_apps_partner_data", [])
+    return cast(list, response.json().get("prod_external_apps_partner_data", []))

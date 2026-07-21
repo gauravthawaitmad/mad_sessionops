@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/lib/redux';
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "@/lib/redux";
 import {
   loginUser,
   logoutUser,
@@ -13,10 +13,10 @@ import {
   selectUser,
   selectIsInitialized,
   clearError,
-} from '@/lib/redux/features/auth/authSlice';
-import { showSuccess, showApiError } from '@/lib/toast/toast';
-import type { LoginFormData, RegisterFormData } from '@/components/auth/validation/authValidation';
-import { loginWithGoogleToken } from '@/lib/redux/features/auth/authSlice';
+} from "@/lib/redux/features/auth/authSlice";
+import { showSuccess, showApiError } from "@/lib/toast/toast";
+import type { LoginFormData, RegisterFormData } from "@/components/auth/validation/authValidation";
+import { loginWithGoogleToken } from "@/lib/redux/features/auth/authSlice";
 
 /**
  * ============================================
@@ -47,78 +47,91 @@ export function useAuth() {
   /**
    * Login
    */
-  const login = useCallback(async (data: LoginFormData) => {
-    try {
-      dispatch(clearError());
+  const login = useCallback(
+    async (data: LoginFormData) => {
+      try {
+        dispatch(clearError());
 
-      await dispatch(loginUser({
-        email: data.email,
-        password: data.password,
-        rememberMe: data.rememberMe,
-      })).unwrap();
+        await dispatch(
+          loginUser({
+            email: data.email,
+            password: data.password,
+            rememberMe: data.rememberMe,
+          })
+        ).unwrap();
 
-      showSuccess('Welcome back!');
-      const params = new URLSearchParams(window.location.search);
-      const next = params.get('next');
-      // Only follow relative paths to prevent open redirect.
-      const destination = next && next.startsWith('/') ? next : '/schools';
-      router.push(destination);
+        showSuccess("Welcome back!");
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next");
+        // Only follow relative paths to prevent open redirect.
+        const destination = next && next.startsWith("/") ? next : "/schools";
+        router.push(destination);
 
-      return { success: true };
-    } catch (err: any) {
-      // Auth failures (wrong credentials) are shown inline by the form via
-      // Redux state — no toast needed. Only surface unexpected errors.
-      const isAuthFailure = typeof err === 'string' || err?.code === 'AUTH_ERROR';
-      if (!isAuthFailure) {
-        showApiError(err);
+        return { success: true };
+      } catch (err: any) {
+        // Auth failures (wrong credentials) are shown inline by the form via
+        // Redux state — no toast needed. Only surface unexpected errors.
+        const isAuthFailure = typeof err === "string" || err?.code === "AUTH_ERROR";
+        if (!isAuthFailure) {
+          showApiError(err);
+        }
+        return { success: false, error: err };
       }
-      return { success: false, error: err };
-    }
-  }, [dispatch, router]);
+    },
+    [dispatch, router]
+  );
 
   /**
    * Login with Google
    */
-  const loginWithGoogle = useCallback(async (googleToken: string) => {
-    try {
-      dispatch(clearError());
+  const loginWithGoogle = useCallback(
+    async (googleToken: string) => {
+      try {
+        dispatch(clearError());
 
-      await dispatch(loginWithGoogleToken(googleToken)).unwrap();
-      showSuccess('Welcome back!');
-      router.push('/home');
+        await dispatch(loginWithGoogleToken(googleToken)).unwrap();
+        showSuccess("Welcome back!");
+        router.push("/home");
 
-      return { success: true };
-    } catch (err: any) {
-      showApiError(err);
-      return { success: false, error: err };
-    }
-  }, [dispatch, router]);
+        return { success: true };
+      } catch (err: any) {
+        showApiError(err);
+        return { success: false, error: err };
+      }
+    },
+    [dispatch, router]
+  );
 
   /**
    * Register
    */
-  const register = useCallback(async (data: RegisterFormData) => {
-    try {
-      dispatch(clearError());
+  const register = useCallback(
+    async (data: RegisterFormData) => {
+      try {
+        dispatch(clearError());
 
-      await dispatch(registerUser({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        confirmPassword: data.confirmPassword,
-        acceptTerms: data.acceptTerms,
-        phone: data.phone,
-      })).unwrap();
+        await dispatch(
+          registerUser({
+            name: data.name,
+            email: data.email,
+            password: data.password,
+            confirmPassword: data.confirmPassword,
+            acceptTerms: data.acceptTerms,
+            phone: data.phone,
+          })
+        ).unwrap();
 
-      showSuccess('Account created successfully!');
-      router.push('/home');
+        showSuccess("Account created successfully!");
+        router.push("/home");
 
-      return { success: true };
-    } catch (err: any) {
-      showApiError(err);
-      return { success: false, error: err };
-    }
-  }, [dispatch, router]);
+        return { success: true };
+      } catch (err: any) {
+        showApiError(err);
+        return { success: false, error: err };
+      }
+    },
+    [dispatch, router]
+  );
 
   /**
    * Logout
@@ -126,12 +139,12 @@ export function useAuth() {
   const logout = useCallback(async () => {
     try {
       await dispatch(logoutUser()).unwrap();
-      showSuccess('Logged out successfully');
-      router.push('/login');
+      showSuccess("Logged out successfully");
+      router.push("/login");
       return { success: true };
     } catch (err: any) {
-      console.error('Logout error:', err);
-      router.push('/login');
+      console.error("Logout error:", err);
+      router.push("/login");
       return { success: false, error: err };
     }
   }, [dispatch, router]);

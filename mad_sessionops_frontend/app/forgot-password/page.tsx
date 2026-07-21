@@ -1,10 +1,10 @@
-import { Metadata } from 'next';
-import { SplitAuthLayout } from '@/components/auth/common/SplitAuthLayout';
-import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
+import { Metadata } from "next";
+import { SplitAuthLayout } from "@/components/auth/common/SplitAuthLayout";
+import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 
 export const metadata: Metadata = {
-  title: 'Set Password | Session-Ops',
-  description: 'Set your Session-Ops password',
+  title: "Set Password | Session-Ops",
+  description: "Set your Session-Ops password",
 };
 
 export default function ForgotPasswordPage() {

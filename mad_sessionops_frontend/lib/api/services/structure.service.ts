@@ -1,4 +1,4 @@
-import { api } from '../client';
+import { api } from "../client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -90,12 +90,12 @@ function mapSchoolClass(raw: RawSchoolClass): SchoolClassItem {
 // ── API calls ──────────────────────────────────────────────────────────────────
 
 export async function fetchActiveYear(): Promise<AcademicYear> {
-  const raw = await api.get<RawAcademicYear>('/academic-years/active/');
+  const raw = await api.get<RawAcademicYear>("/academic-years/active/");
   return { academicYearId: raw.academic_year_id, label: raw.label, isActive: raw.is_active };
 }
 
 export async function fetchClassCatalog(): Promise<ClassCatalogItem[]> {
-  const raw = await api.get<RawClassCatalog[]>('/classes/');
+  const raw = await api.get<RawClassCatalog[]>("/classes/");
   return raw.map((r) => ({
     classId: r.class_id,
     className: r.class_name,
@@ -105,7 +105,7 @@ export async function fetchClassCatalog(): Promise<ClassCatalogItem[]> {
 }
 
 export async function fetchSectionCodes(): Promise<string[]> {
-  return api.get<string[]>('/classes/section-codes/');
+  return api.get<string[]>("/classes/section-codes/");
 }
 
 export async function fetchSchoolClasses(schoolId: number): Promise<SchoolClassItem[]> {
@@ -113,8 +113,13 @@ export async function fetchSchoolClasses(schoolId: number): Promise<SchoolClassI
   return raw.map(mapSchoolClass);
 }
 
-export async function addClassToSchool(schoolId: number, classId: number): Promise<SchoolClassItem> {
-  const raw = await api.post<RawSchoolClass>(`/schools/${schoolId}/classes/`, { class_id: classId });
+export async function addClassToSchool(
+  schoolId: number,
+  classId: number
+): Promise<SchoolClassItem> {
+  const raw = await api.post<RawSchoolClass>(`/schools/${schoolId}/classes/`, {
+    class_id: classId,
+  });
   return mapSchoolClass(raw);
 }
 
@@ -122,13 +127,23 @@ export async function removeSchoolClass(schoolId: number, schoolClassId: number)
   await api.delete(`/schools/${schoolId}/classes/${schoolClassId}/`);
 }
 
-export async function fetchSections(schoolId: number, schoolClassId: number): Promise<SectionItem[]> {
-  const raw = await api.get<RawSection[]>(`/schools/${schoolId}/classes/${schoolClassId}/sections/`);
+export async function fetchSections(
+  schoolId: number,
+  schoolClassId: number
+): Promise<SectionItem[]> {
+  const raw = await api.get<RawSection[]>(
+    `/schools/${schoolId}/classes/${schoolClassId}/sections/`
+  );
   return raw.map(mapSection);
 }
 
-export async function fetchAvailableSectionCodes(schoolId: number, schoolClassId: number): Promise<string[]> {
-  const data = await api.get<{ codes: string[] }>(`/schools/${schoolId}/classes/${schoolClassId}/sections/available-codes/`);
+export async function fetchAvailableSectionCodes(
+  schoolId: number,
+  schoolClassId: number
+): Promise<string[]> {
+  const data = await api.get<{ codes: string[] }>(
+    `/schools/${schoolId}/classes/${schoolClassId}/sections/available-codes/`
+  );
   return data.codes;
 }
 
@@ -151,12 +166,16 @@ export async function removeSection(schoolId: number, sectionId: number): Promis
 // ── Admin: Academic Year management ───────────────────────────────────────────
 
 export async function fetchAllAcademicYears(): Promise<AcademicYear[]> {
-  const raw = await api.get<RawAcademicYear[]>('/academic-years/admin/');
-  return raw.map((r) => ({ academicYearId: r.academic_year_id, label: r.label, isActive: r.is_active }));
+  const raw = await api.get<RawAcademicYear[]>("/academic-years/admin/");
+  return raw.map((r) => ({
+    academicYearId: r.academic_year_id,
+    label: r.label,
+    isActive: r.is_active,
+  }));
 }
 
 export async function createAcademicYear(label: string): Promise<AcademicYear> {
-  const raw = await api.post<RawAcademicYear>('/academic-years/admin/', { label });
+  const raw = await api.post<RawAcademicYear>("/academic-years/admin/", { label });
   return { academicYearId: raw.academic_year_id, label: raw.label, isActive: raw.is_active };
 }
 

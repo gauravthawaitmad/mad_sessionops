@@ -66,7 +66,12 @@ def get_sync_stats(request):
 
 @admin_sync_router.post(
     "/sync/user-by-login/",
-    response={200: SyncUserByLoginOut, 403: ErrorResponseSchema, 404: ErrorResponseSchema, 409: ErrorResponseSchema},
+    response={
+        200: SyncUserByLoginOut,
+        403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
+    },
 )
 def sync_user_by_login_api(request, payload: SyncUserByLoginIn):
     _require_admin(request.auth)
@@ -83,7 +88,7 @@ def sync_user_by_login_api(request, payload: SyncUserByLoginIn):
     "/sync/trigger/",
     response={200: SyncTriggerOut, 403: ErrorResponseSchema, 409: ErrorResponseSchema},
 )
-def trigger_sync(request, entity: str = None):
+def trigger_sync(request, entity: str | None = None):
     """
     entity=None       → sync all 3 entities (global concurrent guard)
     entity=user       → sync only users (per-entity guard)

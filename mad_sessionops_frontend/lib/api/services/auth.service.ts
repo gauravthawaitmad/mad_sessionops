@@ -124,7 +124,9 @@ export const authService = {
    * @deprecated Use loginWithGoogleOAuth instead
    */
   loginWithGoogle: async (googleToken: string): Promise<AuthResponse> => {
-    const response = await api.post<BackendAuthResponse>(`${BASE_URL}/google/login`, { googleToken });
+    const response = await api.post<BackendAuthResponse>(`${BASE_URL}/google/login`, {
+      googleToken,
+    });
     return mapAuthResponse(response);
   },
 

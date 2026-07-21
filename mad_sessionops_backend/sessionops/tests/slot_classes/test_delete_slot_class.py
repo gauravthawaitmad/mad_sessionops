@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import sessionops.services.slot_classes.helpers as slot_class_helpers
 from sessionops.exceptions import ConflictError, NotFound, PermissionDenied
 from sessionops.models import (
     AcademicYear,
@@ -33,7 +34,6 @@ from sessionops.services.slot_classes.create import create_slot_class
 from sessionops.services.slot_classes.delete import delete_slot_class
 from sessionops.services.slot_classes.edit import edit_slot_class
 from sessionops.services.slots.delete import soft_delete_slot
-import sessionops.services.slot_classes.helpers as slot_class_helpers
 
 # ── Counters ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +50,7 @@ def _reset_foundation_subject_cache():
 
 
 # ── Helpers (same pattern as test_create_slot_class.py) ───────────────────────
+
 
 def _make_co() -> User:
     uid = next(_UID)
@@ -205,6 +206,7 @@ def _setup():
 
 # ── Delete tests ───────────────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_delete_slot_class_cascade_soft_deletes_all_rows():
     co, school, section, vol1, slot = _setup()
@@ -295,6 +297,7 @@ def test_delete_slot_class_not_found_raises_404():
 
 # ── Edit tests ─────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_edit_slot_class_volunteer_same_school_replaces_row():
     co, school, section, vol1, slot = _setup()
@@ -369,6 +372,7 @@ def test_edit_slot_class_r_bucket_violation_returns_400():
 
     vol2 = _make_volunteer(sid, co)
     from sessionops.exceptions import ValidationError
+
     with pytest.raises(ValidationError):
         edit_slot_class(scs.slot_class_section_id, _edit_payload(volunteers=[vol1, vol2]), co)
 
@@ -403,11 +407,14 @@ def test_edit_slot_class_section_full_cascade_reset():
         class_section_subject_id=old_css_id, is_active=True, removed=False
     ).exists()
     # New CSS created for section_b, always with the Foundation subject
-    new_css = ClassSectionSubject.objects.get(class_section_id=section_b, is_active=True, removed=False)
+    new_css = ClassSectionSubject.objects.get(
+        class_section_id=section_b, is_active=True, removed=False
+    )
     assert new_css.subject_id.subject_name == "Foundation"
 
 
 # ── Slot-delete blocking tests (deferred from F-M3-6) ─────────────────────────
+
 
 @pytest.mark.django_db
 def test_delete_slot_with_active_slot_classes_returns_409():

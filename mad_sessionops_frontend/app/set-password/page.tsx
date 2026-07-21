@@ -1,10 +1,10 @@
-import { Metadata } from 'next';
-import { SplitAuthLayout } from '@/components/auth/common/SplitAuthLayout';
-import { SetPasswordForm } from '@/components/auth/SetPasswordForm';
+import { Metadata } from "next";
+import { SplitAuthLayout } from "@/components/auth/common/SplitAuthLayout";
+import { SetPasswordForm } from "@/components/auth/SetPasswordForm";
 
 export const metadata: Metadata = {
-  title: 'Set Password | MAD Platform',
-  description: 'Set your MAD Platform password',
+  title: "Set Password | MAD Platform",
+  description: "Set your MAD Platform password",
 };
 
 export default function SetPasswordPage() {

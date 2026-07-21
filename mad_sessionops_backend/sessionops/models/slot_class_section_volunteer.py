@@ -8,21 +8,22 @@ class SlotClassSectionVolunteer(models.Model):
     """
 
     slot_class_section_volunteer_id = models.BigAutoField(primary_key=True)
-    slot_class_section_id           = models.ForeignKey(
-        "SlotClassSection", on_delete=models.PROTECT
+    slot_class_section_id = models.ForeignKey(
+        "SlotClassSection", on_delete=models.PROTECT, db_column="slot_class_section_id"
     )
-    volunteer_id                    = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="slot_class_assignments"
+    volunteer_id = models.ForeignKey(
+        "sessionops.User",
+        on_delete=models.PROTECT,
+        related_name="slot_class_assignments",
+        db_column="volunteer_id",
     )
-    is_active                       = models.BooleanField(default=True)
-    removed                         = models.BooleanField(default=False)
-    deleted_at                      = models.DateTimeField(null=True, blank=True)
-    created_at                      = models.DateTimeField(auto_now_add=True)
-    updated_at                      = models.DateTimeField(auto_now=True)
-    created_by                      = models.ForeignKey(
-        "sessionops.User", on_delete=models.PROTECT, related_name="+"
-    )
-    updated_by                      = models.ForeignKey(
+    is_active = models.BooleanField(default=True)
+    removed = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey("sessionops.User", on_delete=models.PROTECT, related_name="+")
+    updated_by = models.ForeignKey(
         "sessionops.User", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
 

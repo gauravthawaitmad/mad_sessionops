@@ -3,7 +3,9 @@
 
 echo "🚀 Running pre-push checks..."
 
-# Run strict lint (no warnings allowed)
+# Strict lint is informational for now — 141 pre-existing errors surfaced once
+# `next lint`'s removal (Next.js 16) was fixed to run `eslint` directly. See
+# ci-cd-pipeline-tasks.md Open Questions before uncommenting this as blocking.
 # echo "🔎 Running strict ESLint check..."
 # npm run lint:strict
 
@@ -11,8 +13,11 @@ echo "🚀 Running pre-push checks..."
 echo "📝 Type checking..."
 npm run type-check
 
-# Optional: Run tests when you add them
-# echo "🧪 Running tests..."
-# npm run test
+# Run tests. 2 pre-existing failures in __tests__/admin/DataSyncTab.test.tsx
+# (stale accessible-name query — component's sync buttons no longer expose
+# the names the test looks for) are tracked in ci-cd-pipeline-tasks.md Open
+# Questions; fix those before this can block every push.
+echo "🧪 Running tests..."
+npm run test || echo "⚠️  Tests failed — see ci-cd-pipeline-tasks.md Open Questions (2 known pre-existing failures)"
 
 echo "✅ Pre-push checks passed!"

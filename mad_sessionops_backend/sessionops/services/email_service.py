@@ -49,7 +49,9 @@ def _from_sender() -> dict:
     }
 
 
-def _base_email_html(*, heading: str, body_html: str, cta_url: str, cta_label: str, footer_note: str) -> str:
+def _base_email_html(
+    *, heading: str, body_html: str, cta_url: str, cta_label: str, footer_note: str
+) -> str:
     """
     Shared branded HTML shell for all transactional emails.
     Uses table-based layout for maximum email client compatibility.
@@ -135,12 +137,14 @@ def _base_email_html(*, heading: str, body_html: str, cta_url: str, cta_label: s
 
 def _get_year() -> int:
     from datetime import date
+
     return date.today().year
 
 
 def _unique_subject_suffix() -> str:
     """Short timestamp suffix that breaks email threading in Gmail/Outlook."""
     from datetime import datetime
+
     return datetime.now().strftime("%d %b %Y, %H:%M")
 
 

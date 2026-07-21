@@ -103,73 +103,73 @@ mad_backend/
 ### Pylint
 ```bash
 # Check entire project
-pylint madui/
+pylint sessionops/
 
 # Check specific file
-pylint madui/auth.py
+pylint sessionops/auth.py
 
 # Generate report
-pylint madui/ --output-format=json > pylint-report.json
+pylint sessionops/ --output-format=json > pylint-report.json
 ```
 
 ### Black
 ```bash
 # Check formatting
-black --check madui/
+black --check sessionops/
 
 # Format code
-black madui/
+black sessionops/
 
 # Show diff
-black --diff madui/
+black --diff sessionops/
 ```
 
 ### isort
 ```bash
 # Check import sorting
-isort --check-only madui/
+isort --check-only sessionops/
 
 # Sort imports
-isort madui/
+isort sessionops/
 
 # Show diff
-isort --diff madui/
+isort --diff sessionops/
 ```
 
 ### Flake8
 ```bash
 # Check style
-flake8 madui/
+flake8 sessionops/
 
 # Generate statistics
-flake8 madui/ --statistics
+flake8 sessionops/ --statistics
 
 # Check specific file
-flake8 madui/auth.py
+flake8 sessionops/auth.py
 ```
 
 ### MyPy
 ```bash
 # Type check
-mypy madui/
+mypy sessionops/
 
 # Verbose output
-mypy madui/ --verbose
+mypy sessionops/ --verbose
 
 # Generate HTML report
-mypy madui/ --html-report mypy-report
+mypy sessionops/ --html-report mypy-report
 ```
 
 ### Bandit
 ```bash
 # Security scan
-bandit -r madui/
+bandit -r sessionops/
 
 # Generate JSON report
-bandit -r madui/ -f json -o bandit-report.json
+bandit -r sessionops/ -f json -o bandit-report.json
 
 # High severity only
-bandit -r madui/ -ll
+bandit -r sessionops/ -ll
 ```
 
 ### Safety
@@ -187,28 +187,28 @@ safety check --full-report
 ### Radon
 ```bash
 # Cyclomatic complexity
-radon cc madui/ -a
+radon cc sessionops/ -a
 
 # Maintainability index
-radon mi madui/
+radon mi sessionops/
 
 # Raw metrics
-radon raw madui/
+radon raw sessionops/
 
 # Halstead metrics
-radon hal madui/
+radon hal sessionops/
 ```
 
 ### Interrogate
 ```bash
 # Check docstring coverage
-interrogate madui/
+interrogate sessionops/
 
 # Verbose output
-interrogate -v madui/
+interrogate -v sessionops/
 
 # Generate badge
-interrogate --generate-badge madui/
+interrogate --generate-badge sessionops/
 ```
 
 ## ⚙️ Configuration Details
@@ -343,7 +343,7 @@ Install extensions:
 **Solution:** Already configured to be compatible
 
 ### Issue: Import order wrong
-**Solution:** Run `isort madui/`
+**Solution:** Run `isort sessionops/`
 
 ### Issue: Pylint score too low
 **Solution:** Review warnings, fix critical issues

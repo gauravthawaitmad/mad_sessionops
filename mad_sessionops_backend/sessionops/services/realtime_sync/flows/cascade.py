@@ -16,7 +16,6 @@ from sessionops.models import (
 from sessionops.services.realtime_sync.flows import FlowResult
 from sessionops.services.realtime_sync.utils import apply_common_fields
 
-
 # ── School resolver ────────────────────────────────────────────────────────────
 
 
@@ -37,9 +36,7 @@ def _resolve_school_for_worknode(worknode_id: int) -> int | None:
 # ── Cascade remove ─────────────────────────────────────────────────────────────
 
 
-def _cascade_remove_user_from_school(
-    user, school_id: int, now, cascaded_changes: list
-) -> None:
+def _cascade_remove_user_from_school(user, school_id: int, now, cascaded_changes: list) -> None:
     """
     Soft-delete all slot-class assignments for user at school_id, cascading through
     SlotClassSection → ClassSectionSubject → ChildSubject when each parent loses
@@ -66,11 +63,13 @@ def _cascade_remove_user_from_school(
         scsv.removed = True
         scsv.deleted_at = now
         scsv.save(update_fields=["is_active", "removed", "deleted_at"])
-        cascaded_changes.append({
-            "table": "slot_class_section_volunteer",
-            "id": scsv.slot_class_section_volunteer_id,
-            "action": "soft_deleted",
-        })
+        cascaded_changes.append(
+            {
+                "table": "slot_class_section_volunteer",
+                "id": scsv.slot_class_section_volunteer_id,
+                "action": "soft_deleted",
+            }
+        )
 
         # scsv.slot_class_section_id is the FK accessor → SlotClassSection object
         scs = scsv.slot_class_section_id
@@ -89,11 +88,13 @@ def _cascade_remove_user_from_school(
             scs.removed = True
             scs.deleted_at = now
             scs.save(update_fields=["is_active", "removed", "deleted_at"])
-            cascaded_changes.append({
-                "table": "slot_class_section",
-                "id": scs.slot_class_section_id,
-                "action": "soft_deleted",
-            })
+            cascaded_changes.append(
+                {
+                    "table": "slot_class_section",
+                    "id": scs.slot_class_section_id,
+                    "action": "soft_deleted",
+                }
+            )
 
             # scs.class_section_subject_id is the FK accessor → ClassSectionSubject object
             css = scs.class_section_subject_id
@@ -108,11 +109,13 @@ def _cascade_remove_user_from_school(
                 css.removed = True
                 css.deleted_at = now
                 css.save(update_fields=["is_active", "removed", "deleted_at"])
-                cascaded_changes.append({
-                    "table": "class_section_subject",
-                    "id": css.class_section_subject_id,
-                    "action": "soft_deleted",
-                })
+                cascaded_changes.append(
+                    {
+                        "table": "class_section_subject",
+                        "id": css.class_section_subject_id,
+                        "action": "soft_deleted",
+                    }
+                )
 
                 child_count = ChildSubject.objects.filter(
                     class_section_subject_id=css,
@@ -120,12 +123,14 @@ def _cascade_remove_user_from_school(
                     removed=False,
                 ).update(is_active=False, removed=True, deleted_at=now)
                 if child_count:
-                    cascaded_changes.append({
-                        "table": "child_subject",
-                        "parent_css_id": css.class_section_subject_id,
-                        "count": child_count,
-                        "action": "soft_deleted",
-                    })
+                    cascaded_changes.append(
+                        {
+                            "table": "child_subject",
+                            "parent_css_id": css.class_section_subject_id,
+                            "count": child_count,
+                            "action": "soft_deleted",
+                        }
+                    )
 
     sv_count = SchoolVolunteer.objects.filter(
         school_id=school_id,
@@ -134,11 +139,13 @@ def _cascade_remove_user_from_school(
         removed=False,
     ).update(is_active=False, removed=True, deleted_at=now)
     if sv_count:
-        cascaded_changes.append({
-            "table": "school_volunteer",
-            "school_id": school_id,
-            "action": "soft_deleted",
-        })
+        cascaded_changes.append(
+            {
+                "table": "school_volunteer",
+                "school_id": school_id,
+                "action": "soft_deleted",
+            }
+        )
 
 
 def _ensure_school_volunteer(user, school_id: int, now, cascaded_changes: list) -> None:
@@ -159,11 +166,13 @@ def _ensure_school_volunteer(user, school_id: int, now, cascaded_changes: list) 
             school_id=school_id,
             volunteer_id=user,
         )
-        cascaded_changes.append({
-            "table": "school_volunteer",
-            "school_id": school_id,
-            "action": "created",
-        })
+        cascaded_changes.append(
+            {
+                "table": "school_volunteer",
+                "school_id": school_id,
+                "action": "created",
+            }
+        )
 
 
 def _cleanup_other_school_assignments(
@@ -305,9 +314,7 @@ def handle_worknode_change(local_user, payload, diff, now) -> FlowResult:
     rules_fired: list = []
 
     if diff.worknode_action == "added":
-        return cascade_worknode_added(
-            local_user, payload, diff, now, cascaded_changes, rules_fired
-        )
+        return cascade_worknode_added(local_user, payload, diff, now, cascaded_changes, rules_fired)
     elif diff.worknode_action == "removed":
         return cascade_worknode_removed(
             local_user, payload, diff, now, cascaded_changes, rules_fired

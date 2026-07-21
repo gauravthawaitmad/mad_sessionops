@@ -1,6 +1,6 @@
+from sessionops.exceptions import NotFound
 from sessionops.models import SchoolSessionDetails
 from sessionops.services.academic_year.queries import get_active_academic_year
-from sessionops.exceptions import NotFound
 
 
 def get_active_session(school_id: int) -> SchoolSessionDetails | None:
@@ -13,13 +13,9 @@ def get_active_session(school_id: int) -> SchoolSessionDetails | None:
     except NotFound:
         return None
 
-    return (
-        SchoolSessionDetails.objects
-        .filter(
-            school_id=school_id,
-            school_academic_year__academic_year_id=active_year,
-            is_active=True,
-            removed=False,
-        )
-        .first()
-    )
+    return SchoolSessionDetails.objects.filter(
+        school_id=school_id,
+        school_academic_year__academic_year_id=active_year,
+        is_active=True,
+        removed=False,
+    ).first()

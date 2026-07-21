@@ -3,7 +3,6 @@ import { persistStore, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 
 import { persistedRootReducer } from "./persistConfig";
 import { setStore } from "./storeAccessor";
 
-
 /**
  * ============================================
  * REDUX STORE WITH PERSISTENCE

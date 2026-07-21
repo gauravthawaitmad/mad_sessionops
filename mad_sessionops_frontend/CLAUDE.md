@@ -24,47 +24,48 @@ This repo is a thin UI over the backend API. It holds no business logic beyond p
 
 For system-level context — business rules, data model, RBAC, glossary — read docs from the **backend repo**. The assumption is that both repos are checked out side by side:workspace/
 ├── mad-sessionops-backend/
-│   └── docs/                    ← system docs live here
+│ └── docs/ ← system docs live here
 └── mad-sessionops-frontend/
-└── docs/                    ← frontend-specific docs only
+└── docs/ ← frontend-specific docs only
 
-| If you are working on… | Read first |
-|------------------------|------------|
-| Any task                | This file + `docs/FRONTEND_ARCHITECTURE.md` |
-| Business rules          | `../mad-sessionops-backend/docs/BUSINESS_RULES.md` |
-| Domain terms            | `../mad-sessionops-backend/docs/GLOSSARY.md` |
-| API shape / auth flow   | `../mad-sessionops-backend/docs/ARCHITECTURE.md` + `../mad-sessionops-backend/docs/API_CONVENTIONS.md` (when Sprint 2 lands) |
-| "Why was this chosen"   | `docs/FRONTEND_DECISIONS.md` + `../mad-sessionops-backend/docs/DECISIONS.md` |
-| "What's done, what's next" | `../mad-sessionops-backend/docs/PROGRESS.md` |
-| A specific feature      | `../mad-sessionops-backend/docs/features/FXX-*.md` |
+| If you are working on…     | Read first                                                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Any task                   | This file + `docs/FRONTEND_ARCHITECTURE.md`                                                                                  |
+| Business rules             | `../mad-sessionops-backend/docs/BUSINESS_RULES.md`                                                                           |
+| Domain terms               | `../mad-sessionops-backend/docs/GLOSSARY.md`                                                                                 |
+| API shape / auth flow      | `../mad-sessionops-backend/docs/ARCHITECTURE.md` + `../mad-sessionops-backend/docs/API_CONVENTIONS.md` (when Sprint 2 lands) |
+| "Why was this chosen"      | `docs/FRONTEND_DECISIONS.md` + `../mad-sessionops-backend/docs/DECISIONS.md`                                                 |
+| "What's done, what's next" | `../mad-sessionops-backend/docs/PROGRESS.md`                                                                                 |
+| A specific feature         | `../mad-sessionops-backend/docs/features/FXX-*.md`                                                                           |
 
 If the backend repo is not checked out alongside, ask the human before proceeding. Working blind on system rules causes the worst bugs.
 
 ## Repo layoutmad-sessionops-frontend/
-├── CLAUDE.md                    ← you are here
-├── README.md                    ← human-facing setup
+
+├── CLAUDE.md ← you are here
+├── README.md ← human-facing setup
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
-├── postcss.config.mjs           ← only one PostCSS config — do not add .json
-├── proxy.ts                     ← route guards (NOT middleware.ts — Next.js 16 convention)
+├── postcss.config.mjs ← only one PostCSS config — do not add .json
+├── proxy.ts ← route guards (NOT middleware.ts — Next.js 16 convention)
 ├── app/
-│   ├── layout.tsx               ← root layout, theme provider, redux provider
-│   ├── page.tsx                 ← redirects to /schools
-│   ├── login/
-│   ├── auth/callback/
-│   ├── schools/                 ← main authenticated routes
-│   └── admin/
-├── components/                  ← reusable UI
+│ ├── layout.tsx ← root layout, theme provider, redux provider
+│ ├── page.tsx ← redirects to /schools
+│ ├── login/
+│ ├── auth/callback/
+│ ├── schools/ ← main authenticated routes
+│ └── admin/
+├── components/ ← reusable UI
 ├── lib/
-│   ├── api/                     ← Axios client, interceptors, typed API functions
-│   ├── redux/
-│   │   ├── store.ts
-│   │   ├── persistConfig.ts     ← SSR-safe storage fallback
-│   │   └── features/
-│   │       └── auth/            ← auth slice (single source of truth for token)
-│   └── auth/                    ← PKCE helpers
-├── docs/                        ← frontend-specific docs
+│ ├── api/ ← Axios client, interceptors, typed API functions
+│ ├── redux/
+│ │ ├── store.ts
+│ │ ├── persistConfig.ts ← SSR-safe storage fallback
+│ │ └── features/
+│ │ └── auth/ ← auth slice (single source of truth for token)
+│ └── auth/ ← PKCE helpers
+├── docs/ ← frontend-specific docs
 └── public/
 
 ## Non-negotiable rules
@@ -126,3 +127,4 @@ Full dev setup is in `README.md`.
 5. You have a plan to verify the change (visual check, component test, or manual flow).
 
 If any of those is false, stop and clarify.
+```

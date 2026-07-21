@@ -1,6 +1,6 @@
 from django.db import transaction
 
-from sessionops.exceptions import NotFound, PermissionDenied, ValidationError, ConflictError
+from sessionops.exceptions import ConflictError, NotFound, PermissionDenied, ValidationError
 from sessionops.models import (
     ChildClassSection,
     ChildSubject,
@@ -31,9 +31,7 @@ def create_slot_class(slot_id: int, payload, user: User) -> SlotClassSection:
     """
     # 1. Lock slot row — prevents concurrent slot-class creation races
     try:
-        slot = Slot.objects.select_for_update().get(
-            slot_id=slot_id, is_active=True, removed=False
-        )
+        slot = Slot.objects.select_for_update().get(slot_id=slot_id, is_active=True, removed=False)
     except Slot.DoesNotExist:
         raise NotFound(f"Slot {slot_id} not found.")
 
@@ -69,14 +67,12 @@ def create_slot_class(slot_id: int, payload, user: User) -> SlotClassSection:
 
     # 8. R5: section not already in this slot
     if SlotClassSection.objects.filter(
-        slot_id=slot,
+        slot_id=slot.slot_id,
         class_section_id=section,
         is_active=True,
         removed=False,
     ).exists():
-        raise ConflictError(
-            f"Section '{section.section_name}' is already assigned to this slot."
-        )
+        raise ConflictError(f"Section '{section.section_name}' is already assigned to this slot.")
 
     # 9. Insert 1: ClassSectionSubject
     css = ClassSectionSubject.objects.create(
@@ -94,14 +90,16 @@ def create_slot_class(slot_id: int, payload, user: User) -> SlotClassSection:
         ).select_related("child_id")
     )
     if active_ccs:
-        ChildSubject.objects.bulk_create([
-            ChildSubject(
-                child_id=ccs.child_id,
-                class_section_subject_id=css,
-                created_by=user,
-            )
-            for ccs in active_ccs
-        ])
+        ChildSubject.objects.bulk_create(
+            [
+                ChildSubject(
+                    child_id=ccs.child_id,
+                    class_section_subject_id=css,
+                    created_by=user,
+                )
+                for ccs in active_ccs
+            ]
+        )
 
     # 11. Insert 3: SlotClassSection
     scs = SlotClassSection.objects.create(
@@ -136,8 +134,7 @@ def list_slot_classes(slot_id: int, user: User) -> list[SlotClassSection]:
     get_school_or_403(user, slot.school_id)
 
     return list(
-        SlotClassSection.objects
-        .filter(slot_id=slot, is_active=True, removed=False)
+        SlotClassSection.objects.filter(slot_id=slot.slot_id, is_active=True, removed=False)
         .select_related("class_section_id", "class_section_subject_id__subject_id")
         .prefetch_related("slotclasssectionvolunteer_set")
         .order_by("created_at")

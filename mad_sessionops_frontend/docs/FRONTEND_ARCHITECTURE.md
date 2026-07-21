@@ -5,26 +5,26 @@ How this Next.js app is put together. Read before any task that touches routing,
 ## Big picture
 
 The frontend is a single-page-ish application using Next.js App Router. It authenticates via Google OAuth PKCE, stores a JWT pair issued by the backend, and calls the backend API for everything else. It holds no domain state that isn't derived from backend responses.┌─────────────────────────────────────────────────────────┐
-│                      Next.js 16 app                     │
-│                                                         │
-│  ┌───────────┐   ┌───────────┐   ┌───────────────────┐  │
-│  │ proxy.ts  │   │  app/     │   │  components/      │  │
-│  │ (route    │──▶│  (routes) │──▶│  (UI primitives)  │  │
-│  │  guard)   │   │           │   │                   │  │
-│  └───────────┘   └─────┬─────┘   └───────────────────┘  │
-│                        │                                │
-│                        ▼                                │
-│              ┌────────────────┐                         │
-│              │  lib/redux/    │                         │
-│              │  (auth, ui)    │                         │
-│              └────────┬───────┘                         │
-│                       │                                 │
-│                       ▼                                 │
-│              ┌────────────────┐                         │
-│              │  lib/api/      │  ───────▶  backend API  │
-│              │  (Axios +      │                         │
-│              │   interceptor) │                         │
-│              └────────────────┘                         │
+│ Next.js 16 app │
+│ │
+│ ┌───────────┐ ┌───────────┐ ┌───────────────────┐ │
+│ │ proxy.ts │ │ app/ │ │ components/ │ │
+│ │ (route │──▶│ (routes) │──▶│ (UI primitives) │ │
+│ │ guard) │ │ │ │ │ │
+│ └───────────┘ └─────┬─────┘ └───────────────────┘ │
+│ │ │
+│ ▼ │
+│ ┌────────────────┐ │
+│ │ lib/redux/ │ │
+│ │ (auth, ui) │ │
+│ └────────┬───────┘ │
+│ │ │
+│ ▼ │
+│ ┌────────────────┐ │
+│ │ lib/api/ │ ───────▶ backend API │
+│ │ (Axios + │ │
+│ │ interceptor) │ │
+│ └────────────────┘ │
 └─────────────────────────────────────────────────────────┘
 
 ## Routing
@@ -47,13 +47,14 @@ Everything else is protected.
 - `/admin/*` — admin-only (sync dashboard, year progression) — role check happens at the page level, in addition to auth check
 
 ### How `proxy.ts` worksIncoming request
+
 ↓
-Is path in PUBLIC_ROUTES?  → yes → let through
+Is path in PUBLIC_ROUTES? → yes → let through
 ↓ no
 Read access_token from cookies
 ↓
 Cookie present?
-├─ no  → redirect to /login?next=<original path>
+├─ no → redirect to /login?next=<original path>
 └─ yes → let through (do NOT validate expiry here —
 let the Axios interceptor handle refresh when
 API calls fail)
@@ -67,12 +68,14 @@ Redux Toolkit with redux-persist. Two slices to start; more added per feature.
 ### Auth slice (`lib/redux/features/auth/`)
 
 Single source of truth for:
+
 - `accessToken` (in-memory + persisted)
 - `refreshToken` (in-memory + persisted)
 - `user` (profile: id, email, name, role, etc.)
 - `isAuthenticated` (derived)
 
 Actions:
+
 - `loginSucceeded(tokens, user)` — called after OAuth exchange
 - `tokenRefreshed(newAccessToken)` — called by Axios interceptor
 - `loggedOut()` — clears slice, clears cookie, (future) calls backend blacklist
@@ -92,12 +95,13 @@ On client hydration: real localStorage takes over, state rehydrates.
 
 The access token lives in two places, and this is intentional:
 
-| Where | Why |
-|-------|-----|
-| Redux (persisted) | API calls read from here via the Axios interceptor |
+| Where                 | Why                                                          |
+| --------------------- | ------------------------------------------------------------ |
+| Redux (persisted)     | API calls read from here via the Axios interceptor           |
 | `access_token` cookie | `proxy.ts` reads from here (proxies can't read localStorage) |
 
 Both are updated together:
+
 - On login: set Redux + set cookie
 - On refresh (Axios interceptor): update Redux + update cookie
 - On logout: clear Redux + expire cookie
@@ -120,11 +124,12 @@ Two interceptors:
 ↓
 Already refreshing?
 ├─ yes → queue this request, wait for refresh to complete, retry
-└─ no  → start refresh:
+└─ no → start refresh:
+
 1. Mark refreshing=true
 2. POST /api/auth/refresh with refresh token
 3. On success: dispatch tokenRefreshed, update cookie,
-retry original + all queued requests
+   retry original + all queued requests
 4. On failure: dispatch loggedOut, redirect to /login
 5. Mark refreshing=false
 
@@ -212,3 +217,4 @@ Deploy target for production is TBD. Likely candidates: Vercel (zero-config Next
 - **Not GraphQL.** Backend is REST-ish via Ninja. If GraphQL happens, it's a decision for another day.
 - **Not a PWA.** No service worker, no offline support, no install prompt. This is an internal staff tool.
 - **Not i18n'd.** English only for v1. If Hindi (or other) translations happen, add `next-intl` later.
+```

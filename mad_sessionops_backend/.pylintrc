@@ -12,7 +12,11 @@ persistent=yes
 load-plugins=pylint_django
 
 # Django settings module
-django-settings-module=madui.settings
+django-settings-module=sessionops.settings
+
+# Generated code — migrations are Django-authored boilerplate, not
+# hand-written logic; duplicate-code/line-length findings there are noise.
+ignore-paths=.*/migrations/.*
 
 [MESSAGES CONTROL]
 # Disable specific messages
@@ -79,8 +83,13 @@ indent-string='    '
 expected-line-ending-format=LF
 
 [LOGGING]
-# Format style used to check logging format string
-logging-format-style=new
+# Format style used to check logging format string.
+# "old" (%-style), not "new" ({}-style) — this codebase uses %-style lazy
+# logging throughout (the correct, recommended stdlib pattern). Under "new",
+# pylint doesn't recognize %d/%s as placeholders and flags every logger.info()
+# call with args as logging-too-many-args, which is a false positive, not a
+# real bug — verified by reproducing it against a trivial one-line log call.
+logging-format-style=old
 
 [SIMILARITIES]
 # Minimum lines number of a similarity

@@ -32,20 +32,23 @@ slot_classes_router = Router(tags=["Slot Classes"])
 )
 def get_subjects(request):
     """Return all seeded subjects (global catalog, no auth needed)."""
-    return 200, list(Subject.objects.all().order_by("subject_name").values("subject_id", "subject_name"))
+    return 200, list(
+        Subject.objects.all().order_by("subject_name").values("subject_id", "subject_name")
+    )
 
 
 def _scs_to_schema(scs) -> SlotClassReadSchema:
     active_vols = [
-        v for v in scs.slotclasssectionvolunteer_set.all()
-        if v.is_active and not v.removed
+        v for v in scs.slotclasssectionvolunteer_set.all() if v.is_active and not v.removed
     ]
     return SlotClassReadSchema(
         slot_class_section_id=scs.slot_class_section_id,
         class_section_id=scs.class_section_id_id,
         section_name=scs.class_section_id.section_name,
         section_display_name=scs.class_section_id.section_display_name,
-        subject_name=normalize_subject_display_name(scs.class_section_subject_id.subject_id.subject_name),
+        subject_name=normalize_subject_display_name(
+            scs.class_section_subject_id.subject_id.subject_name
+        ),
         volunteers=[
             VolunteerInSlotClassSchema(
                 user_id=v.volunteer_id_id,
@@ -83,9 +86,11 @@ def post_slot_class(request, school_id: int, slot_id: int, payload: SlotClassCre
     scs = create_slot_class(slot_id, payload, request.auth)
     # Re-fetch with prefetch for serialization
     from sessionops.models import SlotClassSection
+
     scs = (
-        SlotClassSection.objects
-        .select_related("class_section_id", "class_section_subject_id__subject_id")
+        SlotClassSection.objects.select_related(
+            "class_section_id", "class_section_subject_id__subject_id"
+        )
         .prefetch_related("slotclasssectionvolunteer_set__volunteer_id")
         .get(slot_class_section_id=scs.slot_class_section_id)
     )
@@ -103,14 +108,19 @@ def post_slot_class(request, school_id: int, slot_id: int, payload: SlotClassCre
     },
 )
 def patch_slot_class(
-    request, school_id: int, slot_id: int, scs_id: int,
+    request,
+    school_id: int,
+    slot_id: int,
+    scs_id: int,
     payload: SlotClassUpdateSchema,
 ):
     scs = edit_slot_class(scs_id, payload, request.auth)
     from sessionops.models import SlotClassSection
+
     scs = (
-        SlotClassSection.objects
-        .select_related("class_section_id", "class_section_subject_id__subject_id")
+        SlotClassSection.objects.select_related(
+            "class_section_id", "class_section_subject_id__subject_id"
+        )
         .prefetch_related("slotclasssectionvolunteer_set__volunteer_id")
         .get(slot_class_section_id=scs.slot_class_section_id)
     )

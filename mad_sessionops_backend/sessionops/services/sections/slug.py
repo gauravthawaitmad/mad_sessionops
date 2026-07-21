@@ -25,7 +25,5 @@ def normalize_section_slug(display_name: str) -> str:
 def next_default_display_name(school_id: int) -> str:
     from sessionops.models import ClassSection
 
-    n = ClassSection.objects.filter(
-        school_id=school_id, is_active=True, removed=False
-    ).count()
+    n = ClassSection.objects.filter(school_id=school_id, is_active=True, removed=False).count()
     return f"Group {n + 1}"

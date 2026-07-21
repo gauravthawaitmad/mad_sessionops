@@ -4,8 +4,9 @@ F-M6-2: Buckets API integration tests.
 
 import json
 
-import pytest
 from django.test import Client
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import Partner, User
@@ -59,6 +60,7 @@ def client():
 
 
 # ── GET /sections/ ────────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_list_buckets_empty(client):
@@ -114,6 +116,7 @@ def test_list_buckets_admin_sees_any_school(client):
 
 
 # ── POST /sections/ ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 def test_post_bucket_creates_row(client):
@@ -190,6 +193,7 @@ def test_post_bucket_403_for_co_of_other_school(client):
 
 # ── PATCH /sections/{id}/ ─────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 def test_patch_bucket_renames(client):
     co = _make_user("CO Full Time")
@@ -257,6 +261,7 @@ def test_patch_bucket_409_on_collision(client):
 
 
 # ── DELETE /sections/{id}/ (existing M2 endpoint, unchanged) ──────────────────
+
 
 @pytest.mark.django_db
 def test_delete_bucket_via_existing_endpoint(client):

@@ -10,17 +10,17 @@ Following Dalgo backend best practices:
 - Sentry integration
 """
 
-import os
-from pathlib import Path
 import logging
+import os
 from datetime import timedelta
+from pathlib import Path
+from typing import Any
 
 import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
 from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
-
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -40,7 +40,6 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 PRODUCTION = ENVIRONMENT == "production"
 
 
-
 # Sentry Setup
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN"),
@@ -57,9 +56,7 @@ sentry_sdk.init(
 
 # CORS Configuration
 ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-    if h.strip()
+    h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()
 ]
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all in development only (DEBUG=False in production)
@@ -111,7 +108,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
 ]
 
-REST_FRAMEWORK = {
+REST_FRAMEWORK: dict = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
 }
 
@@ -168,17 +165,34 @@ _DB_OPTIONS = {"options": f"-c search_path={DBSCHEMA},public"}
 # Tests run as admin user because the app user lacks CREATEDB. The test DB is
 # destroyed after each run — no lasting privilege escalation.
 import sys as _sys
+
 _TESTING = any("pytest" in a for a in _sys.argv) or os.environ.get("PYTEST_CURRENT_TEST")
 
-DATABASES = {
+_conn_max_age_env = os.getenv("CONN_MAX_AGE")
+_CONN_MAX_AGE: int | None = int(_conn_max_age_env) if _conn_max_age_env else None
+
+DATABASES: dict[str, dict[str, Any]] = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("DBNAME"),
         "HOST": os.getenv("DBHOST"),
         "USER": os.getenv("DBADMINUSER", os.getenv("DBUSER")) if _TESTING else os.getenv("DBUSER"),
-        "PASSWORD": os.getenv("DBADMINPASSWORD", os.getenv("DBPASSWORD")) if _TESTING else os.getenv("DBPASSWORD"),
+        "PASSWORD": os.getenv("DBADMINPASSWORD", os.getenv("DBPASSWORD"))
+        if _TESTING
+        else os.getenv("DBPASSWORD"),
         "PORT": os.getenv("DBPORT"),
         "OPTIONS": _DB_OPTIONS,
+        # Was unset (Django default: 0 — closes the connection after every
+        # request/command). That makes close_old_connections() calls in the sync
+        # services (a legitimate practice for long-running batch loops) tear down
+        # a connection that's only milliseconds old, which is harmless in
+        # production but breaks pytest-django's transaction-wrapped test
+        # connection when those same functions are called directly in tests.
+        # None (persistent, Django's is_usable() check reconnects on failure) —
+        # a fixed age like 60s just delays the same bug until the test SESSION
+        # (not any one test) runs past that age, since pytest-django keeps one
+        # connection alive across the whole run.
+        "CONN_MAX_AGE": _CONN_MAX_AGE,
     },
     # Used only for `just migrate` — needs DDL rights (table owner or superuser).
     # Set DBADMINUSER / DBADMINPASSWORD in your .env file.
@@ -325,12 +339,13 @@ def print_startup_info():
     print(f"  DB Host     : {db['HOST']}:{db['PORT']}")
     print(f"  DB User     : {db['USER']}")
     print("-" * 60)
-    print(f"  API Docs    : http://localhost:8000/api/docs")
-    print(f"  Admin       : http://localhost:8000/admin/")
+    print("  API Docs    : http://localhost:8000/api/docs")
+    print("  Admin       : http://localhost:8000/admin/")
     print("=" * 60 + "\n")
 
 
 # Only print on actual server start (not during migrations, shell, etc.)
 import sys
+
 if "runserver" in sys.argv or "uvicorn" in sys.argv[0] if sys.argv else False:
     print_startup_info()

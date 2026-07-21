@@ -4,7 +4,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from django.utils.dateparse import parse_datetime
-from ninja import Router
+
+from ninja import Router, Schema
 
 from sessionops.exceptions import NotFound, PermissionDenied
 from sessionops.exceptions import ValidationError as BusinessValidationError
@@ -13,7 +14,6 @@ from sessionops.schemas.auth import ErrorResponseSchema
 from sessionops.services.auth.role_helpers import user_has_admin_access
 from sessionops.services.realtime_sync.orchestrator import process_sync_event
 from sessionops.services.realtime_sync.schema import RealtimeSyncUserPayload
-from ninja import Schema
 
 admin_realtime_events_router = Router(tags=["admin-realtime-events"])
 

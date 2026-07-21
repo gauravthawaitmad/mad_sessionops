@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import sessionops.services.slot_classes.helpers as slot_class_helpers
 from sessionops.api.slot_classes_api import _scs_to_schema
 from sessionops.models import (
     AcademicYear,
@@ -29,7 +30,6 @@ from sessionops.models import (
 from sessionops.services.slot_classes.create import create_slot_class
 from sessionops.services.slot_classes.helpers import normalize_subject_display_name
 from sessionops.services.slot_classes.schedule import get_school_schedule
-import sessionops.services.slot_classes.helpers as slot_class_helpers
 
 # ── Counters ───────────────────────────────────────────────────────────────────
 
@@ -46,6 +46,7 @@ def _reset_foundation_subject_cache():
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _make_co() -> User:
     uid = next(_UID)
@@ -88,12 +89,18 @@ def _make_section(school_id: int, user: User) -> ClassSection:
         school_id=school_id, academic_year_id=year, defaults={"created_by": user}
     )
     sc = SchoolClass.objects.create(
-        school_id=school_id, school_academic_year_id=say,
-        class_id_id=cls.class_id, created_by=user,
+        school_id=school_id,
+        school_academic_year_id=say,
+        class_id_id=cls.class_id,
+        created_by=user,
     )
     return ClassSection.objects.create(
-        school_class_id=sc, school_id=school_id, section_code="A",
-        section_name="5th - A", is_active=True, created_by=user,
+        school_class_id=sc,
+        school_id=school_id,
+        section_code="A",
+        section_name="5th - A",
+        is_active=True,
+        created_by=user,
     )
 
 
@@ -109,7 +116,10 @@ def _add_children(section: ClassSection, count: int, user: User) -> list[Child]:
             created_by=user,
         )
         ChildClassSection.objects.create(
-            child_id=child, class_section_id=section, is_active=True, created_by=user,
+            child_id=child,
+            class_section_id=section,
+            is_active=True,
+            created_by=user,
         )
         children.append(child)
     return children
@@ -136,10 +146,15 @@ def _make_slot(school_id: int, user: User) -> Slot:
         school_id=school_id, academic_year_id=year, defaults={"created_by": user}
     )
     return Slot.objects.create(
-        school_id=school_id, school_academic_year_id=say,
-        slot_name="Monday 09:00", day_of_week="monday",
-        start_time=time(9, 0), end_time=time(10, 0),
-        recurring=True, is_active=True, created_by=user,
+        school_id=school_id,
+        school_academic_year_id=say,
+        slot_name="Monday 09:00",
+        day_of_week="monday",
+        start_time=time(9, 0),
+        end_time=time(10, 0),
+        recurring=True,
+        is_active=True,
+        created_by=user,
     )
 
 
@@ -160,7 +175,10 @@ def _make_legacy_slot_class(school_id: int, co: User, legacy_subject_name: str):
     slot = _make_slot(school_id, co)
     scs = create_slot_class(slot.slot_id, _payload(section, vol), co)
 
-    legacy_subject, _ = Subject.objects.get_or_create(subject_name=legacy_subject_name)
+    program, _ = Program.objects.get_or_create(program_name="Foundation Program")
+    legacy_subject, _ = Subject.objects.get_or_create(
+        subject_name=legacy_subject_name, defaults={"program_id": program}
+    )
     css = scs.class_section_subject_id
     css.subject_id = legacy_subject
     css.save(update_fields=["subject_id"])
@@ -169,6 +187,7 @@ def _make_legacy_slot_class(school_id: int, co: User, legacy_subject_name: str):
 
 
 # ── Unit tests — normalize_subject_display_name ─────────────────────────────────
+
 
 def test_normalize_leaves_foundation_unchanged():
     assert normalize_subject_display_name("Foundation") == "Foundation"
@@ -187,6 +206,7 @@ def test_normalize_leaves_other_subjects_unchanged():
 
 
 # ── Integration — slot-class read path (_scs_to_schema) ─────────────────────────
+
 
 @pytest.mark.django_db
 def test_scs_to_schema_normalizes_legacy_subject_name():
@@ -213,6 +233,7 @@ def test_scs_to_schema_does_not_mutate_db_value():
 
 
 # ── Integration — schedule view read path (get_school_schedule) ────────────────
+
 
 @pytest.mark.django_db
 def test_schedule_view_normalizes_legacy_subject_name():

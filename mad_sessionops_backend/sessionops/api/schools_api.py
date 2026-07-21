@@ -2,7 +2,12 @@ from ninja import Router
 
 from sessionops.exceptions import NotFound
 from sessionops.models import Partner
-from sessionops.schemas.schools import SchoolDetailSchema, SchoolListItemSchema, SchoolListResponseSchema, SchoolSummarySchema
+from sessionops.schemas.schools import (
+    SchoolDetailSchema,
+    SchoolListItemSchema,
+    SchoolListResponseSchema,
+    SchoolSummarySchema,
+)
 from sessionops.services.rbac import schools_visible_to
 
 schools_router = Router(tags=["Schools"])
@@ -29,9 +34,9 @@ def _to_item(partner: Partner) -> SchoolListItemSchema:
         co_name=partner.co_name,
         setup_status="not_configured",  # M1: no classes/sections yet
         children_count=partner.confirmed_child_count or 0,
-        volunteers_count=0,    # M1: no volunteer data
-        assignments_count=0,   # M1: no assignment data
-        classes_count=0,       # M1: no class data
+        volunteers_count=0,  # M1: no volunteer data
+        assignments_count=0,  # M1: no assignment data
+        classes_count=0,  # M1: no class data
         updated_at=updated_at,
     )
 
@@ -42,12 +47,10 @@ def list_schools(request):
 
     search = request.GET.get("search", "").strip()
     if search:
-        qs = qs.filter(
-            partner_name__icontains=search
-        ) | schools_visible_to(request.auth).filter(
-            city__icontains=search
-        ) | schools_visible_to(request.auth).filter(
-            state__icontains=search
+        qs = (
+            qs.filter(partner_name__icontains=search)
+            | schools_visible_to(request.auth).filter(city__icontains=search)
+            | schools_visible_to(request.auth).filter(state__icontains=search)
         )
         qs = qs.distinct()
 

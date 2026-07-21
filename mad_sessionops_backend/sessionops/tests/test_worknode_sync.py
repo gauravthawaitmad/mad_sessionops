@@ -2,8 +2,8 @@
 Tests for F-M3-3: Worknode sync — user.worknode_id field + partner_worknode table.
 """
 
-from unittest.mock import patch
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 import pytest
 
@@ -17,7 +17,10 @@ def _now():
 
 def _make_sync_run():
     from sessionops.models import SyncRun
-    return SyncRun.objects.create(status=SyncRun.STATUS_RUNNING, entity_sync_type=SyncRun.ENTITY_SYNC_TYPE_ALL)
+
+    return SyncRun.objects.create(
+        status=SyncRun.STATUS_RUNNING, entity_sync_type=SyncRun.ENTITY_SYNC_TYPE_ALL
+    )
 
 
 def _noop(msg: str) -> None:
@@ -25,6 +28,7 @@ def _noop(msg: str) -> None:
 
 
 # ── User worknode_id sync ─────────────────────────────────────────────────────
+
 
 @pytest.mark.django_db
 class TestUserWorknodeSyncField:
@@ -79,6 +83,7 @@ class TestUserWorknodeSyncField:
 
 # ── PartnerWorknode sync ──────────────────────────────────────────────────────
 
+
 @pytest.mark.django_db
 class TestPartnerWorknodeSync:
     def test_partner_worknode_sync_upserts_rows(self):
@@ -113,9 +118,7 @@ class TestPartnerWorknodeSync:
 
     def test_partner_worknode_sync_idempotent(self):
         sync_run = _make_sync_run()
-        chapter_rows = [
-            {"chapter_id": "581", "worknode_id": 55, "city_name": "Pune"}
-        ]
+        chapter_rows = [{"chapter_id": "581", "worknode_id": 55, "city_name": "Pune"}]
 
         with patch(
             "sessionops.services.sync.fetch_chapter_mapping",
@@ -130,9 +133,7 @@ class TestPartnerWorknodeSync:
         PartnerWorknode.objects.create(partner_id="999", worknode_id=77)
 
         sync_run = _make_sync_run()
-        chapter_rows = [
-            {"chapter_id": "582", "worknode_id": 88}
-        ]
+        chapter_rows = [{"chapter_id": "582", "worknode_id": 88}]
 
         with patch(
             "sessionops.services.sync.fetch_chapter_mapping",

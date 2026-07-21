@@ -6,7 +6,6 @@ import pytest
 
 from sessionops.services.realtime_sync.allowlist import ACTIVE_ROLES, classify_event
 
-
 # ── Active role → insert / update ─────────────────────────────────────────────
 
 

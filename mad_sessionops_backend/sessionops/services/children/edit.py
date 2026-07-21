@@ -19,9 +19,15 @@ from sessionops.services.children.enroll import MAX_CHILDREN_PER_SECTION
 from sessionops.services.rbac.scope import get_school_or_403
 
 _DEMOGRAPHIC_FIELDS = [
-    "first_name", "last_name", "gender", "age",
-    "date_of_birth", "city", "mother_tongue",
-    "date_of_enrollment", "mad_joining_date",
+    "first_name",
+    "last_name",
+    "gender",
+    "age",
+    "date_of_birth",
+    "city",
+    "mother_tongue",
+    "date_of_enrollment",
+    "mad_joining_date",
 ]
 
 
@@ -29,10 +35,8 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
     with transaction.atomic():
         # Lock child row to prevent concurrent edits
         try:
-            child = (
-                Child.objects
-                .select_for_update()
-                .get(child_id=child_id, is_active=True, removed=False)
+            child = Child.objects.select_for_update().get(
+                child_id=child_id, is_active=True, removed=False
             )
         except Child.DoesNotExist:
             raise NotFound(f"Child {child_id} not found.")
@@ -55,7 +59,7 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
         # the select_for_update() on `child` above serialises concurrent calls.
         if payload.school_class_id is not None:
             current_active_count = ChildClass.objects.filter(
-                child_id=child, is_active=True, removed=False
+                child_id=child.child_id, is_active=True, removed=False
             ).count()
             if current_active_count > 1:
                 raise ValidationError(
@@ -63,7 +67,7 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
                     "child. Contact an administrator."
                 )
             current_cc = ChildClass.objects.filter(
-                child_id=child, is_active=True, removed=False
+                child_id=child.child_id, is_active=True, removed=False
             ).first()
             if current_cc is None or current_cc.school_class_id_id != payload.school_class_id:
                 try:
@@ -83,21 +87,19 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
                     current_cc.updated_by = user
                     current_cc.save()
                 ChildClass.objects.create(
-                    child_id=child, school_class_id=new_school_class, created_by=user,
+                    child_id=child,
+                    school_class_id=new_school_class,
+                    created_by=user,
                 )
 
         # Handle bucket change — independent of class change (a bucket has no
         # school_class_id to follow, unlike legacy M2/M3 sections).
         if payload.class_section_id is not None:
             try:
-                new_section = (
-                    ClassSection.objects
-                    .select_for_update()
-                    .get(
-                        class_section_id=payload.class_section_id,
-                        is_active=True,
-                        removed=False,
-                    )
+                new_section = ClassSection.objects.select_for_update().get(
+                    class_section_id=payload.class_section_id,
+                    is_active=True,
+                    removed=False,
                 )
             except ClassSection.DoesNotExist:
                 raise NotFound(f"Section {payload.class_section_id} not found.")
@@ -108,7 +110,7 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
 
             now = timezone.now()
             current_ccs = ChildClassSection.objects.filter(
-                child_id=child, is_active=True, removed=False
+                child_id=child.child_id, is_active=True, removed=False
             ).first()
 
             # Only create history rows when the section actually changes
@@ -157,4 +159,5 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
 
     # Re-fetch with annotations for serialization
     from sessionops.services.children.queries import list_children
+
     return list_children(child.school_id).get(child_id=child_id)

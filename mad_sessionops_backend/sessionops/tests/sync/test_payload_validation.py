@@ -7,8 +7,9 @@ HTTP endpoint (422 for invalid input).
 
 import json
 
-import pytest
 from django.test import Client
+
+import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from sessionops.models import User
@@ -128,17 +129,13 @@ def test_payload_user_active_status_null_for_deactivate_succeeds():
 
 def test_payload_worknode_id_as_numeric_string_coerced_to_int():
     for val in ("42", " 42 ", "1000"):
-        p = RealtimeSyncUserPayload(
-            user_login="u@test.com", event_type="update", worknode_id=val
-        )
+        p = RealtimeSyncUserPayload(user_login="u@test.com", event_type="update", worknode_id=val)
         assert isinstance(p.worknode_id, int), f"Failed for {val!r}"
         assert p.worknode_id == int(val.strip()), f"Failed for {val!r}"
 
 
 def test_payload_worknode_id_empty_string_treated_as_null():
-    p = RealtimeSyncUserPayload(
-        user_login="u@test.com", event_type="update", worknode_id=""
-    )
+    p = RealtimeSyncUserPayload(user_login="u@test.com", event_type="update", worknode_id="")
     assert p.worknode_id is None
 
 
@@ -225,12 +222,14 @@ def test_deactivate_event_succeeds_with_all_optional_fields_null(client):
     uid = next(_UID)
     resp = client.post(
         _url(uid),
-        data=json.dumps({
-            "user_login": f"alumni{uid}@test.com",
-            "event_type": "deactivate",
-            "user_role": "Alumni",
-            "sync_type": "realtime_webhook",
-        }),
+        data=json.dumps(
+            {
+                "user_login": f"alumni{uid}@test.com",
+                "event_type": "deactivate",
+                "user_role": "Alumni",
+                "sync_type": "realtime_webhook",
+            }
+        ),
         content_type="application/json",
         **_auth_header(admin),
     )

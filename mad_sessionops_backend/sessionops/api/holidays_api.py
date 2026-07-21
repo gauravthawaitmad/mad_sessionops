@@ -46,17 +46,22 @@ def list_holidays_api(
 
 @holidays_router.post(
     "/{school_id}/holidays/",
-    response={200: HolidayOut, 400: ErrorResponseSchema, 403: ErrorResponseSchema, 409: ErrorResponseSchema},
+    response={
+        200: HolidayOut,
+        400: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        409: ErrorResponseSchema,
+    },
 )
 def create_holiday_api(request, school_id: int, payload: HolidayCreateIn):
     h = create_holiday(
         school_id=school_id,
         payload={
-            "holiday_reason":      payload.holiday_reason,
-            "start_date":          payload.start_date,
-            "end_date":            payload.end_date,
+            "holiday_reason": payload.holiday_reason,
+            "start_date": payload.start_date,
+            "end_date": payload.end_date,
             "holiday_description": payload.holiday_description,
-            "remarks":             payload.remarks,
+            "remarks": payload.remarks,
         },
         user=request.auth,
     )
@@ -65,7 +70,13 @@ def create_holiday_api(request, school_id: int, payload: HolidayCreateIn):
 
 @holidays_router.patch(
     "/{school_id}/holidays/{holiday_id}/",
-    response={200: HolidayOut, 400: ErrorResponseSchema, 403: ErrorResponseSchema, 404: ErrorResponseSchema, 409: ErrorResponseSchema},
+    response={
+        200: HolidayOut,
+        400: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
+    },
 )
 def edit_holiday_api(request, school_id: int, holiday_id: int, payload: HolidayPatchIn):
     patch: dict = {}
