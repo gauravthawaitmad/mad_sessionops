@@ -30,6 +30,16 @@ repos:
       - id: flake8
         args: ['--max-line-length=200', '--extend-ignore=E203,W503']
 
+  - repo: local
+    hooks:
+      - id: check-migration-db-alias
+        name: Migration DB-alias check
+        description: RunPython migrations must pin .using(schema_editor.connection.alias)
+        entry: python scripts/check_migration_db_alias.py
+        language: system
+        pass_filenames: false
+        files: ^sessionops/migrations/.*\.py$
+
 default_language_version:
   python: python3.10
 

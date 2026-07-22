@@ -6,16 +6,17 @@ from django.db import migrations
 def seed_foundation_subject(apps, schema_editor):
     Program = apps.get_model("sessionops", "Program")
     Subject = apps.get_model("sessionops", "Subject")
+    alias = schema_editor.connection.alias
 
     # Reuse the existing "Foundation Program" row (seeded by db_startup.py /
     # seed_m2_catalog.py) — the same Program that already backs the legacy
     # "Foundation Day 1" / "Foundation Day 2" subjects and the hardcoded
     # FOUNDATION_PROGRAM_ID=1 in services/children/enroll.py.
-    program, _ = Program.objects.get_or_create(
+    program, _ = Program.objects.using(alias).get_or_create(
         program_name="Foundation Program",
         defaults={"is_active": True},
     )
-    Subject.objects.get_or_create(
+    Subject.objects.using(alias).get_or_create(
         subject_name="Foundation",
         defaults={"program_id": program},
     )

@@ -76,7 +76,7 @@ def reactivate_child(child_id: int, payload: ReactivateIn, user: User) -> Child:
         # 5. School-level capacity check
         partner = Partner.objects.get(partner_id=child.school_id)
         if partner.confirmed_child_count is not None:
-            active_count = BatchChild.objects.filter(
+            active_count = Child.objects.filter(
                 school_id=child.school_id, is_active=True, removed=False
             ).count()
             if active_count >= partner.confirmed_child_count:

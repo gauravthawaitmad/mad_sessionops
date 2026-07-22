@@ -5,7 +5,9 @@ import django.db.models.deletion
 def backfill_run_type(apps, schema_editor):
     """Set run_type='auto' on all pre-M4 rows (they were all cron-triggered)."""
     SyncRun = apps.get_model("sessionops", "SyncRun")
-    SyncRun.objects.filter(run_type__isnull=True).update(run_type="auto")
+    SyncRun.objects.using(schema_editor.connection.alias).filter(
+        run_type__isnull=True
+    ).update(run_type="auto")
 
 
 class Migration(migrations.Migration):
