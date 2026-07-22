@@ -29,7 +29,7 @@ The plan specifies a fully containerized stack with nginx as its own container d
 - [x] `docker-compose.staging.yml` overlay for `dev.sessionops.makeadiff.in` frontend build args — committed
 - [x] `docker-compose.local-staging.yml` — confirmed purpose: local Docker run against real staging credentials (RDS/Brevo/Google OAuth via `.env.staging`) with `localhost` URLs, distinct from `docker-compose.staging.yml`'s EC2-domain overlay. Self-documented via header comment, no action needed.
 - [~] nginx reverse proxy — **not built as a container** (plan's Step 4); if TLS/reverse-proxy is still meant to live in Docker rather than the EC2 host, this needs an explicit decision (see Open Questions)
-- [ ] celery-worker / celery-beat containers — not present in `docker-compose.yml`; confirm if Celery is in scope for this deploy or deferred
+- [x] celery-worker / celery-beat containers — confirmed out of scope for this deploy (2026-07-21, user decision); not present in `docker-compose.yml` by design
 - [ ] Run the actual Phase 1 local smoke test end-to-end (`docker compose build && up -d`, `curl /healthcheck`, `curl /`) and confirm all services report healthy — not verified in this session (no local Docker Desktop check performed)
 
 ## Phase 2 — EC2 Deployment
@@ -48,6 +48,6 @@ The plan specifies a fully containerized stack with nginx as its own container d
 
 ## Open Questions (new, raised during this status check — not in the original plan)
 1. **Is nginx staying host-level, or should it be moved back into Docker?** Current state has no containerized nginx and no host-level nginx config committed anywhere in the repo (host config, by nature, wouldn't be — but there's no doc describing the intended host setup either). Needs a decision before Phase 2 EC2 work starts.
-2. **Is Celery (worker + beat) in scope for this deploy?** Not present in `docker-compose.yml` despite being in the plan's architecture diagram and Sprint/CLAUDE.md mentioning Celery for async work (Hasura sync tasks, etc.).
-3. **`docker-compose.local-staging.yml`** — purpose unclear from filename alone; needs a one-line doc comment (like the other two compose files have) or removal if superseded.
+2. **Resolved (2026-07-21, user decision): Celery is out of scope for this deploy.** `docker-compose.yml` intentionally has no `celery-worker`/`celery-beat` services. Hasura sync currently runs as a one-shot step in `entrypoint.sh` (`sync_users`/`sync_partners`/`sync_partner_worknode` on container start for staging/production), not as a recurring Celery beat schedule. Revisit if/when recurring async jobs are needed.
+3. **Resolved:** `docker-compose.local-staging.yml` already has a header comment identifying its purpose (local Docker run against real staging credentials with `localhost` URLs) — no action needed.
 4. **Is there already a provisioned EC2 instance for `dev.sessionops.makeadiff.in`,** or does Phase 2 start from zero? Changes what "pending" work actually means here.

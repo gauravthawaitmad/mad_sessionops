@@ -5,9 +5,9 @@ from django.db import migrations, models
 
 def backfill_section_display_name(apps, schema_editor):
     ClassSection = apps.get_model("sessionops", "ClassSection")
-    ClassSection.objects.filter(section_display_name__isnull=True).update(
-        section_display_name=models.F("section_name")
-    )
+    ClassSection.objects.using(schema_editor.connection.alias).filter(
+        section_display_name__isnull=True
+    ).update(section_display_name=models.F("section_name"))
 
 
 def noop_reverse(apps, schema_editor):

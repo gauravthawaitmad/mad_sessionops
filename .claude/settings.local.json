@@ -135,7 +135,11 @@
       "Bash(docker start *)",
       "Bash(echo \"EXIT:$?\")",
       "Bash(cd *)",
-      "Bash(cygpath -w /tmp/targeted2.log)"
+      "Bash(cygpath -w /tmp/targeted2.log)",
+      "Bash(curl -s \"https://api.github.com/repos/gauravthawaitmad/mad_sessionops/pulls?head=gauravthawaitmad:dev_gaurav&state=open\")",
+      "Bash(.venv/Scripts/python.exe *)",
+      "Bash(mkdir -p /tmp/mig_test/sessionops/migrations)",
+      "Bash(cat)"
     ]
   }
 }

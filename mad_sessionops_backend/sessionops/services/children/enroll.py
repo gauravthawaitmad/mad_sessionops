@@ -68,12 +68,12 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
             raise NotFound(f"School {school_id} not found.")
 
         if partner.confirmed_child_count is not None:
-            active_batch = BatchChild.objects.filter(
+            active_count = Child.objects.filter(
                 school_id=school_id,
                 is_active=True,
                 removed=False,
             ).count()
-            if active_batch >= partner.confirmed_child_count:
+            if active_count >= partner.confirmed_child_count:
                 raise ConflictError("School has reached its confirmed child limit.")
 
         # 4. Resolve SchoolAcademicYear

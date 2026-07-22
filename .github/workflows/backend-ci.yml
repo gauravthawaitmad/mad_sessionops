@@ -78,6 +78,88 @@ jobs:
       - name: Bandit
         run: uv run bandit -r sessionops/ -c .bandit
 
+      - name: Migration DB-alias check
+        run: uv run python scripts/check_migration_db_alias.py
+
+  migration-check:
+    name: Migration deadlock check (--database migrate)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DJANGOSECRET: test-secret-key-for-ci
+      DEBUG: "True"
+      ENVIRONMENT: test
+      DBNAME: test_db
+      DBHOST: localhost
+      DBPORT: 5432
+      DBUSER: postgres
+      DBPASSWORD: postgres
+      DBADMINUSER: postgres
+      DBADMINPASSWORD: postgres
+      JWT_SECRET_KEY: test-jwt-secret
+      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL_V2: http://localhost:3000
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Create .env.test file
+        run: |
+          cat > .env.test << 'EOF'
+          DJANGOSECRET=${{ env.DJANGOSECRET }}
+          DEBUG=${{ env.DEBUG }}
+          ENVIRONMENT=${{ env.ENVIRONMENT }}
+          DBNAME=${{ env.DBNAME }}
+          DBHOST=${{ env.DBHOST }}
+          DBPORT=${{ env.DBPORT }}
+          DBUSER=${{ env.DBUSER }}
+          DBPASSWORD=${{ env.DBPASSWORD }}
+          DBADMINUSER=${{ env.DBADMINUSER }}
+          DBADMINPASSWORD=${{ env.DBADMINPASSWORD }}
+          JWT_SECRET_KEY=${{ env.JWT_SECRET_KEY }}
+          FRONTEND_URL=${{ env.FRONTEND_URL }}
+          FRONTEND_URL_V2=${{ env.FRONTEND_URL_V2 }}
+          CELERY_BROKER_URL=${{ env.CELERY_BROKER_URL }}
+          CELERY_RESULT_BACKEND=${{ env.CELERY_RESULT_BACKEND }}
+          EOF
+
+      # This is the one thing pytest-django never exercises: applying the
+      # full migration history through the SAME `migrate` DB alias that
+      # entrypoint.sh/db_startup.py uses on every real deploy. A RunPython
+      # step that touches the ORM without `.using(schema_editor.connection.alias)`
+      # opens a second connection and can deadlock against a lock held by an
+      # earlier DDL operation in the same migration -- invisible to pytest,
+      # which only ever touches the `default` alias. Timeout-boxed so a real
+      # deadlock fails fast instead of hanging for the job's full time limit.
+      - name: Apply full migration history via the migrate alias (production path)
+        timeout-minutes: 5
+        run: uv run python manage.py migrate --database migrate --noinput
+
   test:
     name: Test
     runs-on: ubuntu-latest
