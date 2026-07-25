@@ -18,7 +18,7 @@ import pytest
 from ninja.testing import TestClient
 from rest_framework_simplejwt.tokens import AccessToken
 
-from sessionops.models import AcademicYear, Partner, SchoolAcademicYear, User
+from sessionops.models import AcademicYear, Partner, PartnerWorknode, SchoolAcademicYear, User
 from sessionops.routes import api
 
 # ---------------------------------------------------------------------------
@@ -245,6 +245,23 @@ def test_school_list_academic_year_label_shown_when_year_itself_is_inactive():
     data = resp.json()
     entry = next(s for s in data["schools"] if s["partner_id"] == school.partner_id)
     assert entry["academic_year_label"] == "2025-2026"
+
+
+@pytest.mark.django_db
+def test_school_list_volunteers_count_reflects_worknode_mapped_active_user():
+    admin = _make_user("Function Lead")
+    school = _make_partner("School With Volunteer", co_id=admin.user_id)
+    PartnerWorknode.objects.create(partner_id=str(school.partner_id), worknode_id=555)
+    volunteer = _make_user("CHO")
+    volunteer.worknode_id = 555
+    volunteer.is_active = True
+    volunteer.save(update_fields=["worknode_id", "is_active"])
+
+    resp = CLIENT.get("/api/schools/", **_auth_header(admin))
+
+    assert resp.status_code == 200
+    entry = next(s for s in resp.json()["schools"] if s["partner_id"] == school.partner_id)
+    assert entry["volunteers_count"] == 1
 
 
 @pytest.mark.django_db

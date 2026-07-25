@@ -211,6 +211,100 @@ describe("SchoolListPage — F-M1-4", () => {
     expect(vi.mocked(fetchSchools)).toHaveBeenCalledTimes(1);
   });
 
+  it("test_schools_page_shows_error_on_fetch_failure", async () => {
+    vi.mocked(fetchSchools).mockRejectedValue(new Error("network down"));
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Could not load schools. Please try again.")).toBeInTheDocument();
+    });
+  });
+
+  it("test_schools_page_sort_by_name", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText(/Sort: Recently updated/));
+    await userEvent.click(screen.getByText("Name (A–Z)"));
+
+    const rows = screen.getAllByRole("row").filter((r) => r.getAttribute("tabindex") === "0");
+    expect(rows[0]?.textContent).toContain("Govt. High School Shaikpet");
+  });
+
+  it("test_schools_page_sort_by_city", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText(/Sort: Recently updated/));
+    await userEvent.click(screen.getByText("City (A–Z)"));
+
+    expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+  });
+
+  it("test_schools_page_sort_by_children_count", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText(/Sort: Recently updated/));
+    await userEvent.click(screen.getByText("Most children"));
+
+    const rows = screen.getAllByRole("row").filter((r) => r.getAttribute("tabindex") === "0");
+    // Shaikpet has 25 children vs Jubilee Hills' 20 — should sort first
+    expect(rows[0]?.textContent).toContain("Govt. High School Shaikpet");
+  });
+
+  it("test_schools_page_clear_search_resets_filter", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search by school name/i);
+    await userEvent.type(searchInput, "nonexistent-school-xyz");
+
+    await waitFor(() => {
+      expect(screen.getByText("Clear search")).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText("Clear search"));
+
+    await waitFor(() => {
+      expect(searchInput).toHaveValue("");
+    });
+    expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+  });
+
   it("test_schools_page_row_click_navigates_to_detail", async () => {
     vi.mocked(fetchSchools).mockResolvedValue({
       schools: MOCK_SCHOOLS,
@@ -230,5 +324,49 @@ describe("SchoolListPage — F-M1-4", () => {
     await userEvent.click(row!);
 
     expect(mockRouterPush).toHaveBeenCalledWith("/schools/580");
+  });
+
+  it("test_schools_page_row_enter_key_navigates_to_detail", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    const row = screen
+      .getByText("Govt. High School Shaikpet")
+      .closest('[role="row"]') as HTMLElement;
+    row.focus();
+    await userEvent.keyboard("{Enter}");
+
+    expect(mockRouterPush).toHaveBeenCalledWith("/schools/580");
+  });
+
+  it("test_schools_page_row_space_key_navigates_to_detail", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Municipal School Jubilee Hills")).toBeInTheDocument();
+    });
+
+    const row = screen
+      .getByText("Municipal School Jubilee Hills")
+      .closest('[role="row"]') as HTMLElement;
+    row.focus();
+    await userEvent.keyboard(" ");
+
+    expect(mockRouterPush).toHaveBeenCalledWith("/schools/612");
   });
 });

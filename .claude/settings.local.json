@@ -147,7 +147,9 @@
       "Bash(powershell -Command \"Get-Process | Where-Object { \\\\$_.ProcessName -match 'python|pytest' } | Select-Object Id,ProcessName,StartTime\" 2>&1)",
       "Bash(powershell -Command \"Get-CimInstance Win32_Process | Where-Object { \\\\$_.ProcessId -in 6260,1456,5292,7672,23312,23992,24016,29120 } | Select-Object ProcessId,Name,CommandLine | Format-List\" 2>&1)",
       "PowerShell([System.Environment]::GetEnvironmentVariable\\(\"DBHOST\",\"Machine\"\\); \"---User---\"; [System.Environment]::GetEnvironmentVariable\\(\"DBHOST\",\"User\"\\); \"---DBADMINUSER Machine---\"; [System.Environment]::GetEnvironmentVariable\\(\"DBADMINUSER\",\"Machine\"\\); \"---DBADMINUSER User---\"; [System.Environment]::GetEnvironmentVariable\\(\"DBADMINUSER\",\"User\"\\); \"---Process DBHOST---\"; $env:DBHOST; \"---Process DBADMINUSER---\"; $env:DBADMINUSER)",
-      "Bash(powershell -Command \"Get-Process | Where-Object { \\\\$_.ProcessName -match 'pytest' } | Select-Object Id,ProcessName,StartTime\" 2>&1)"
+      "Bash(powershell -Command \"Get-Process | Where-Object { \\\\$_.ProcessName -match 'pytest' } | Select-Object Id,ProcessName,StartTime\" 2>&1)",
+      "Bash(awk '/EditSlotClassModal.tsx/,/end_of_record/' coverage/lcov.info)",
+      "Bash(awk *)"
     ]
   }
 }

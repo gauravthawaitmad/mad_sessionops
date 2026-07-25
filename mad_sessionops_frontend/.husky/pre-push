@@ -3,6 +3,9 @@
 
 echo "🚀 Running pre-push checks..."
 
+HOOK_DIR="$(dirname -- "$0")"
+cd "$HOOK_DIR/.." || exit 1
+
 # Strict lint is informational for now — 141 pre-existing errors surfaced once
 # `next lint`'s removal (Next.js 16) was fixed to run `eslint` directly. See
 # ci-cd-pipeline-tasks.md Open Questions before uncommenting this as blocking.
@@ -11,7 +14,7 @@ echo "🚀 Running pre-push checks..."
 
 # Run TypeScript type check
 echo "📝 Type checking..."
-npm run type-check
+npm run type-check || exit 1
 
 # Run tests. 2 pre-existing failures in __tests__/admin/DataSyncTab.test.tsx
 # (stale accessible-name query — component's sync buttons no longer expose

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EditChildDrawer } from "@/components/schools/children/EditChildDrawer";
 import type { SchoolClassItem } from "@/lib/api/services/structure.service";
@@ -27,6 +27,7 @@ vi.mock("react-hot-toast", () => ({
 import { fetchSchoolClasses } from "@/lib/api/services/structure.service";
 import { fetchBuckets } from "@/lib/api/services/buckets.service";
 import { updateChild } from "@/lib/api/services/children.service";
+import toast from "react-hot-toast";
 
 const noop = () => {};
 
@@ -70,6 +71,11 @@ const CHILD_WITH_BUCKET: ChildItem = {
   isActive: true,
   currentSection: { classSectionId: 10, sectionDisplayName: "Group 1", sectionName: "group_1" },
   currentSchoolClass: { schoolClassId: 1, className: "Grade 5" },
+};
+
+const CHILD_NO_BUCKET: ChildItem = {
+  ...CHILD_WITH_BUCKET,
+  currentSection: null,
 };
 
 describe("EditChildDrawer — F-M6-7", () => {
@@ -175,5 +181,181 @@ describe("EditChildDrawer — F-M6-7", () => {
     const payload = vi.mocked(updateChild).mock.calls[0][2];
     expect(payload).not.toHaveProperty("school_class_id");
     expect(payload).not.toHaveProperty("class_section_id");
+  });
+
+  it("test_gender_picker_selecting_option_updates_value", async () => {
+    vi.mocked(updateChild).mockResolvedValue(CHILD_WITH_BUCKET);
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_WITH_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
+    await userEvent.click(screen.getByText("Male"));
+
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(updateChild).toHaveBeenCalledWith(
+        580,
+        100,
+        expect.objectContaining({ gender: "male" })
+      );
+    });
+  });
+
+  it("test_class_picker_shows_no_classes_message_when_school_has_no_classes", async () => {
+    vi.mocked(fetchSchoolClasses).mockResolvedValueOnce([]);
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_WITH_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("No classes added to this school yet.")).toBeInTheDocument()
+    );
+  });
+
+  it("test_bucket_picker_shows_skeletons_while_loading_then_buckets_after", async () => {
+    let resolveBuckets!: (v: BucketItem[]) => void;
+    vi.mocked(fetchBuckets).mockImplementation(
+      () =>
+        new Promise((res) => {
+          resolveBuckets = res;
+        })
+    );
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_WITH_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
+    expect(screen.queryByText("Unassigned")).not.toBeInTheDocument();
+
+    resolveBuckets([BUCKET_1]);
+
+    await waitFor(() => expect(screen.getByText("Unassigned")).toBeInTheDocument());
+  });
+
+  it("test_selecting_a_specific_bucket_tile_marks_bucket_changed", async () => {
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_NO_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Unassigned")).toBeInTheDocument());
+    expect(
+      screen.queryByText("Moving to a different bucket will preserve full assignment history.")
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByText("Group 1"));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Moving to a different bucket will preserve full assignment history.")
+      ).toBeInTheDocument()
+    );
+  });
+
+  it("test_classes_load_failure_shows_toast_error", async () => {
+    vi.mocked(fetchSchoolClasses).mockRejectedValueOnce(new Error("network fail"));
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_WITH_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Could not load classes"));
+  });
+
+  it("test_buckets_load_failure_shows_toast_error", async () => {
+    vi.mocked(fetchBuckets).mockRejectedValueOnce(new Error("network fail"));
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_WITH_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Could not load mentoring circles")
+    );
+  });
+
+  it("test_submit_failure_shows_error_toast_with_message", async () => {
+    vi.mocked(updateChild).mockRejectedValueOnce(new Error("Custom failure message"));
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_WITH_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Custom failure message"));
+  });
+
+  it("test_age_field_input_updates_value_and_included_in_payload", async () => {
+    vi.mocked(updateChild).mockResolvedValue(CHILD_WITH_BUCKET);
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_WITH_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
+
+    const ageInput = screen.getByRole("spinbutton");
+    fireEvent.change(ageInput, { target: { value: "15" } });
+    expect(ageInput).toHaveValue(15);
+
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(updateChild).toHaveBeenCalledWith(580, 100, expect.objectContaining({ age: 15 }));
+    });
   });
 });
