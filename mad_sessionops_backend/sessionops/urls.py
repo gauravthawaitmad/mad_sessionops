@@ -23,7 +23,11 @@ def trigger_error(request):
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # Renamed off "admin/" to avoid colliding with the frontend's own /admin
+    # route behind the reverse proxy (both containers previously answered to
+    # /admin, and the proxy's rule for it forwarded to this backend, shadowing
+    # the frontend page). Proxy config must route /django-admin/ here instead.
+    path("django-admin/", admin.site.urls),
     path("healthcheck", healthcheck),
     path("sentry-debug/", trigger_error),
     path("prometheus/", include("django_prometheus.urls")),

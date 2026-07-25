@@ -168,7 +168,7 @@ class UserAuthAdmin(admin.ModelAdmin):
     @admin.display(description="User")
     def user_link(self, obj):
         if obj.user:
-            url = f"/admin/sessionops/user/{obj.user.user_id}/change/"
+            url = f"/django-admin/sessionops/user/{obj.user.user_id}/change/"
             return format_html('<a href="{}">{}</a>', url, obj.user.email)
         return "-"
 

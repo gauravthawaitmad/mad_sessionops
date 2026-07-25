@@ -18,23 +18,39 @@ Rules are enforced at the **service layer** (Python), not at the DB layer, unles
 
 ---
 
-### R2 — Section must have 1 to 2 volunteers per slot-class
+### R2 — Slot-class must have 1 to 5 volunteers, bounded by the bucket's active children (superseded by M6)
 
-**Rule:** When scheduling a volunteer to teach a section in a slot, at least 1 volunteer must be assigned; at most 2 may be assigned.
+**Rule:** When scheduling volunteers to teach a mentoring circle (bucket) in a slot, at least 1 volunteer must be assigned, at most 5 — and volunteer count can never exceed the bucket's current active-children count.
 
-**Rationale:** Solo volunteers burn out; 3+ volunteers is inefficient and dilutes instruction quality.
+**Rationale:** Solo volunteers burn out; too many volunteers for too few children is inefficient and dilutes instruction quality. The 5-cap and the "class-agnostic bucket" model replaced the original 2-volunteer, class-scoped section design in M6 (`docs/milestones/M6.md`) — this file's original text (`Vol1`/`Vol2`, 1-2 volunteers) described the pre-M6 model and is kept below for historical reference, but is no longer accurate.
 
-**Enforcement:** Service layer on slot-class creation and update. `Vol1` is required, `Vol2` is optional.
+**Enforcement:** Service layer, on slot-class create/edit (`check_r_bucket_capacity`, `sessionops/services/slot_classes/helpers.py`) — see R-bucket below for the companion rule on the *removal* side.
+
+<details><summary>Original (pre-M6) text, historical only</summary>
+
+At most 2 may be assigned; `Vol1` is required, `Vol2` is optional.
+
+</details>
 
 ---
 
-### R3 — Vol1 must not equal Vol2
+### R-bucket — Removing/moving a child out of a bucket must not leave a slot-class over-volunteered
+
+**Rule:** A child cannot be removed from a bucket, deactivated, or moved to a different bucket if doing so would leave any of that bucket's scheduled slot-classes with more volunteers than remaining active children (violating R2's capacity bound in reverse).
+
+**Rationale:** R2 only guards the assign-volunteers direction. Without this rule, removing children is a silent backdoor to the same invalid state R2 exists to prevent.
+
+**Enforcement:** Service layer, `assert_bucket_not_over_volunteered()` (`sessionops/services/structure/bucket_children.py`), called with the bucket row locked (`select_for_update()`) from all three places a child can leave a bucket: `remove_child_from_bucket`, `deactivate_child`, and `edit_child`'s bucket-reassignment path. Raises `ConflictError` (409) — the CO must remove a volunteer from the slot-class first; there is no auto-remediation.
+
+---
+
+### R3 — Vol1 must not equal Vol2 (superseded by M6 — see R-bucket's 1-5 volunteer model)
 
 **Rule:** In a slot-class, the same volunteer cannot be assigned as both primary and secondary.
 
 **Rationale:** Obvious. A person isn't two people.
 
-**Enforcement:** Schema-level (Pydantic validator) + service layer.
+**Enforcement:** Schema-level (Pydantic validator) + service layer. Superseded by the M6 volunteer-list model, where uniqueness across the whole `volunteer_ids` list is validated instead of a Vol1/Vol2 pair specifically.
 
 ## Volunteer assignment
 

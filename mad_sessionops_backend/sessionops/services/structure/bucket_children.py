@@ -21,6 +21,46 @@ from sessionops.models import (
 MAX_CHILDREN_PER_BUCKET = 5  # same rule as MAX_CHILDREN_PER_SECTION in enroll.py — R1 is one rule
 
 
+def assert_bucket_not_over_volunteered(
+    bucket: ClassSection, excluding_child_class_section_id: int | None
+) -> None:
+    """R-bucket: raises ConflictError if removing/moving the given ChildClassSection
+    would leave any active slot-class in `bucket` with more volunteers than
+    remaining active children. Caller MUST hold select_for_update() on `bucket`
+    to avoid a lost-update race between concurrent child-removal/move requests.
+    """
+    remaining_children = (
+        ChildClassSection.objects.filter(
+            class_section_id=bucket,
+            is_active=True,
+            removed=False,
+        )
+        .exclude(child_class_section_id=excluding_child_class_section_id)
+        .count()
+    )
+
+    active_slot_classes = SlotClassSection.objects.filter(
+        class_section_id=bucket,
+        is_active=True,
+        removed=False,
+    ).select_related("slot_id").annotate(
+        vol_count=Count(
+            "slotclasssectionvolunteer",
+            filter=Q(
+                slotclasssectionvolunteer__is_active=True, slotclasssectionvolunteer__removed=False
+            ),
+        )
+    )
+    bucket_name = bucket.section_display_name or bucket.section_name
+    for scs in active_slot_classes:
+        if scs.vol_count > remaining_children:
+            raise ConflictError(
+                f'Cannot remove child from bucket "{bucket_name}". A scheduled slot-class on '
+                f'slot "{scs.slot_id.slot_name}" has {scs.vol_count} volunteers and would have '
+                f"only {remaining_children} children. Remove a volunteer from the slot-class first."
+            )
+
+
 @transaction.atomic
 def add_child_to_bucket(
     school_id: int, class_section_id: int, child_id: int, user
@@ -116,35 +156,7 @@ def remove_child_from_bucket(school_id: int, class_section_id: int, child_id: in
     if not ccs:
         raise NotFound(f"Child {child_id} is not in this bucket.")
 
-    remaining_children = (
-        ChildClassSection.objects.filter(
-            class_section_id=bucket,
-            is_active=True,
-            removed=False,
-        )
-        .exclude(child_class_section_id=ccs.child_class_section_id)
-        .count()
-    )
-
-    active_slot_classes = SlotClassSection.objects.filter(
-        class_section_id=bucket,
-        is_active=True,
-        removed=False,
-    ).annotate(
-        vol_count=Count(
-            "slotclasssectionvolunteer",
-            filter=Q(
-                slotclasssectionvolunteer__is_active=True, slotclasssectionvolunteer__removed=False
-            ),
-        )
-    )
-    for scs in active_slot_classes:
-        if scs.vol_count > remaining_children:
-            raise ConflictError(
-                f"Cannot remove child. A scheduled slot-class for this bucket has "
-                f"{scs.vol_count} volunteers and would have only {remaining_children} children. "
-                f"Remove a volunteer from the slot-class first."
-            )
+    assert_bucket_not_over_volunteered(bucket, ccs.child_class_section_id)
 
     now = timezone.now()
     ccs.is_active = False

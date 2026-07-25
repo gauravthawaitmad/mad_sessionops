@@ -13,6 +13,7 @@ import { fetchBuckets, type BucketItem } from "@/lib/api/services/buckets.servic
 import { fetchSlotClasses, type SlotClassItem } from "@/lib/api/services/slot_classes.service";
 import type { SlotItem, DayOfWeek } from "@/lib/api/services/slots.service";
 import { AddSlotClassModal, type PrefillBucket } from "./AddSlotClassModal";
+import { EditSlotClassModal } from "./EditSlotClassModal";
 import { DeleteSlotClassModal } from "./DeleteSlotClassModal";
 import { formatTime } from "./SlotCard";
 
@@ -88,10 +89,12 @@ const VOL_COLORS = ["#0284C7", "#7C3AED"] as const;
 function AssignedCell({
   scs,
   canModify,
+  onEdit,
   onDelete,
 }: {
   scs: SlotClassItem;
   canModify: boolean;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   return (
@@ -109,9 +112,24 @@ function AssignedCell({
         "&:hover": { borderColor: "#38BDF8", bgcolor: "#E0F2FE" },
       }}
     >
-      {/* Row 1: delete (only rendered when there's something to show) */}
+      {/* Row 1: edit + delete (only rendered when there's something to show) */}
       {canModify && (
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 0.5 }}>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            sx={{
+              p: 0.25,
+              flexShrink: 0,
+              color: MUTED,
+              "&:hover": { color: "#2563EB", bgcolor: "#EFF6FF" },
+            }}
+          >
+            <Pencil size={11} />
+          </IconButton>
           <IconButton
             size="small"
             onClick={(e) => {
@@ -415,6 +433,7 @@ export function SlotGridView({
   const [bySlot, setBySlot] = useState<BySlot>(new Map());
   const [loading, setLoading] = useState(true);
   const [addModal, setAddModal] = useState<{ slot: SlotItem; bucket: PrefillBucket } | null>(null);
+  const [editTarget, setEditTarget] = useState<{ slot: SlotItem; scs: SlotClassItem } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ slot: SlotItem; scs: SlotClassItem } | null>(
     null
   );
@@ -468,6 +487,27 @@ export function SlotGridView({
     });
     onCountChange(slot.slotId, +1);
     toast.success("Class assigned.");
+  }
+
+  // ── Slot-class: edit volunteers ───────────────────────────────────────────────
+
+  function handleOpenEdit(slot: SlotItem, scs: SlotClassItem) {
+    setEditTarget({ slot, scs });
+  }
+
+  function handleUpdated(scs: SlotClassItem) {
+    if (!editTarget) return;
+    setBySlot((prev) => {
+      const next = new Map(prev);
+      next.set(
+        editTarget.slot.slotId,
+        (next.get(editTarget.slot.slotId) ?? []).map((s) =>
+          s.slotClassSectionId === scs.slotClassSectionId ? scs : s
+        )
+      );
+      return next;
+    });
+    toast.success("Volunteers updated.");
   }
 
   // ── Slot-class: delete (opens confirmation modal) ────────────────────────────
@@ -547,7 +587,7 @@ export function SlotGridView({
                 textTransform: "uppercase",
               }}
             >
-              Bucket
+              Mentoring Circle
             </Typography>
           </Box>
 
@@ -592,7 +632,8 @@ export function SlotGridView({
               }}
             >
               <Typography sx={{ fontSize: "13px", color: MUTED }}>
-                No buckets configured yet. Add buckets in the Buckets tab first.
+                No mentoring circles configured yet. Add mentoring circles in the Structure tab
+                first.
               </Typography>
             </Box>
           ) : (
@@ -616,6 +657,7 @@ export function SlotGridView({
                           <AssignedCell
                             scs={scs}
                             canModify={canModify}
+                            onEdit={() => handleOpenEdit(slot, scs)}
                             onDelete={() => handleOpenDelete(slot, scs)}
                           />
                         ) : (
@@ -668,6 +710,17 @@ export function SlotGridView({
           }}
         />
       )}
+
+      {/* Edit slot-class volunteers modal */}
+      <EditSlotClassModal
+        open={editTarget !== null}
+        schoolId={schoolId}
+        slotId={editTarget?.slot.slotId ?? 0}
+        slotClass={editTarget?.scs ?? null}
+        existingSlotClasses={editTarget ? (bySlot.get(editTarget.slot.slotId) ?? []) : []}
+        onClose={() => setEditTarget(null)}
+        onUpdated={handleUpdated}
+      />
 
       {/* Delete slot-class confirmation modal */}
       <DeleteSlotClassModal

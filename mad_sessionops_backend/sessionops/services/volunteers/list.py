@@ -17,7 +17,10 @@ def list_school_volunteers(school_id: int, requesting_user) -> dict:
     if not worknode_ids:
         return {
             "status": "no_worknode",
-            "message": "No Worknode found for this school. Please contact admin.",
+            "message": (
+                "No Worknode found for this school. Contact an admin to map it in Platform "
+                "Commons before volunteers can be assigned here."
+            ),
             "volunteers": [],
         }
 
@@ -32,8 +35,10 @@ def list_school_volunteers(school_id: int, requesting_user) -> dict:
         return {
             "status": "no_volunteers",
             "message": (
-                "No volunteers found for this school. "
-                "Please make sure you've tagged the Worknode in user management."
+                "No volunteers found for this school. To see volunteers here, add this "
+                "school's workplace for that user in Platform Commons' user management — "
+                "once tagged, they'll appear here and can be assigned to slots and mentoring "
+                "circles."
             ),
             "volunteers": [],
         }

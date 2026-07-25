@@ -124,7 +124,7 @@ function BucketPicker({
 }) {
   return (
     <Box>
-      <FieldLabel>Bucket</FieldLabel>
+      <FieldLabel>Mentoring Circle</FieldLabel>
       {loading ? (
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1 }}>
           {[1, 2, 3, 4].map((i) => (
@@ -282,7 +282,7 @@ export function ReactivateChildModal({
     setBucketsLoading(true);
     fetchBuckets(schoolId)
       .then(setBuckets)
-      .catch(() => toast.error("Could not load buckets"))
+      .catch(() => toast.error("Could not load mentoring circles"))
       .finally(() => setBucketsLoading(false));
   }, [open, schoolId]);
 

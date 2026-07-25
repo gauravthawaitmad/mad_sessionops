@@ -57,7 +57,6 @@ from sessionops.schemas import (
     ChangePasswordSchema,
     LoginSchema,
     RegisterSchema,
-    ScopeWarningSchema,
     TokenResponseSchema,
     user_to_response,
 )
@@ -817,17 +816,9 @@ class AuthService:
     @staticmethod
     def _build_auth_response(user: User, tokens: TokenResponseSchema) -> "AuthResponseSchema":
         """Build AuthResponseSchema, attaching scope_warning if user has no visible schools."""
-        from sessionops.services.rbac.scope import schools_visible_to
+        from sessionops.services.rbac.scope import get_scope_warning
 
-        scope_warning = None
-        if not schools_visible_to(user).exists():
-            scope_warning = ScopeWarningSchema(
-                code="no_worknode_mapping",
-                message=(
-                    "You are not assigned to any schools or partner. "
-                    "Please contact your community organizer or admin."
-                ),
-            )
+        scope_warning = get_scope_warning(user)
         return AuthResponseSchema(
             user=user_to_response(user),
             tokens=tokens,

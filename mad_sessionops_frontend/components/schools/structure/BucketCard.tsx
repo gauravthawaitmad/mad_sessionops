@@ -141,7 +141,7 @@ function RemoveBucketDialog({
 }) {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontSize: "15px", fontWeight: 700 }}>Remove Bucket</DialogTitle>
+      <DialogTitle sx={{ fontSize: "15px", fontWeight: 700 }}>Remove Mentoring Circle</DialogTitle>
       <DialogContent>
         <Typography sx={{ fontSize: "14px", color: "#475569" }}>
           Remove <strong>{bucketName}</strong> from this school? This cannot be undone.
@@ -247,7 +247,7 @@ export function BucketCard({
         {canModify && (
           <IconButton
             size="small"
-            aria-label="Bucket options"
+            aria-label="Mentoring circle options"
             onClick={(e) => {
               e.stopPropagation();
               setMenuAnchor(e.currentTarget);

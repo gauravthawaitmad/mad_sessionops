@@ -40,5 +40,18 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Run on every route except Next.js internals and static assets.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public/).*)"],
+  //
+  // NOTE: `public/` here previously tried to exclude files served from the
+  // public/ folder — but Next.js serves them at the site root (e.g.
+  // public/images/mad_logo.png -> /images/mad_logo.png), never under a
+  // literal /public/ URL prefix, so that exclusion never matched anything.
+  // Every request for a public/ asset (any image, on any page, including
+  // unauthenticated ones like /login) was falling through to the auth gate
+  // below and getting redirected to /login instead of returning the file —
+  // an <img> tag has no way to render an HTML redirect, so it silently
+  // showed only its alt text. Fixed by excluding by file extension instead,
+  // which covers every public/ asset regardless of subfolder.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf)$).*)",
+  ],
 };

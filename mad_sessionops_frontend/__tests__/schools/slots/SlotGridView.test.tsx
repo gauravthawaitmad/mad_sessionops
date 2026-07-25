@@ -78,8 +78,8 @@ describe("SlotGridView — F-M6-8", () => {
     await waitFor(() => {
       expect(screen.getByText("Group 1")).toBeInTheDocument();
     });
-    // "Bucket" column header, not the old class-grouped "Section" header
-    expect(screen.getByText("Bucket")).toBeInTheDocument();
+    // "Mentoring Circle" column header, not the old class-grouped "Section" header
+    expect(screen.getByText("Mentoring Circle")).toBeInTheDocument();
   });
 
   it("test_assigned_cell_shows_no_subject_pill", async () => {
@@ -119,7 +119,7 @@ describe("SlotGridView — F-M6-8", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/No buckets configured yet/)).toBeInTheDocument();
+      expect(screen.getByText(/No mentoring circles configured yet/)).toBeInTheDocument();
     });
   });
 });

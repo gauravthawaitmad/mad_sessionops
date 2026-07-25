@@ -55,7 +55,7 @@ describe("EditBucketModal — F-M6-6", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Bucket name is required")).toBeInTheDocument();
+      expect(screen.getByText("Mentoring circle name is required")).toBeInTheDocument();
     });
     expect(editBucket).not.toHaveBeenCalled();
   });

@@ -274,7 +274,7 @@ function BucketPicker({
 }) {
   return (
     <Box>
-      <FieldLabel>Bucket</FieldLabel>
+      <FieldLabel>Mentoring Circle</FieldLabel>
       {loading ? (
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1 }}>
           {[1, 2, 3, 4].map((i) => (
@@ -448,7 +448,7 @@ export function EditChildDrawer({
     setBucketsLoading(true);
     fetchBuckets(schoolId)
       .then(setBuckets)
-      .catch(() => toast.error("Could not load buckets"))
+      .catch(() => toast.error("Could not load mentoring circles"))
       .finally(() => setBucketsLoading(false));
   }, [schoolId]);
 
@@ -720,7 +720,7 @@ export function EditChildDrawer({
 
               {/* ── Class & Bucket ── */}
               <Box sx={{ pt: 2, borderTop: `1px solid ${BORDER}` }}>
-                <SectionHeading>Class &amp; Bucket</SectionHeading>
+                <SectionHeading>Class &amp; Mentoring Circle</SectionHeading>
 
                 {bucketChanged && (
                   <Alert

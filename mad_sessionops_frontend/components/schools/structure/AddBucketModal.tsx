@@ -17,7 +17,11 @@ import { createBucket, type BucketItem } from "@/lib/api/services/buckets.servic
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const bucketSchema = z.object({
-  display_name: z.string().trim().min(1, "Bucket name is required").max(255, "Name is too long"),
+  display_name: z
+    .string()
+    .trim()
+    .min(1, "Mentoring circle name is required")
+    .max(255, "Name is too long"),
 });
 
 type FormValues = z.infer<typeof bucketSchema>;
@@ -90,20 +94,22 @@ export function AddBucketModal({ open, schoolId, onClose, onAdded }: AddBucketMo
       onAdded(bucket);
       onClose();
     } catch (err: any) {
-      setError("display_name", { message: err?.message ?? "Failed to create bucket." });
+      setError("display_name", { message: err?.message ?? "Failed to create mentoring circle." });
     }
   }
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontSize: "15px", fontWeight: 700, pb: 1 }}>Add Bucket</DialogTitle>
+      <DialogTitle sx={{ fontSize: "15px", fontWeight: 700, pb: 1 }}>
+        Add Mentoring Circle
+      </DialogTitle>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent sx={{ pt: "8px !important" }}>
           <Typography sx={{ fontSize: "12px", color: "#64748B", mb: 1.5 }}>
-            Buckets are class-agnostic groups of up to 5 children.
+            Mentoring circles are class-agnostic groups of up to 5 children.
           </Typography>
-          <FieldLabel required>Bucket Name</FieldLabel>
+          <FieldLabel required>Mentoring Circle Name</FieldLabel>
           <Controller
             name="display_name"
             control={control}

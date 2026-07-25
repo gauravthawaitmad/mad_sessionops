@@ -183,7 +183,7 @@ export function ManageBucketChildrenModal({
         )}
 
         {/* Roster */}
-        <FieldLabel>{`In this bucket (${bucket.activeChildrenCount}/${MAX_CAPACITY})`}</FieldLabel>
+        <FieldLabel>{`In this mentoring circle (${bucket.activeChildrenCount}/${MAX_CAPACITY})`}</FieldLabel>
         {loading ? (
           <Box sx={{ mb: 3 }}>
             <RowSkeletons count={Math.max(bucket.activeChildrenCount, 1)} />
@@ -276,8 +276,8 @@ export function ManageBucketChildrenModal({
                   <Tooltip
                     title={
                       atCapacity
-                        ? `Bucket is full (${MAX_CAPACITY}/${MAX_CAPACITY})`
-                        : "Add to bucket"
+                        ? `Mentoring circle is full (${MAX_CAPACITY}/${MAX_CAPACITY})`
+                        : "Add to mentoring circle"
                     }
                   >
                     <span>

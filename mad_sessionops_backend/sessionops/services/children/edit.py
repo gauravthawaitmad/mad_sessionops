@@ -17,6 +17,7 @@ from sessionops.models import (
 from sessionops.schemas.children import ChildEditIn
 from sessionops.services.children.enroll import MAX_CHILDREN_PER_SECTION
 from sessionops.services.rbac.scope import get_school_or_403
+from sessionops.services.structure.bucket_children import assert_bucket_not_over_volunteered
 
 _DEMOGRAPHIC_FIELDS = [
     "first_name",
@@ -115,6 +116,20 @@ def edit_child(child_id: int, payload: ChildEditIn, user: User):
 
             # Only create history rows when the section actually changes
             if current_ccs is None or current_ccs.class_section_id_id != payload.class_section_id:
+                # R-bucket: vacating the OLD bucket must not silently leave a
+                # scheduled slot-class over-volunteered, same guard
+                # remove_child_from_bucket already applies. Lock the old
+                # bucket (a different row from `new_section`, already locked
+                # above) before checking, to avoid a lost-update race against
+                # a concurrent removal/move on that same old bucket.
+                if current_ccs is not None:
+                    old_bucket = ClassSection.objects.select_for_update().get(
+                        pk=current_ccs.class_section_id_id
+                    )
+                    assert_bucket_not_over_volunteered(
+                        old_bucket, current_ccs.child_class_section_id
+                    )
+
                 # Capacity check on the target section
                 occupied = ChildClassSection.objects.filter(
                     class_section_id=new_section, is_active=True, removed=False

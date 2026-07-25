@@ -41,7 +41,7 @@ describe("AddBucketModal — F-M6-6", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Bucket name is required")).toBeInTheDocument();
+      expect(screen.getByText("Mentoring circle name is required")).toBeInTheDocument();
     });
     expect(createBucket).not.toHaveBeenCalled();
   });

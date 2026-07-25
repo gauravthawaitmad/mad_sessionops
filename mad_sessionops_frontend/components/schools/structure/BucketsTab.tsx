@@ -12,7 +12,9 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Tooltip from "@mui/material/Tooltip";
-import { Plus, Layers, BookOpen, X } from "lucide-react";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import { Plus, Layers, BookOpen, MoreVertical, Info } from "lucide-react";
 import { fetchBuckets, type BucketItem } from "@/lib/api/services/buckets.service";
 import {
   fetchSchoolClasses,
@@ -37,20 +39,29 @@ const CLASS_ACCENT = "#7C3AED";
 
 function SectionHeader({
   title,
+  info,
   actionLabel,
   onAction,
   disabled,
 }: {
   title: string;
+  info?: string;
   actionLabel?: string;
   onAction?: () => void;
   disabled?: boolean;
 }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2.5 }}>
-      <Typography sx={{ fontSize: "18px", fontWeight: 700, color: TEXT_STRONG }}>
-        {title}
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+        <Typography sx={{ fontSize: "18px", fontWeight: 700, color: TEXT_STRONG }}>
+          {title}
+        </Typography>
+        {info && (
+          <Tooltip title={info} placement="right" arrow>
+            <Info size={15} strokeWidth={2} color={TEXT_MUTED} style={{ cursor: "help" }} />
+          </Tooltip>
+        )}
+      </Box>
       {actionLabel && onAction && (
         <Button
           variant="contained"
@@ -77,6 +88,8 @@ function ClassCard({
   canModify: boolean;
   onRemove: () => void;
 }) {
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+
   return (
     <Box
       sx={{
@@ -91,23 +104,36 @@ function ClassCard({
       }}
     >
       {canModify && (
-        <Tooltip title="Remove class">
+        <>
           <IconButton
             size="small"
-            aria-label={`Remove ${schoolClass.className}`}
-            onClick={onRemove}
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              p: 0.5,
-              color: TEXT_MUTED,
-              "&:hover": { color: DANGER, bgcolor: "#FEF2F2" },
+            aria-label={`${schoolClass.className} options`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuAnchor(e.currentTarget);
             }}
+            sx={{ position: "absolute", top: 8, right: 8, p: 0.5 }}
           >
-            <X size={14} />
+            <MoreVertical size={15} strokeWidth={2} color={TEXT_MUTED} />
           </IconButton>
-        </Tooltip>
+
+          <Menu
+            anchorEl={menuAnchor}
+            open={Boolean(menuAnchor)}
+            onClose={() => setMenuAnchor(null)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MenuItem
+              onClick={() => {
+                setMenuAnchor(null);
+                onRemove();
+              }}
+              sx={{ fontSize: "13px", color: DANGER }}
+            >
+              Delete
+            </MenuItem>
+          </Menu>
+        </>
       )}
 
       <Box
@@ -280,7 +306,7 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
       })
       .catch(() => {
         if (!cancelled) {
-          setError("Failed to load buckets.");
+          setError("Failed to load mentoring circles.");
           setLoading(false);
         }
       });
@@ -372,11 +398,12 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
 
       <Divider sx={{ mb: 4, borderColor: CARD_BORDER }} />
 
-      {/* Buckets */}
+      {/* Mentoring Circles */}
       <Box>
         <SectionHeader
-          title="Buckets"
-          actionLabel="Add Bucket"
+          title="Mentoring Circles"
+          info="A mentoring circle is independent from class — you can add children from different classes to the same circle, and rename the circle anytime."
+          actionLabel="Add Mentoring Circle"
           onAction={canModify ? () => setAddBucketOpen(true) : undefined}
           disabled={loading}
         />
@@ -396,8 +423,8 @@ export function BucketsTab({ schoolId, canModify = true }: BucketsTabProps) {
         {!loading && !error && buckets.length === 0 && (
           <EmptyState
             icon={<Layers size={22} strokeWidth={1.5} color={TEXT_MUTED} />}
-            title="No buckets added yet."
-            subtitle="Add a bucket to start grouping children for this school."
+            title="No mentoring circles added yet."
+            subtitle="Add a mentoring circle to start grouping children for this school."
           />
         )}
 

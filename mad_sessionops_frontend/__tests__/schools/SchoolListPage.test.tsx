@@ -58,6 +58,7 @@ const MOCK_SCHOOLS = [
     childrenCount: 25,
     volunteersCount: 5,
     assignmentsCount: 10,
+    academicYearLabel: "2026-2027",
     updatedAt: "2026-04-29T10:00:00Z",
   },
   {
@@ -73,6 +74,7 @@ const MOCK_SCHOOLS = [
     childrenCount: 20,
     volunteersCount: 7,
     assignmentsCount: 0,
+    academicYearLabel: "2026-2027",
     updatedAt: "2026-04-28T08:00:00Z",
   },
 ];
@@ -90,7 +92,11 @@ describe("SchoolListPage — F-M1-4", () => {
   });
 
   it("test_schools_page_renders_table_with_data", async () => {
-    vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
 
     renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 
@@ -110,6 +116,7 @@ describe("SchoolListPage — F-M1-4", () => {
     vi.mocked(fetchSchools).mockResolvedValue({
       schools: [],
       summary: { ...MOCK_SUMMARY, totalSchools: 0 },
+      scopeWarning: null,
     });
 
     renderWithProvider(<SchoolListPage userName="Test CHO" />);
@@ -122,8 +129,64 @@ describe("SchoolListPage — F-M1-4", () => {
     expect(screen.queryByText("School")).not.toBeInTheDocument();
   });
 
+  it("test_schools_page_shows_scope_warning_message_for_cho_with_no_worknode_mapping", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: [],
+      summary: { ...MOCK_SUMMARY, totalSchools: 0 },
+      scopeWarning: {
+        code: "no_worknode_mapping",
+        message:
+          "You are not assigned to any schools or partner. Please contact your community organizer or admin.",
+      },
+    });
+
+    renderWithProvider(<SchoolListPage userName="Test CHO" />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "You are not assigned to any schools or partner. Please contact your community organizer or admin."
+        )
+      ).toBeInTheDocument();
+    });
+
+    // The scope-warning message replaces the generic empty-state copy
+    expect(screen.queryByText("No schools assigned yet")).not.toBeInTheDocument();
+    expect(screen.getByText("No schools assigned")).toBeInTheDocument();
+  });
+
+  it("test_schools_page_scope_warning_survives_without_redux_login_state", async () => {
+    // Simulates a page refresh: redux's login-time scopeWarning is gone,
+    // but the schools list endpoint still returns the fresh scope_warning.
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: [],
+      summary: { ...MOCK_SUMMARY, totalSchools: 0 },
+      scopeWarning: {
+        code: "no_worknode_mapping",
+        message:
+          "You are not assigned to any schools or partner. Please contact your community organizer or admin.",
+      },
+    });
+
+    renderWithProvider(<SchoolListPage userName="Test CHO" />, {
+      auth: { scopeWarning: null },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "You are not assigned to any schools or partner. Please contact your community organizer or admin."
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
   it("test_schools_page_search_debounces_calls", async () => {
-    vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
 
     renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 
@@ -149,7 +212,11 @@ describe("SchoolListPage — F-M1-4", () => {
   });
 
   it("test_schools_page_row_click_navigates_to_detail", async () => {
-    vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
 
     renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 

@@ -13,6 +13,7 @@ from sessionops.services.rbac.scope import (
     can_modify_school,
     can_view_school,
     get_school_or_403,
+    get_scope_warning,
     schools_visible_to,
 )
 
@@ -208,6 +209,57 @@ def test_cho_with_multiple_partner_worknode_rows_sees_all_mapped_schools():
 
     assert school_a.partner_id in ids
     assert school_b.partner_id in ids
+
+
+# ── TC-M3-4-12b  Duplicate partner_worknode rows for the same school dedupe ───
+
+
+@pytest.mark.django_db
+def test_cho_with_duplicate_partner_worknode_rows_sees_school_once():
+    """Two sync rows for the same partner_id (e.g. a re-sync duplicate) must
+    collapse to a single visible school, keeping the most recently created row."""
+    cho = _make_cho(worknode_id=1150)
+    school = _make_school()
+    older = _make_pw(school, worknode_id=1150)
+    PartnerWorknode.objects.filter(pk=older.pk).update(created_at="2020-01-01T00:00:00Z")
+    _make_pw(school, worknode_id=1150)  # newer duplicate row, same partner_id
+
+    ids = list(schools_visible_to(cho).values_list("partner_id", flat=True))
+
+    assert ids == [school.partner_id]
+
+
+# ── Scope warning ──────────────────────────────────────────────────────────────
+
+
+@pytest.mark.django_db
+def test_get_scope_warning_none_when_cho_has_visible_schools():
+    cho = _make_cho(worknode_id=1300)
+    school = _make_school()
+    _make_pw(school, worknode_id=1300)
+
+    assert get_scope_warning(cho) is None
+
+
+@pytest.mark.django_db
+def test_get_scope_warning_set_when_cho_has_no_worknode_id():
+    cho = _make_cho(worknode_id=None)
+
+    warning = get_scope_warning(cho)
+
+    assert warning is not None
+    assert warning.code == "no_worknode_mapping"
+    assert "contact your community organizer or admin" in warning.message
+
+
+@pytest.mark.django_db
+def test_get_scope_warning_set_when_worknode_id_has_no_mapping():
+    cho = _make_cho(worknode_id=1400)
+
+    warning = get_scope_warning(cho)
+
+    assert warning is not None
+    assert warning.code == "no_worknode_mapping"
 
 
 # ── TC-M3-4-13  CHO does not see inactive schools ─────────────────────────────

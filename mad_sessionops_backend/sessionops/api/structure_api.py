@@ -28,6 +28,7 @@ from sessionops.services.structure.bucket_children import (
     remove_child_from_bucket,
 )
 from sessionops.services.structure.queries import (
+    BLOCKED_NEW_CLASS_CODES,
     add_class_to_school,
     list_classes_for_school,
     soft_delete_school_class,
@@ -51,7 +52,13 @@ classes_catalog_router = Router(tags=["Classes Catalog"])
 
 @classes_catalog_router.get("/", response=list[ClassCatalogItemOut], auth=None)
 def list_class_catalog(request):
-    return Class.objects.filter(is_active=True, removed=False).select_related("program_id")
+    # Class 8 is excluded here — it's only reachable via year-end progression,
+    # never a direct add. See BLOCKED_NEW_CLASS_CODES.
+    return (
+        Class.objects.filter(is_active=True, removed=False)
+        .exclude(class_code__in=BLOCKED_NEW_CLASS_CODES)
+        .select_related("program_id")
+    )
 
 
 @classes_catalog_router.get("/section-codes/", auth=None)

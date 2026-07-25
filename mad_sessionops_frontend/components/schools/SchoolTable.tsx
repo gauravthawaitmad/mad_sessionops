@@ -9,13 +9,15 @@ import { colors } from "@/config/design-tokens";
 import { SchoolTableRow } from "./SchoolTableRow";
 import type { SchoolListItem } from "@/lib/api/services/schools.service";
 
-// School · City · Classes · Children · Volunteers · Assignments
-const GRID = "minmax(0, 2.4fr) 1fr 0.7fr 0.7fr 0.7fr 0.7fr";
+// ID · School · City · Academic Year · Classes · Children · Volunteers · Assignments
+const GRID = "0.5fr minmax(0, 2.4fr) 1fr 0.8fr 0.7fr 0.7fr 0.7fr 0.7fr";
 export const ROW_H = 64;
 
 const HEADERS = [
+  { label: "ID", align: "left" },
   { label: "School", align: "left" },
   { label: "City", align: "left" },
+  { label: "Academic Year", align: "left" },
   { label: "Classes", align: "right" },
   { label: "Children", align: "right" },
   { label: "Volunteers", align: "right" },
@@ -43,6 +45,7 @@ function SkeletonRow() {
         flexShrink: 0,
       }}
     >
+      <Skeleton width="60%" height={13} />
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         <Skeleton
           variant="rounded"
@@ -55,7 +58,7 @@ function SkeletonRow() {
           <Skeleton width="36%" height={11} sx={{ mt: 0.75 }} />
         </Box>
       </Box>
-      {HEADERS.slice(1).map((h, i) => (
+      {HEADERS.slice(2).map((h, i) => (
         <Skeleton key={i} width="50%" height={13} sx={{ ml: h.align === "right" ? "auto" : 0 }} />
       ))}
     </Box>

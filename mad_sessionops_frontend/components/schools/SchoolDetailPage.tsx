@@ -48,11 +48,13 @@ const ACCENT = "#2563EB";
 
 const TABS = [
   { key: "overview", label: "Overview", icon: LayoutDashboard, enabled: true },
-  { key: "structure", label: "Buckets", icon: BookOpen, enabled: true },
+  { key: "structure", label: "Structure", icon: BookOpen, enabled: true },
   { key: "children", label: "Children", icon: Users, enabled: true },
   { key: "volunteers", label: "Volunteers", icon: UserCheck, enabled: true },
   { key: "slots", label: "Slots", icon: Clock, enabled: true },
-  { key: "schedule", label: "Schedule", icon: Calendar, enabled: true },
+  // Hidden for now — superseded by the Calendar tab. Not deleted: content
+  // route/component below is left intact in case this comes back.
+  { key: "schedule", label: "Schedule", icon: Calendar, enabled: true, hidden: true },
   { key: "calendar", label: "Calendar", icon: Calendar, enabled: true },
 ];
 
@@ -118,7 +120,7 @@ function WorkspaceSidebar({
           Workspace
         </Typography>
 
-        {TABS.map(({ key, label, icon: Icon, enabled }) => {
+        {TABS.filter((t) => !t.hidden).map(({ key, label, icon: Icon, enabled }) => {
           const isActive = key === active;
 
           const item = (
@@ -789,7 +791,7 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
                       <Typography sx={{ fontSize: "12px" }}>{school.coName}</Typography>
                     </Box>
                   )}
-                  {activeYear && (
+                  {school?.academicYearLabel && (
                     <Box
                       sx={{
                         display: "inline-flex",
@@ -804,7 +806,7 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
                     >
                       <BookOpen size={11} strokeWidth={2} color="#2563EB" />
                       <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "#1D4ED8" }}>
-                        {activeYear}
+                        {school.academicYearLabel}
                       </Typography>
                     </Box>
                   )}

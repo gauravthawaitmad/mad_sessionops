@@ -18,7 +18,17 @@ import IconButton from "@mui/material/IconButton";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
-import { Plus, Search, X, User, Pencil, UserMinus, UserCheck } from "lucide-react";
+import {
+  Plus,
+  Search,
+  X,
+  User,
+  Pencil,
+  UserMinus,
+  UserCheck,
+  BookOpen,
+  Heart,
+} from "lucide-react";
 import {
   fetchChildren,
   type ChildItem,
@@ -30,6 +40,7 @@ import { EnrollChildModal } from "./EnrollChildModal";
 import { EditChildDrawer } from "./EditChildDrawer";
 import { DeactivateChildModal } from "./DeactivateChildModal";
 import { ReactivateChildModal } from "./ReactivateChildModal";
+import { RichEmptyState } from "@/components/schools/shared/RichEmptyState";
 import toast from "react-hot-toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -78,10 +89,11 @@ function StatusTabs({ value, counts, onChange }: StatusTabsProps) {
     <Box
       sx={{
         display: "inline-flex",
-        bgcolor: TH_BG,
+        alignItems: "center",
+        bgcolor: "#FAFAFA",
         borderRadius: "8px",
         border: `1px solid ${BORDER}`,
-        p: 0.375,
+        p: 0.5,
         gap: 0.25,
       }}
     >
@@ -97,7 +109,7 @@ function StatusTabs({ value, counts, onChange }: StatusTabsProps) {
               alignItems: "center",
               gap: 0.75,
               px: 1.25,
-              py: 0.5,
+              py: 0.75,
               borderRadius: "6px",
               cursor: "pointer",
               transition: "all 0.12s ease",
@@ -152,47 +164,28 @@ function StatusTabs({ value, counts, onChange }: StatusTabsProps) {
 
 function EmptyState({ onEnroll }: { onEnroll?: () => void }) {
   return (
-    <Box sx={{ mt: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5 }}>
-      <Box
-        sx={{
-          width: 56,
-          height: 56,
-          borderRadius: "50%",
-          bgcolor: "#EFF6FF",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          mb: 0.5,
-        }}
-      >
-        <User size={24} color="#2563EB" />
-      </Box>
-      <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#0F172A" }}>
-        No children enrolled yet.
-      </Typography>
-      <Typography sx={{ fontSize: "13px", color: MUTED, textAlign: "center", maxWidth: 280 }}>
-        {onEnroll
-          ? "Click 'Enroll Child' to get started."
-          : "No children have been enrolled in this school."}
-      </Typography>
-      {onEnroll && (
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<Plus size={14} />}
-          onClick={onEnroll}
-          sx={{
-            mt: 1,
-            bgcolor: "#2563EB",
-            "&:hover": { bgcolor: "#1D4ED8" },
-            fontSize: "13px",
-            fontWeight: 600,
-          }}
-        >
-          Enroll Child
-        </Button>
-      )}
-    </Box>
+    <RichEmptyState
+      badgeIcon={User}
+      badgeText="Get started"
+      heading="Add children to start your school's journey"
+      subtitle={
+        onEnroll
+          ? "Enroll the first child to start tracking their class, mentoring circle, and attendance right here on Session-Ops."
+          : "No children have been enrolled in this school yet."
+      }
+      bullets={
+        onEnroll
+          ? [
+              { icon: BookOpen, text: "Enroll children into classes and mentoring circles" },
+              { icon: UserCheck, text: "Track attendance and progress through the year" },
+              { icon: Heart, text: "Every child enrolled is a step closer to the difference you're making" },
+            ]
+          : undefined
+      }
+      ctaLabel={onEnroll ? "Enroll Child" : undefined}
+      onCta={onEnroll}
+      accent="#2563EB"
+    />
   );
 }
 
@@ -224,6 +217,9 @@ function SkeletonRows() {
       {[1, 2, 3, 4, 5].map((i) => (
         <TableRow key={i}>
           <TableCell sx={{ py: 1.5 }}>
+            <Skeleton variant="text" width={16} height={14} />
+          </TableCell>
+          <TableCell sx={{ py: 1.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Skeleton variant="circular" width={32} height={32} />
               <Box>
@@ -249,11 +245,13 @@ const GENDER_LABELS: Record<string, string> = { male: "Male", female: "Female", 
 
 function ChildRow({
   child,
+  index,
   onEdit,
   onDeactivate,
   onReactivate,
 }: {
   child: ChildItem;
+  index: number;
   onEdit: (c: ChildItem) => void;
   onDeactivate: (c: ChildItem) => void;
   onReactivate: (c: ChildItem) => void;
@@ -261,6 +259,11 @@ function ChildRow({
   const gc = genderColor(child.gender);
   return (
     <TableRow sx={{ "&:hover": { bgcolor: ROW_HOVER } }}>
+      {/* Serial number */}
+      <TableCell sx={{ py: 1.25 }}>
+        <Typography sx={{ fontSize: "13px", color: MUTED }}>{index}</Typography>
+      </TableCell>
+
       {/* Name cell */}
       <TableCell sx={{ py: 1.25 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -644,7 +647,9 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
                   }}
                 >
                   <MenuItem value="all">
-                    <Typography sx={{ fontSize: "13px", color: MUTED }}>All buckets</Typography>
+                    <Typography sx={{ fontSize: "13px", color: MUTED }}>
+                      All mentoring circles
+                    </Typography>
                   </MenuItem>
                   <MenuItem value="unassigned">
                     <Typography sx={{ fontSize: "13px" }}>Unassigned</Typography>
@@ -710,32 +715,35 @@ export function ChildrenTab({ schoolId, activeYear, canModify = true }: Children
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: TH_BG }}>
-                  {["Name", "Gender", "Age", "Class", "Bucket", "Status", ""].map((h) => (
-                    <TableCell
-                      key={h}
-                      sx={{
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        color: TH_TEXT,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                        py: 1.25,
-                        borderBottom: `1px solid ${BORDER}`,
-                      }}
-                    >
-                      {h}
-                    </TableCell>
-                  ))}
+                  {["#", "Name", "Gender", "Age", "Class", "Mentoring Circle", "Status", ""].map(
+                    (h) => (
+                      <TableCell
+                        key={h}
+                        sx={{
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          color: TH_TEXT,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          py: 1.25,
+                          borderBottom: `1px solid ${BORDER}`,
+                        }}
+                      >
+                        {h}
+                      </TableCell>
+                    )
+                  )}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   <SkeletonRows />
                 ) : (
-                  displayChildren.map((c) => (
+                  displayChildren.map((c, i) => (
                     <ChildRow
                       key={c.childId}
                       child={c}
+                      index={i + 1}
                       onEdit={setEditChild}
                       onDeactivate={setDeactivateChild}
                       onReactivate={setReactivateChild}

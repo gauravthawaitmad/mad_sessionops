@@ -3,6 +3,8 @@ from typing import Optional
 
 from ninja import Schema
 
+from sessionops.schemas.auth import ScopeWarningSchema
+
 
 class SchoolListItemSchema(Schema):
     partner_id: int
@@ -17,6 +19,7 @@ class SchoolListItemSchema(Schema):
     volunteers_count: int = 0
     assignments_count: int = 0
     classes_count: int = 0
+    academic_year_label: Optional[str] = None
     updated_at: Optional[datetime] = None
 
 
@@ -25,12 +28,13 @@ class SchoolSummarySchema(Schema):
     fully_configured: int
     children_enrolled: int
     active_volunteers: int
-    academic_year: str
+    academic_year: Optional[str] = None
 
 
 class SchoolListResponseSchema(Schema):
     schools: list[SchoolListItemSchema]
     summary: SchoolSummarySchema
+    scope_warning: Optional[ScopeWarningSchema] = None
 
 
 class SchoolDetailSchema(Schema):
@@ -59,3 +63,4 @@ class SchoolDetailSchema(Schema):
     classes_count: int = 0
     volunteers_count: int = 0
     assignments_count: int = 0
+    academic_year_label: Optional[str] = None

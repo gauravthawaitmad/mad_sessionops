@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Skeleton from "@mui/material/Skeleton";
-import { UserCheck, AlertCircle } from "lucide-react";
+import { UserCheck, AlertCircle, Building2, Clock, Heart } from "lucide-react";
 import {
   fetchVolunteers,
   type VolunteerListResponse,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/services/volunteers.service";
 import { VolunteerCard } from "./VolunteerCard";
 import { VolunteerDetailDrawer } from "./VolunteerDetailDrawer";
+import { RichEmptyState } from "@/components/schools/shared/RichEmptyState";
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -147,23 +148,42 @@ export function VolunteerListTab({ schoolId }: Props) {
 
   if (data.status === "no_worknode") {
     return (
-      <InfoState
-        icon={AlertCircle}
-        title="No Worknode configured"
-        subtitle={data.message ?? "No Worknode found for this school. Please contact admin."}
+      <RichEmptyState
+        badgeIcon={AlertCircle}
+        badgeText="Setup required"
+        heading="No Worknode configured"
+        subtitle={
+          data.message ??
+          "No Worknode found for this school. Contact an admin to map it in Platform Commons before volunteers can be assigned here."
+        }
+        bullets={[
+          {
+            icon: Building2,
+            text: "A Worknode links this school to volunteers tagged in Platform Commons",
+          },
+          { icon: UserCheck, text: "Once mapped, tagged volunteers appear here automatically" },
+        ]}
+        accent="#D97706"
       />
     );
   }
 
   if (data.status === "no_volunteers") {
     return (
-      <InfoState
-        icon={UserCheck}
-        title="No volunteers found"
+      <RichEmptyState
+        badgeIcon={UserCheck}
+        badgeText="Get started"
+        heading="No volunteers found"
         subtitle={
           data.message ??
-          "No volunteers found for this school. Please make sure you've tagged the Worknode in user management."
+          "No volunteers found for this school. To see volunteers here, add this school's workplace for that user in Platform Commons' user management — once tagged, they'll appear here and can be assigned to slots and mentoring circles."
         }
+        bullets={[
+          { icon: Building2, text: "Add this school as the volunteer's workplace in Platform Commons" },
+          { icon: Clock, text: "Assign them to teaching slots and mentoring circles once they appear" },
+          { icon: Heart, text: "Every volunteer mapped means one more class can run" },
+        ]}
+        accent="#7C3AED"
       />
     );
   }
