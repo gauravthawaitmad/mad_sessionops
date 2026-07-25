@@ -14,6 +14,7 @@ as admin scope here — that is an explicit M1 decision, see milestone doc F-M1-
 from django.db.models import QuerySet
 
 from sessionops.models import Partner, PartnerWorknode, User
+from sessionops.schemas.auth import ScopeWarningSchema
 from sessionops.services.auth.role_helpers import ADMIN_ROLES, parse_user_roles
 
 _ADMIN_SCOPE_ROLES: frozenset[str] = ADMIN_ROLES | frozenset(["CXO"])
@@ -43,12 +44,16 @@ def schools_visible_to(user: User) -> QuerySet:
     if scope == "cho":
         if user.worknode_id is None:
             return Partner.objects.none()
+        # order_by + distinct(*fields) is Postgres-only DISTINCT ON: for each
+        # partner_id, keeps the row with the latest created_at, so a stale
+        # duplicate sync row never shadows the current mapping.
         partner_ids = (
             PartnerWorknode.objects.filter(worknode_id=user.worknode_id)
             .exclude(partner_id__isnull=True)
             .exclude(partner_id="")
+            .order_by("partner_id", "-created_at")
+            .distinct("partner_id")
             .values_list("partner_id", flat=True)
-            .distinct()
         )
         if not partner_ids:
             return Partner.objects.none()
@@ -57,6 +62,22 @@ def schools_visible_to(user: User) -> QuerySet:
             is_active=True,
         )
     return Partner.objects.none()
+
+
+_NO_SCHOOLS_WARNING = ScopeWarningSchema(
+    code="no_worknode_mapping",
+    message=(
+        "You are not assigned to any schools or partner. "
+        "Please contact your community organizer or admin."
+    ),
+)
+
+
+def get_scope_warning(user: User) -> "ScopeWarningSchema | None":
+    """Return the empty-scope warning for user, or None if they have visible schools."""
+    if schools_visible_to(user).exists():
+        return None
+    return _NO_SCHOOLS_WARNING
 
 
 def can_view_school(user: User, partner: Partner) -> bool:

@@ -19,6 +19,7 @@ export interface SchoolListItem {
   childrenCount: number;
   volunteersCount: number;
   assignmentsCount: number;
+  academicYearLabel: string | null;
   updatedAt: string | null; // kept for sort order
 }
 
@@ -27,12 +28,18 @@ export interface SchoolSummary {
   fullyConfigured: number;
   childrenEnrolled: number;
   activeVolunteers: number;
-  academicYear: string;
+  academicYear: string | null;
+}
+
+export interface SchoolScopeWarning {
+  code: string;
+  message: string;
 }
 
 export interface SchoolListResponse {
   schools: SchoolListItem[];
   summary: SchoolSummary;
+  scopeWarning: SchoolScopeWarning | null;
 }
 
 // ── Raw backend shape (snake_case) ───────────────────────────────────────────
@@ -50,6 +57,7 @@ interface RawSchoolItem {
   children_count: number;
   volunteers_count: number;
   assignments_count: number;
+  academic_year_label: string | null;
   updated_at: string | null;
 }
 
@@ -60,8 +68,9 @@ interface RawSchoolListResponse {
     fully_configured: number;
     children_enrolled: number;
     active_volunteers: number;
-    academic_year: string;
+    academic_year: string | null;
   };
+  scope_warning: SchoolScopeWarning | null;
 }
 
 function mapItem(raw: RawSchoolItem): SchoolListItem {
@@ -78,6 +87,7 @@ function mapItem(raw: RawSchoolItem): SchoolListItem {
     childrenCount: raw.children_count,
     volunteersCount: raw.volunteers_count,
     assignmentsCount: raw.assignments_count,
+    academicYearLabel: raw.academic_year_label,
     updatedAt: raw.updated_at,
   };
 }
@@ -110,6 +120,7 @@ export interface SchoolDetail {
   classesCount: number;
   volunteersCount: number;
   assignmentsCount: number;
+  academicYearLabel: string | null;
 }
 
 interface RawSchoolDetail {
@@ -138,6 +149,7 @@ interface RawSchoolDetail {
   classes_count: number;
   volunteers_count: number;
   assignments_count: number;
+  academic_year_label: string | null;
 }
 
 function mapDetail(raw: RawSchoolDetail): SchoolDetail {
@@ -167,6 +179,7 @@ function mapDetail(raw: RawSchoolDetail): SchoolDetail {
     classesCount: raw.classes_count,
     volunteersCount: raw.volunteers_count,
     assignmentsCount: raw.assignments_count,
+    academicYearLabel: raw.academic_year_label,
   };
 }
 
@@ -189,5 +202,6 @@ export async function fetchSchools(search?: string): Promise<SchoolListResponse>
       activeVolunteers: data.summary.active_volunteers,
       academicYear: data.summary.academic_year,
     },
+    scopeWarning: data.scope_warning ?? null,
   };
 }

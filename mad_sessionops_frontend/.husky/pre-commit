@@ -3,12 +3,20 @@
 
 echo "🔍 Running pre-commit checks..."
 
-# Lint + format staged files only
-echo "✨ Linting and formatting staged files..."
-npx lint-staged
+HOOK_DIR="$(dirname -- "$0")"
 
-# Run TypeScript type check
+# Backend: black, isort, flake8, migration DB-alias check — mirrors
+# .pre-commit-config.yaml / backend-ci.yml's lint job. Runs against staged
+# files only (no --all-files), same as a normal pre-commit invocation.
+echo "🐍 Running backend pre-commit checks..."
+(cd "$HOOK_DIR/../../mad_sessionops_backend" && uv run pre-commit run) || exit 1
+
+# Frontend: lint + format staged files only
+echo "✨ Linting and formatting staged files..."
+(cd "$HOOK_DIR/.." && npx lint-staged) || exit 1
+
+# Frontend TypeScript type check
 echo "📝 Type checking..."
-npm run type-check
+(cd "$HOOK_DIR/.." && npm run type-check) || exit 1
 
 echo "✅ Pre-commit checks passed!"

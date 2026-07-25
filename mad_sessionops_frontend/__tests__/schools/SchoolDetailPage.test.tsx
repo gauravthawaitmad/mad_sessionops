@@ -111,6 +111,7 @@ const MOCK_SCHOOL = {
   classesCount: 3,
   volunteersCount: 5,
   assignmentsCount: 10,
+  academicYearLabel: "2026-2027",
 };
 
 // ── Tests — F-M2-1 ───────────────────────────────────────────────────────────
@@ -129,13 +130,13 @@ describe("SchoolDetailPage — F-M6-6 (Buckets tab activation)", () => {
       expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
     });
 
-    // Click the first "Buckets" (sidebar nav item)
-    const bucketsItems = screen.getAllByText("Buckets");
-    await userEvent.click(bucketsItems[0]);
+    // Click the first "Structure" (sidebar nav item)
+    const structureItems = screen.getAllByText("Structure");
+    await userEvent.click(structureItems[0]);
 
     // BucketsTab renders: empty state since fetchBuckets returns []
     await waitFor(() => {
-      expect(screen.getByText("No buckets added yet.")).toBeInTheDocument();
+      expect(screen.getByText("No mentoring circles added yet.")).toBeInTheDocument();
     });
   });
 
@@ -146,11 +147,11 @@ describe("SchoolDetailPage — F-M6-6 (Buckets tab activation)", () => {
       expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
     });
 
-    const bucketsItems = screen.getAllByText("Buckets");
-    await userEvent.click(bucketsItems[0]);
+    const structureItems = screen.getAllByText("Structure");
+    await userEvent.click(structureItems[0]);
 
     await waitFor(() => {
-      expect(screen.getByText("No buckets added yet.")).toBeInTheDocument();
+      expect(screen.getByText("No mentoring circles added yet.")).toBeInTheDocument();
     });
   });
 
@@ -189,7 +190,7 @@ describe("SchoolDetailPage — F-M2-2 (Children tab activation)", () => {
 
     // ChildrenTab renders
     await waitFor(() => {
-      expect(screen.getByText("No children enrolled yet.")).toBeInTheDocument();
+      expect(screen.getByText("Add children to start your school's journey")).toBeInTheDocument();
     });
   });
 
@@ -204,8 +205,8 @@ describe("SchoolDetailPage — F-M2-2 (Children tab activation)", () => {
     await userEvent.click(childrenItems[0]);
 
     await waitFor(() => {
-      expect(screen.getByText("No children enrolled yet.")).toBeInTheDocument();
-      expect(screen.getByText("Click 'Enroll Child' to get started.")).toBeInTheDocument();
+      expect(screen.getByText("Add children to start your school's journey")).toBeInTheDocument();
+      expect(screen.getAllByText("Enroll Child").length).toBeGreaterThan(0);
     });
   });
 
@@ -225,7 +226,7 @@ describe("SchoolDetailPage — F-M2-2 (Children tab activation)", () => {
     await userEvent.click(childrenItems[0]);
 
     await waitFor(() => {
-      expect(screen.getByText("No children enrolled yet.")).toBeInTheDocument();
+      expect(screen.getByText("Add children to start your school's journey")).toBeInTheDocument();
     });
   });
 
@@ -283,14 +284,16 @@ describe("SchoolDetailPage — F-M1-5", () => {
       expect(screen.getByText("Overview")).toBeInTheDocument();
     });
 
-    // All tab labels are present in DOM
-    const tabLabels = ["Buckets", "Volunteers", "Slots", "Calendar", "Children", "Schedule"];
+    // All visible tab labels are present in DOM — Schedule is hidden for now
+    // (superseded by Calendar), so intentionally excluded here.
+    const tabLabels = ["Structure", "Volunteers", "Slots", "Calendar", "Children"];
     for (const label of tabLabels) {
       const elements = screen.getAllByText(label);
       expect(elements.length).toBeGreaterThan(0);
     }
+    expect(screen.queryByText("Schedule")).not.toBeInTheDocument();
 
-    // M4: all tabs enabled — zero "Coming in a future milestone" tooltips
+    // M4: all visible tabs enabled — zero "Coming in a future milestone" tooltips
     const tooltips = document.querySelectorAll('[aria-label="Coming in a future milestone"]');
     expect(tooltips.length).toBe(0);
   });

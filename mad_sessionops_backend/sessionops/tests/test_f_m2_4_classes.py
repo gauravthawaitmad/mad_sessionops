@@ -3,8 +3,9 @@ Tests for F-M2-4: Classes — catalog, add, list, remove.
 """
 
 import pytest
+from ninja.testing import TestClient
 
-from sessionops.exceptions import ConflictError, NotFound, PermissionDenied
+from sessionops.exceptions import ConflictError, NotFound, PermissionDenied, ValidationError
 from sessionops.models import (
     AcademicYear,
     Child,
@@ -15,11 +16,14 @@ from sessionops.models import (
     Program,
     User,
 )
+from sessionops.routes import api
 from sessionops.services.structure.queries import (
     add_class_to_school,
     list_classes_for_school,
     soft_delete_school_class,
 )
+
+CLIENT = TestClient(api)
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -87,6 +91,20 @@ class TestCatalog:
         Program.objects.get_or_create(program_name="Foundation Program")
         assert Program.objects.filter(program_name="Foundation Program").exists()
 
+    def test_catalog_endpoint_excludes_class_8(self):
+        program, _ = Program.objects.get_or_create(program_name="Foundation Program")
+        for name, code in [("5th", "5"), ("6th", "6"), ("7th", "7"), ("8th", "8")]:
+            Class.objects.get_or_create(
+                class_code=code,
+                defaults={"class_name": name, "program_id": program},
+            )
+
+        resp = CLIENT.get("/api/classes/")
+
+        assert resp.status_code == 200
+        codes = {c["class_code"] for c in resp.json()}
+        assert codes == {"5", "6", "7"}
+
 
 # ── Add class ──────────────────────────────────────────────────────────────────
 
@@ -141,6 +159,27 @@ class TestAddClass:
 
         sc = add_class_to_school(school_id, cls.class_id, admin)
         assert sc.sections_count == 0
+
+    def test_add_class_8_directly_raises_validation_error(self):
+        """Class 8 is only reachable via year-end progression from class 7,
+        not a direct add — MAD's program scope is 5th-7th for now."""
+        admin = _make_user()
+        _make_active_year(admin)
+        cls8 = _get_or_create_class("8", "8th")
+        school_id = 2005
+
+        with pytest.raises(ValidationError):
+            add_class_to_school(school_id, cls8.class_id, admin)
+
+    def test_add_class_5_6_7_still_allowed(self):
+        admin = _make_user()
+        _make_active_year(admin)
+        school_id = 2006
+
+        for code, name in [("5", "5th"), ("6", "6th"), ("7", "7th")]:
+            cls = _get_or_create_class(code, name)
+            sc = add_class_to_school(school_id, cls.class_id, admin)
+            assert sc.class_id_id == cls.class_id
 
 
 # ── List classes ───────────────────────────────────────────────────────────────

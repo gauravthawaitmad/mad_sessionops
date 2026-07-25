@@ -28,6 +28,7 @@ vi.mock("react-hot-toast", () => ({
 import { fetchBuckets } from "@/lib/api/services/buckets.service";
 import { fetchVolunteers } from "@/lib/api/services/volunteers.service";
 import { createSlotClass } from "@/lib/api/services/slot_classes.service";
+import toast from "react-hot-toast";
 
 const noop = () => {};
 
@@ -261,6 +262,96 @@ describe("AddSlotClassModal — F-M6-8", () => {
     await waitFor(() => {
       expect(screen.getByText(/Cannot assign 3 volunteers/)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /Assign Class/ })).toBeDisabled();
+    });
+  });
+
+  it("test_no_buckets_shows_empty_state", async () => {
+    vi.mocked(fetchBuckets).mockResolvedValue([]);
+
+    render(
+      <AddSlotClassModal
+        open={true}
+        schoolId={580}
+        slot={SLOT}
+        existingSlotClasses={[]}
+        onClose={noop}
+        onAdded={noop}
+      />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("No mentoring circles added to this school yet.")
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("test_data_load_failure_shows_toast_error", async () => {
+    vi.mocked(fetchBuckets).mockRejectedValue(new Error("network down"));
+
+    render(
+      <AddSlotClassModal
+        open={true}
+        schoolId={580}
+        slot={SLOT}
+        existingSlotClasses={[]}
+        onClose={noop}
+        onAdded={noop}
+      />
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Failed to load form data.");
+    });
+  });
+
+  it("test_submit_failure_shows_api_error_message_via_toast", async () => {
+    vi.mocked(createSlotClass).mockRejectedValue({
+      data: { error: { message: "Bucket is already full for this slot." } },
+    });
+
+    render(
+      <AddSlotClassModal
+        open={true}
+        schoolId={580}
+        slot={SLOT}
+        existingSlotClasses={[]}
+        onClose={noop}
+        onAdded={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Group 1")).toBeInTheDocument());
+    await selectBucket("Group 1");
+    await selectVolunteer("Asha Kumar");
+    await userEvent.click(screen.getByRole("button", { name: /Assign Class/ }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Bucket is already full for this slot.");
+    });
+  });
+
+  it("test_submit_failure_falls_back_to_generic_message_when_no_api_message", async () => {
+    vi.mocked(createSlotClass).mockRejectedValue(new Error("boom"));
+
+    render(
+      <AddSlotClassModal
+        open={true}
+        schoolId={580}
+        slot={SLOT}
+        existingSlotClasses={[]}
+        onClose={noop}
+        onAdded={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Group 1")).toBeInTheDocument());
+    await selectBucket("Group 1");
+    await selectVolunteer("Asha Kumar");
+    await userEvent.click(screen.getByRole("button", { name: /Assign Class/ }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("boom");
     });
   });
 });

@@ -9,13 +9,16 @@ TC-M1-4-05  search filters by city
 TC-M1-4-06  search filters by state
 TC-M1-4-07  unauthenticated request returns 401
 TC-M1-4-08  response summary totals match schools returned
+TC-M1-4-09  CHO with no scope gets scope_warning on the list response
+TC-M1-4-10  CO with schools gets no scope_warning
+TC-M1-4-11  academic_year_label shows even when the AcademicYear itself is inactive
 """
 
 import pytest
 from ninja.testing import TestClient
 from rest_framework_simplejwt.tokens import AccessToken
 
-from sessionops.models import Partner, User
+from sessionops.models import AcademicYear, Partner, PartnerWorknode, SchoolAcademicYear, User
 from sessionops.routes import api
 
 # ---------------------------------------------------------------------------
@@ -120,6 +123,29 @@ def test_school_list_returns_empty_for_cho():
     data = resp.json()
     assert data["schools"] == []
     assert data["summary"]["total_schools"] == 0
+    assert data["scope_warning"] == {
+        "code": "no_worknode_mapping",
+        "message": (
+            "You are not assigned to any schools or partner. "
+            "Please contact your community organizer or admin."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# TC-M1-4-10  CO with schools gets no scope_warning
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_school_list_no_scope_warning_when_schools_visible():
+    co = _make_user("CO Full Time")
+    _make_partner("My School", co_id=co.user_id)
+
+    resp = CLIENT.get("/api/schools/", **_auth_header(co))
+
+    assert resp.status_code == 200
+    assert resp.json()["scope_warning"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -196,6 +222,46 @@ def test_school_list_requires_auth():
 # ---------------------------------------------------------------------------
 # TC-M1-4-08  summary totals match returned schools
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_school_list_academic_year_label_shown_when_year_itself_is_inactive():
+    """A school's own SchoolAcademicYear row being active is what matters —
+    not whether the AcademicYear it points to is the current globally-active one.
+    A school can be mid-progression on a year that's since been superseded."""
+    admin = _make_user("Function Lead")
+    school = _make_partner("School With Old Year", co_id=admin.user_id)
+    old_year = AcademicYear.objects.create(label="2025-2026", is_active=False, created_by=admin)
+    SchoolAcademicYear.objects.create(
+        school_id=school.partner_id,
+        academic_year_id=old_year,
+        is_active=True,
+        created_by=admin,
+    )
+
+    resp = CLIENT.get("/api/schools/", **_auth_header(admin))
+
+    assert resp.status_code == 200
+    data = resp.json()
+    entry = next(s for s in data["schools"] if s["partner_id"] == school.partner_id)
+    assert entry["academic_year_label"] == "2025-2026"
+
+
+@pytest.mark.django_db
+def test_school_list_volunteers_count_reflects_worknode_mapped_active_user():
+    admin = _make_user("Function Lead")
+    school = _make_partner("School With Volunteer", co_id=admin.user_id)
+    PartnerWorknode.objects.create(partner_id=str(school.partner_id), worknode_id=555)
+    volunteer = _make_user("CHO")
+    volunteer.worknode_id = 555
+    volunteer.is_active = True
+    volunteer.save(update_fields=["worknode_id", "is_active"])
+
+    resp = CLIENT.get("/api/schools/", **_auth_header(admin))
+
+    assert resp.status_code == 200
+    entry = next(s for s in resp.json()["schools"] if s["partner_id"] == school.partner_id)
+    assert entry["volunteers_count"] == 1
 
 
 @pytest.mark.django_db

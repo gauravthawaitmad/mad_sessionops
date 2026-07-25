@@ -340,7 +340,7 @@ def print_startup_info():
     print(f"  DB User     : {db['USER']}")
     print("-" * 60)
     print("  API Docs    : http://localhost:8000/api/docs")
-    print("  Admin       : http://localhost:8000/admin/")
+    print("  Admin       : http://localhost:8000/django-admin/")
     print("=" * 60 + "\n")
 
 

@@ -133,7 +133,7 @@ describe("BucketCard — UX polish", () => {
   it("test_menu_opens_with_manage_edit_delete_options", async () => {
     render(<BucketCard bucket={MOCK_BUCKET} schoolId={580} onUpdated={noop} onRemoved={noop} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Bucket options" }));
+    await userEvent.click(screen.getByRole("button", { name: "Mentoring circle options" }));
 
     await waitFor(() => {
       expect(screen.getByText("Manage Children")).toBeInTheDocument();
@@ -145,7 +145,7 @@ describe("BucketCard — UX polish", () => {
   it("test_delete_disabled_when_bucket_has_children", async () => {
     render(<BucketCard bucket={MOCK_BUCKET} schoolId={580} onUpdated={noop} onRemoved={noop} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Bucket options" }));
+    await userEvent.click(screen.getByRole("button", { name: "Mentoring circle options" }));
 
     await waitFor(() => {
       expect(screen.getByText("Delete").closest("li")).toHaveAttribute("aria-disabled", "true");
@@ -155,7 +155,7 @@ describe("BucketCard — UX polish", () => {
   it("test_delete_enabled_when_bucket_is_empty", async () => {
     render(<BucketCard bucket={EMPTY_BUCKET} schoolId={580} onUpdated={noop} onRemoved={noop} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Bucket options" }));
+    await userEvent.click(screen.getByRole("button", { name: "Mentoring circle options" }));
 
     await waitFor(() => {
       expect(screen.getByText("Delete").closest("li")).not.toHaveAttribute("aria-disabled", "true");

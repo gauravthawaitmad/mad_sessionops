@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { colors } from "@/config/design-tokens";
 import type { SchoolListItem } from "@/lib/api/services/schools.service";
 
-const GRID = "minmax(0, 2.4fr) 1fr 0.7fr 0.7fr 0.7fr 0.7fr";
+const GRID = "0.5fr minmax(0, 2.4fr) 1fr 0.8fr 0.7fr 0.7fr 0.7fr 0.7fr";
 const ROW_H = 64;
 
 // ── Avatar ─────────────────────────────────────────────────────────────────────
@@ -104,7 +104,18 @@ export const SchoolTableRow = memo(function SchoolTableRow({ school }: { school:
         "&:focus-visible": { outline: `2px solid #3b82f6`, outlineOffset: "-2px" },
       }}
     >
-      {/* Col 1: School name + Community Organizer */}
+      {/* Col 1: ID */}
+      <Typography
+        sx={{
+          fontSize: "13px",
+          color: colors.gray[500],
+          fontFamily: '"JetBrains Mono", "Courier New", monospace',
+        }}
+      >
+        {school.partnerId}
+      </Typography>
+
+      {/* Col 2: School name + Community Organizer */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
         <SchoolAvatar initials={school.initials} name={school.name} />
         <Box sx={{ minWidth: 0 }}>
@@ -138,21 +149,26 @@ export const SchoolTableRow = memo(function SchoolTableRow({ school }: { school:
         </Box>
       </Box>
 
-      {/* Col 2: City */}
+      {/* Col 3: City */}
       <Typography sx={{ fontSize: "13px", color: colors.gray[500] }}>
         {school.city ?? "—"}
       </Typography>
 
-      {/* Col 3: Classes */}
+      {/* Col 4: Academic Year */}
+      <Typography sx={{ fontSize: "13px", color: colors.gray[500] }}>
+        {school.academicYearLabel ?? "—"}
+      </Typography>
+
+      {/* Col 5: Classes */}
       <NumCell value={school.classesCount} />
 
-      {/* Col 4: Children */}
+      {/* Col 6: Children */}
       <NumCell value={school.childrenCount} />
 
-      {/* Col 5: Volunteers */}
+      {/* Col 7: Volunteers */}
       <NumCell value={school.volunteersCount} />
 
-      {/* Col 6: Assignments */}
+      {/* Col 8: Assignments */}
       <NumCell value={school.assignmentsCount} />
     </Box>
   );

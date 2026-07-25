@@ -2,8 +2,14 @@ from django.db import IntegrityError
 from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 
-from sessionops.exceptions import ConflictError, NotFound
+from sessionops.exceptions import ConflictError, NotFound, ValidationError
 from sessionops.models import ChildClass, Class, SchoolClass
+
+# MAD's program scope is 5th-7th for now; 8th only exists because last year's
+# 7th-graders progress into it (via Bubble's child/academic-year progression,
+# not yet rebuilt here post-M6 decoupling). Nobody should be able to newly
+# add class 8 to a school until that progression flow lands in Session-Ops.
+BLOCKED_NEW_CLASS_CODES = frozenset(["8"])
 
 # ── Classes ────────────────────────────────────────────────────────────────────
 
@@ -25,8 +31,16 @@ def list_classes_for_school(school_id: int) -> QuerySet:
 def add_class_to_school(school_id: int, class_id: int, user) -> SchoolClass:
     from sessionops.services.academic_year.queries import get_or_create_school_academic_year
 
-    if not Class.objects.filter(class_id=class_id, is_active=True, removed=False).exists():
+    try:
+        cls = Class.objects.get(class_id=class_id, is_active=True, removed=False)
+    except Class.DoesNotExist:
         raise NotFound(f"Class {class_id} not found in catalog.")
+
+    if cls.class_code in BLOCKED_NEW_CLASS_CODES:
+        raise ValidationError(
+            f"Class {cls.class_name} cannot be added directly. "
+            f"It is only reachable via year-end progression from a lower class."
+        )
 
     say = get_or_create_school_academic_year(school_id, user)
     try:

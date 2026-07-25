@@ -58,6 +58,7 @@ const MOCK_SCHOOLS = [
     childrenCount: 25,
     volunteersCount: 5,
     assignmentsCount: 10,
+    academicYearLabel: "2026-2027",
     updatedAt: "2026-04-29T10:00:00Z",
   },
   {
@@ -73,6 +74,7 @@ const MOCK_SCHOOLS = [
     childrenCount: 20,
     volunteersCount: 7,
     assignmentsCount: 0,
+    academicYearLabel: "2026-2027",
     updatedAt: "2026-04-28T08:00:00Z",
   },
 ];
@@ -90,7 +92,11 @@ describe("SchoolListPage — F-M1-4", () => {
   });
 
   it("test_schools_page_renders_table_with_data", async () => {
-    vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
 
     renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 
@@ -110,6 +116,7 @@ describe("SchoolListPage — F-M1-4", () => {
     vi.mocked(fetchSchools).mockResolvedValue({
       schools: [],
       summary: { ...MOCK_SUMMARY, totalSchools: 0 },
+      scopeWarning: null,
     });
 
     renderWithProvider(<SchoolListPage userName="Test CHO" />);
@@ -122,8 +129,64 @@ describe("SchoolListPage — F-M1-4", () => {
     expect(screen.queryByText("School")).not.toBeInTheDocument();
   });
 
+  it("test_schools_page_shows_scope_warning_message_for_cho_with_no_worknode_mapping", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: [],
+      summary: { ...MOCK_SUMMARY, totalSchools: 0 },
+      scopeWarning: {
+        code: "no_worknode_mapping",
+        message:
+          "You are not assigned to any schools or partner. Please contact your community organizer or admin.",
+      },
+    });
+
+    renderWithProvider(<SchoolListPage userName="Test CHO" />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "You are not assigned to any schools or partner. Please contact your community organizer or admin."
+        )
+      ).toBeInTheDocument();
+    });
+
+    // The scope-warning message replaces the generic empty-state copy
+    expect(screen.queryByText("No schools assigned yet")).not.toBeInTheDocument();
+    expect(screen.getByText("No schools assigned")).toBeInTheDocument();
+  });
+
+  it("test_schools_page_scope_warning_survives_without_redux_login_state", async () => {
+    // Simulates a page refresh: redux's login-time scopeWarning is gone,
+    // but the schools list endpoint still returns the fresh scope_warning.
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: [],
+      summary: { ...MOCK_SUMMARY, totalSchools: 0 },
+      scopeWarning: {
+        code: "no_worknode_mapping",
+        message:
+          "You are not assigned to any schools or partner. Please contact your community organizer or admin.",
+      },
+    });
+
+    renderWithProvider(<SchoolListPage userName="Test CHO" />, {
+      auth: { scopeWarning: null },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "You are not assigned to any schools or partner. Please contact your community organizer or admin."
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
   it("test_schools_page_search_debounces_calls", async () => {
-    vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
 
     renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 
@@ -148,8 +211,106 @@ describe("SchoolListPage — F-M1-4", () => {
     expect(vi.mocked(fetchSchools)).toHaveBeenCalledTimes(1);
   });
 
+  it("test_schools_page_shows_error_on_fetch_failure", async () => {
+    vi.mocked(fetchSchools).mockRejectedValue(new Error("network down"));
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Could not load schools. Please try again.")).toBeInTheDocument();
+    });
+  });
+
+  it("test_schools_page_sort_by_name", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText(/Sort: Recently updated/));
+    await userEvent.click(screen.getByText("Name (A–Z)"));
+
+    const rows = screen.getAllByRole("row").filter((r) => r.getAttribute("tabindex") === "0");
+    expect(rows[0]?.textContent).toContain("Govt. High School Shaikpet");
+  });
+
+  it("test_schools_page_sort_by_city", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText(/Sort: Recently updated/));
+    await userEvent.click(screen.getByText("City (A–Z)"));
+
+    expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+  });
+
+  it("test_schools_page_sort_by_children_count", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText(/Sort: Recently updated/));
+    await userEvent.click(screen.getByText("Most children"));
+
+    const rows = screen.getAllByRole("row").filter((r) => r.getAttribute("tabindex") === "0");
+    // Shaikpet has 25 children vs Jubilee Hills' 20 — should sort first
+    expect(rows[0]?.textContent).toContain("Govt. High School Shaikpet");
+  });
+
+  it("test_schools_page_clear_search_resets_filter", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByPlaceholderText(/search by school name/i);
+    await userEvent.type(searchInput, "nonexistent-school-xyz");
+
+    await waitFor(() => {
+      expect(screen.getByText("Clear search")).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText("Clear search"));
+
+    await waitFor(() => {
+      expect(searchInput).toHaveValue("");
+    });
+    expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+  });
+
   it("test_schools_page_row_click_navigates_to_detail", async () => {
-    vi.mocked(fetchSchools).mockResolvedValue({ schools: MOCK_SCHOOLS, summary: MOCK_SUMMARY });
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
 
     renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
 
@@ -163,5 +324,49 @@ describe("SchoolListPage — F-M1-4", () => {
     await userEvent.click(row!);
 
     expect(mockRouterPush).toHaveBeenCalledWith("/schools/580");
+  });
+
+  it("test_schools_page_row_enter_key_navigates_to_detail", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    const row = screen
+      .getByText("Govt. High School Shaikpet")
+      .closest('[role="row"]') as HTMLElement;
+    row.focus();
+    await userEvent.keyboard("{Enter}");
+
+    expect(mockRouterPush).toHaveBeenCalledWith("/schools/580");
+  });
+
+  it("test_schools_page_row_space_key_navigates_to_detail", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Municipal School Jubilee Hills")).toBeInTheDocument();
+    });
+
+    const row = screen
+      .getByText("Municipal School Jubilee Hills")
+      .closest('[role="row"]') as HTMLElement;
+    row.focus();
+    await userEvent.keyboard(" ");
+
+    expect(mockRouterPush).toHaveBeenCalledWith("/schools/612");
   });
 });

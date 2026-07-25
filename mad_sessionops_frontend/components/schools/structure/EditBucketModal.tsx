@@ -17,7 +17,11 @@ import { editBucket, type BucketItem } from "@/lib/api/services/buckets.service"
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const bucketSchema = z.object({
-  display_name: z.string().trim().min(1, "Bucket name is required").max(255, "Name is too long"),
+  display_name: z
+    .string()
+    .trim()
+    .min(1, "Mentoring circle name is required")
+    .max(255, "Name is too long"),
 });
 
 type FormValues = z.infer<typeof bucketSchema>;
@@ -98,17 +102,19 @@ export function EditBucketModal({
       const updated = await editBucket(schoolId, bucket.classSectionId, values.display_name.trim());
       onEdited(updated);
     } catch (err: any) {
-      setError("display_name", { message: err?.message ?? "Failed to update bucket." });
+      setError("display_name", { message: err?.message ?? "Failed to update mentoring circle." });
     }
   }
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontSize: "15px", fontWeight: 700, pb: 1 }}>Edit Bucket</DialogTitle>
+      <DialogTitle sx={{ fontSize: "15px", fontWeight: 700, pb: 1 }}>
+        Edit Mentoring Circle
+      </DialogTitle>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent sx={{ pt: "8px !important" }}>
-          <FieldLabel required>Bucket Name</FieldLabel>
+          <FieldLabel required>Mentoring Circle Name</FieldLabel>
           <Controller
             name="display_name"
             control={control}

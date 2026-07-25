@@ -11,7 +11,12 @@ import { SchoolToolbar } from "./SchoolToolbar";
 import { SchoolTable } from "./SchoolTable";
 import { SchoolEmptyState } from "./SchoolEmptyState";
 import { fetchSchools } from "@/lib/api/services/schools.service";
-import type { SchoolListItem, SchoolSummary, SortOption } from "@/lib/api/services/schools.service";
+import type {
+  SchoolListItem,
+  SchoolScopeWarning,
+  SchoolSummary,
+  SortOption,
+} from "@/lib/api/services/schools.service";
 import { selectScopeWarning } from "@/lib/redux/features/auth/authSlice";
 
 interface SchoolListPageProps {
@@ -112,9 +117,12 @@ function sortSchools(schools: SchoolListItem[], sort: SortOption): SchoolListIte
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function SchoolListPage({ userName }: SchoolListPageProps) {
-  const scopeWarning = useSelector(selectScopeWarning);
+  const loginScopeWarning = useSelector(selectScopeWarning);
   const [allSchools, setAllSchools] = useState<SchoolListItem[]>([]);
   const [summary, setSummary] = useState<SchoolSummary | null>(null);
+  const [scopeWarning, setScopeWarning] = useState<SchoolScopeWarning | null>(
+    loginScopeWarning ?? null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,6 +138,7 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
       const data = await fetchSchools();
       setAllSchools(data.schools);
       setSummary(data.summary);
+      setScopeWarning(data.scopeWarning);
     } catch {
       setError("Could not load schools. Please try again.");
     } finally {
@@ -184,14 +193,17 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
               <Skeleton width={180} height={13} />
             ) : summary ? (
               <Typography sx={{ fontSize: "13px", color: colors.gray[500] }}>
-                Academic year {summary.academicYear}
-                {allSchools.length > 0 &&
+                {[
+                  summary.academicYear ? `Academic year ${summary.academicYear}` : null,
                   (() => {
+                    if (allSchools.length === 0) return null;
                     const cities = new Set(allSchools.map((s) => s.city).filter(Boolean));
-                    return cities.size > 0
-                      ? ` · ${cities.size === 1 ? `${[...cities][0]}` : `${cities.size} cities`}`
-                      : "";
-                  })()}
+                    if (cities.size === 0) return null;
+                    return cities.size === 1 ? `${[...cities][0]}` : `${cities.size} cities`;
+                  })(),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </Typography>
             ) : null}
           </Box>

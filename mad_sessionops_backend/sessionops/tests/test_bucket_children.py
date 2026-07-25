@@ -14,6 +14,7 @@ from sessionops.models import (
     ChildSubject,
     ClassSection,
     ClassSectionSubject,
+    Partner,
     Program,
     SchoolAcademicYear,
     Slot,
@@ -22,6 +23,9 @@ from sessionops.models import (
     Subject,
     User,
 )
+from sessionops.schemas.children import ChildEditIn, DeactivateIn
+from sessionops.services.children.deactivate import deactivate_child
+from sessionops.services.children.edit import edit_child
 from sessionops.services.structure.bucket_children import (
     add_child_to_bucket,
     remove_child_from_bucket,
@@ -42,6 +46,13 @@ def _make_user(role: str = "Function Lead") -> User:
         user_role=role,
         is_active=True,
     )
+
+
+def _make_partner(school_id: int) -> Partner:
+    return Partner.objects.get_or_create(
+        partner_id=school_id,
+        defaults={"partner_name": f"School {school_id}", "converted": True},
+    )[0]
 
 
 def _make_child(school_id: int, user: User, first_name: str = "Test") -> Child:
@@ -286,3 +297,117 @@ class TestRemoveChildFromBucket:
         child = _make_child(415, user)
         with pytest.raises(NotFound):
             remove_child_from_bucket(415, 999999, child.child_id, user)
+
+
+# ── deactivate_child (R-bucket) ──────────────────────────────────────────────────
+
+
+@pytest.mark.django_db
+class TestDeactivateChildRBucket:
+    def test_deactivate_blocked_when_over_volunteers_remaining_bucket(self):
+        user = _make_user()
+        _make_partner(420)
+        bucket_out = create_bucket(420, "Bucket", user)
+        bucket = ClassSection.objects.get(class_section_id=bucket_out.class_section_id)
+        subject = _make_subject(user)
+        css = _make_class_section_subject(bucket, subject, user)
+
+        children = [_make_child(420, user) for _ in range(3)]
+        for c in children:
+            add_child_to_bucket(420, bucket.class_section_id, c.child_id, user)
+
+        _make_slot_class_with_volunteers(bucket, css, 420, user, n_volunteers=3)
+
+        with pytest.raises(ConflictError, match="3 volunteers"):
+            deactivate_child(children[0].child_id, DeactivateIn(removed_reason="dropped_out"), user)
+
+        # Blocked — no partial state change
+        assert Child.objects.get(child_id=children[0].child_id).is_active is True
+        assert ChildClassSection.objects.filter(
+            child_id=children[0], is_active=True, removed=False
+        ).exists()
+
+    def test_deactivate_succeeds_when_no_slot_class_or_within_capacity(self):
+        user = _make_user()
+        _make_partner(421)
+        bucket_out = create_bucket(421, "Bucket", user)
+        bucket = ClassSection.objects.get(class_section_id=bucket_out.class_section_id)
+        subject = _make_subject(user)
+        css = _make_class_section_subject(bucket, subject, user)
+
+        children = [_make_child(421, user) for _ in range(3)]
+        for c in children:
+            add_child_to_bucket(421, bucket.class_section_id, c.child_id, user)
+
+        _make_slot_class_with_volunteers(bucket, css, 421, user, n_volunteers=2)
+
+        # Removing one child leaves 2 remaining, exactly matching 2 volunteers — allowed
+        deactivate_child(children[0].child_id, DeactivateIn(removed_reason="dropped_out"), user)
+
+        assert Child.objects.get(child_id=children[0].child_id).is_active is False
+        assert not ChildClassSection.objects.filter(
+            child_id=children[0], is_active=True, removed=False
+        ).exists()
+
+
+# ── edit_child bucket-reassignment (R-bucket) ────────────────────────────────────
+
+
+@pytest.mark.django_db
+class TestEditChildRBucket:
+    def test_bucket_move_blocked_when_vacating_over_volunteers_old_bucket(self):
+        user = _make_user()
+        _make_partner(430)
+        old_bucket_out = create_bucket(430, "Old Bucket", user)
+        old_bucket = ClassSection.objects.get(class_section_id=old_bucket_out.class_section_id)
+        new_bucket_out = create_bucket(430, "New Bucket", user)
+        subject = _make_subject(user)
+        css = _make_class_section_subject(old_bucket, subject, user)
+
+        children = [_make_child(430, user) for _ in range(3)]
+        for c in children:
+            add_child_to_bucket(430, old_bucket.class_section_id, c.child_id, user)
+
+        _make_slot_class_with_volunteers(old_bucket, css, 430, user, n_volunteers=3)
+
+        with pytest.raises(ConflictError, match="3 volunteers"):
+            edit_child(
+                children[0].child_id,
+                ChildEditIn(class_section_id=new_bucket_out.class_section_id),
+                user,
+            )
+
+        # Blocked — old bucket membership untouched
+        assert ChildClassSection.objects.filter(
+            child_id=children[0],
+            class_section_id_id=old_bucket.class_section_id,
+            is_active=True,
+            removed=False,
+        ).exists()
+
+    def test_bucket_move_succeeds_normal_case(self):
+        user = _make_user()
+        _make_partner(431)
+        old_bucket_out = create_bucket(431, "Old Bucket", user)
+        old_bucket = ClassSection.objects.get(class_section_id=old_bucket_out.class_section_id)
+        new_bucket_out = create_bucket(431, "New Bucket", user)
+
+        child = _make_child(431, user)
+        add_child_to_bucket(431, old_bucket.class_section_id, child.child_id, user)
+
+        edit_child(
+            child.child_id, ChildEditIn(class_section_id=new_bucket_out.class_section_id), user
+        )
+
+        assert not ChildClassSection.objects.filter(
+            child_id=child,
+            class_section_id_id=old_bucket.class_section_id,
+            is_active=True,
+            removed=False,
+        ).exists()
+        assert ChildClassSection.objects.filter(
+            child_id=child,
+            class_section_id_id=new_bucket_out.class_section_id,
+            is_active=True,
+            removed=False,
+        ).exists()

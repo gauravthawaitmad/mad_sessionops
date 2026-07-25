@@ -4,8 +4,9 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Image from "next/image";
 import NextLink from "next/link";
-import { BookOpen, Users, Calendar, CheckCircle2, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { colors } from "@/config/design-tokens";
+import { BrandPanelSlideshow } from "./BrandPanelSlideshow";
 import { ReactNode } from "react";
 
 interface SplitAuthLayoutProps {
@@ -15,12 +16,6 @@ interface SplitAuthLayoutProps {
   backHref?: string;
   backLabel?: string;
 }
-
-const features = [
-  { icon: BookOpen, label: "Manage class sessions and school partnerships" },
-  { icon: Users, label: "Track COs, volunteers, and children" },
-  { icon: Calendar, label: "Schedule and coordinate teaching slots" },
-];
 
 export function SplitAuthLayout({
   children,
@@ -39,7 +34,11 @@ export function SplitAuthLayout({
           flexDirection: "column",
           justifyContent: "space-between",
           p: 5,
-          background: `linear-gradient(160deg, ${colors.brand.red[600]} 0%, ${colors.brand.red[500]} 100%)`,
+          background: `
+            radial-gradient(circle at 88% 8%, rgba(251,192,45,0.22) 0%, transparent 42%),
+            radial-gradient(circle at 8% 96%, rgba(0,0,0,0.18) 0%, transparent 50%),
+            linear-gradient(160deg, ${colors.brand.red[600]} 0%, ${colors.brand.red[500]} 55%, #8B1E1E 100%)
+          `,
           position: "relative",
           overflow: "hidden",
         }}
@@ -49,7 +48,7 @@ export function SplitAuthLayout({
           sx={{
             position: "absolute",
             inset: 0,
-            opacity: 0.06,
+            opacity: 0.08,
             backgroundImage:
               "url(\"data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='1' fill='%23ffffff'/%3E%3C/svg%3E\")",
             backgroundSize: "20px 20px",
@@ -94,57 +93,32 @@ export function SplitAuthLayout({
           </Box>
         </Box>
 
-        {/* center content */}
+        {/* headline + subtext + illustration slideshow */}
         <Box sx={{ position: "relative", zIndex: 1 }}>
-          <Box
-            sx={{
-              width: 52,
-              height: 52,
-              borderRadius: 2.5,
-              bgcolor: "rgba(255,255,255,0.15)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mb: 3,
-            }}
-          >
-            <BookOpen size={26} strokeWidth={1.5} color="#fff" />
-          </Box>
-
           <Typography
             variant="h4"
             sx={{ fontWeight: 700, color: "#fff", mb: 1.5, lineHeight: 1.2, fontSize: "1.625rem" }}
           >
-            School Operations,
+            Small Circles.
             <br />
-            Simplified
+            Big Change.
           </Typography>
 
           <Typography
             sx={{
               fontSize: "0.875rem",
               color: "rgba(255,255,255,0.75)",
-              mb: 4,
-              maxWidth: 320,
+              mb: 3,
+              maxWidth: 340,
               lineHeight: 1.6,
             }}
           >
-            The internal platform MAD uses to coordinate city officers, volunteers, and children
-            across every partner school.
+            Behind every scheduled session is a volunteer who shows up and a child who&apos;s
+            counting on them. Session-Ops keeps that promise running — school after school, week
+            after week.
           </Typography>
 
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
-            {features.map(({ icon: Icon, label }) => (
-              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-                <CheckCircle2 size={16} strokeWidth={1.75} color="rgba(255,255,255,0.85)" />
-                <Typography
-                  sx={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}
-                >
-                  {label}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
+          <BrandPanelSlideshow />
         </Box>
 
         <Typography

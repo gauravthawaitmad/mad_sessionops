@@ -8,11 +8,14 @@ from sessionops.schemas.schools import (
     SchoolListResponseSchema,
     SchoolSummarySchema,
 )
-from sessionops.services.rbac import schools_visible_to
+from sessionops.services.rbac import get_scope_warning, schools_visible_to
+from sessionops.services.schools.queries import (
+    get_active_academic_year_label,
+    get_active_volunteers_count,
+    get_school_stats,
+)
 
 schools_router = Router(tags=["Schools"])
-
-_CURRENT_ACADEMIC_YEAR = "2025–26"  # en-dash
 
 
 def _compute_initials(name: str) -> str:
@@ -22,7 +25,7 @@ def _compute_initials(name: str) -> str:
     return name[:2].upper() if name else "??"
 
 
-def _to_item(partner: Partner) -> SchoolListItemSchema:
+def _to_item(partner: Partner, stats: dict) -> SchoolListItemSchema:
     updated_at = partner.partner_updated_date or partner.synced_at
     return SchoolListItemSchema(
         partner_id=partner.partner_id,
@@ -33,10 +36,11 @@ def _to_item(partner: Partner) -> SchoolListItemSchema:
         contact_phone=partner.poc_contact,
         co_name=partner.co_name,
         setup_status="not_configured",  # M1: no classes/sections yet
-        children_count=partner.confirmed_child_count or 0,
-        volunteers_count=0,  # M1: no volunteer data
-        assignments_count=0,  # M1: no assignment data
-        classes_count=0,  # M1: no class data
+        children_count=stats.get("children_count", 0),
+        volunteers_count=stats.get("volunteers_count", 0),
+        assignments_count=stats.get("assignments_count", 0),
+        classes_count=stats.get("classes_count", 0),
+        academic_year_label=stats.get("academic_year_label"),
         updated_at=updated_at,
     )
 
@@ -44,6 +48,7 @@ def _to_item(partner: Partner) -> SchoolListItemSchema:
 @schools_router.get("", response=SchoolListResponseSchema)
 def list_schools(request):
     qs = schools_visible_to(request.auth)
+    scope_warning = get_scope_warning(request.auth)
 
     search = request.GET.get("search", "").strip()
     if search:
@@ -55,17 +60,19 @@ def list_schools(request):
         qs = qs.distinct()
 
     partners = list(qs.order_by("-partner_updated_date", "-synced_at"))
-    schools = [_to_item(p) for p in partners]
+    partner_ids = [p.partner_id for p in partners]
+    stats_by_school = get_school_stats(partner_ids)
+    schools = [_to_item(p, stats_by_school.get(p.partner_id, {})) for p in partners]
 
     summary = SchoolSummarySchema(
         total_schools=len(schools),
         fully_configured=sum(1 for s in schools if s.setup_status == "configured"),
         children_enrolled=sum(s.children_count for s in schools),
-        active_volunteers=0,  # M1
-        academic_year=_CURRENT_ACADEMIC_YEAR,
+        active_volunteers=get_active_volunteers_count(partner_ids),
+        academic_year=get_active_academic_year_label(),
     )
 
-    return SchoolListResponseSchema(schools=schools, summary=summary)
+    return SchoolListResponseSchema(schools=schools, summary=summary, scope_warning=scope_warning)
 
 
 @schools_router.get("/{partner_id}", response=SchoolDetailSchema)
@@ -74,6 +81,8 @@ def get_school(request, partner_id: int):
         partner = schools_visible_to(request.auth).get(partner_id=partner_id)
     except Partner.DoesNotExist:
         raise NotFound("School not found")
+
+    stats = get_school_stats([partner_id]).get(partner_id, {})
 
     return SchoolDetailSchema(
         partner_id=partner.partner_id,
@@ -97,8 +106,9 @@ def get_school(request, partner_id: int):
         co_name=partner.co_name,
         synced_at=partner.synced_at,
         configuration_status="awaiting_setup",
-        children_count=partner.confirmed_child_count or 0,
-        classes_count=0,
-        volunteers_count=0,
-        assignments_count=0,
+        children_count=stats.get("children_count", 0),
+        classes_count=stats.get("classes_count", 0),
+        volunteers_count=stats.get("volunteers_count", 0),
+        assignments_count=stats.get("assignments_count", 0),
+        academic_year_label=stats.get("academic_year_label"),
     )

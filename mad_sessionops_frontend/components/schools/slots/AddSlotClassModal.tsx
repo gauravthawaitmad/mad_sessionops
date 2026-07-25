@@ -12,7 +12,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Tooltip from "@mui/material/Tooltip";
-import { X, Check, AlertTriangle } from "lucide-react";
+import { X, Check, AlertTriangle, Info } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,7 +50,7 @@ function initials(name: string): string {
 
 const schema = z
   .object({
-    class_section_id: z.number().min(1, "Select a bucket"),
+    class_section_id: z.number().min(1, "Select a mentoring circle"),
     volunteer_ids: z
       .array(z.number().positive())
       .min(1, "At least 1 volunteer required")
@@ -92,7 +92,7 @@ function CompositionPreview({
     >
       {isEmpty ? (
         <Typography sx={{ fontSize: "12px", color: "#CBD5E1", fontStyle: "italic" }}>
-          Select a bucket and volunteers below — your assignment preview will appear here.
+          Select a mentoring circle and volunteers below — your assignment preview will appear here.
         </Typography>
       ) : (
         <>
@@ -122,7 +122,7 @@ function CompositionPreview({
             <Typography
               sx={{ fontSize: "13px", fontWeight: 700, color: bucketName ? "#1E293B" : "#CBD5E1" }}
             >
-              {bucketName ?? "Bucket —"}
+              {bucketName ?? "Mentoring Circle —"}
             </Typography>
           </Box>
 
@@ -241,7 +241,7 @@ function BucketPicker({
         sx={{ p: 1.5, borderRadius: "8px", border: `1px dashed ${BORDER}`, textAlign: "center" }}
       >
         <Typography sx={{ fontSize: "12px", color: MUTED }}>
-          No buckets added to this school yet.
+          No mentoring circles added to this school yet.
         </Typography>
       </Box>
     );
@@ -337,7 +337,7 @@ function BucketPicker({
       </Box>
       {error && (
         <Typography sx={{ fontSize: "11px", color: "#EF4444", mt: 0.5 }}>
-          Select a bucket
+          Select a mentoring circle
         </Typography>
       )}
     </Box>
@@ -350,44 +350,52 @@ function ColumnLabel({
   children,
   required,
   optional,
+  info,
 }: {
   children: React.ReactNode;
   required?: boolean;
   optional?: boolean;
+  info?: string;
 }) {
   return (
-    <Typography
-      sx={{
-        fontSize: "11px",
-        fontWeight: 700,
-        color: MUTED,
-        letterSpacing: "0.07em",
-        textTransform: "uppercase",
-        mb: 1,
-      }}
-    >
-      {children}
-      {required && (
-        <Typography component="span" sx={{ color: "#EF4444", ml: 0.25, fontSize: "11px" }}>
-          *
-        </Typography>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
+      <Typography
+        sx={{
+          fontSize: "11px",
+          fontWeight: 700,
+          color: MUTED,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+        }}
+      >
+        {children}
+        {required && (
+          <Typography component="span" sx={{ color: "#EF4444", ml: 0.25, fontSize: "11px" }}>
+            *
+          </Typography>
+        )}
+        {optional && (
+          <Typography
+            component="span"
+            sx={{
+              color: MUTED,
+              ml: 0.5,
+              fontSize: "10px",
+              textTransform: "none",
+              fontWeight: 400,
+              letterSpacing: 0,
+            }}
+          >
+            (optional)
+          </Typography>
+        )}
+      </Typography>
+      {info && (
+        <Tooltip title={info} placement="right" arrow>
+          <Info size={12} strokeWidth={2} color={MUTED} style={{ cursor: "help", flexShrink: 0 }} />
+        </Tooltip>
       )}
-      {optional && (
-        <Typography
-          component="span"
-          sx={{
-            color: MUTED,
-            ml: 0.5,
-            fontSize: "10px",
-            textTransform: "none",
-            fontWeight: 400,
-            letterSpacing: 0,
-          }}
-        >
-          (optional)
-        </Typography>
-      )}
-    </Typography>
+    </Box>
   );
 }
 
@@ -568,7 +576,7 @@ export function AddSlotClassModal({
                 {prefillBucket ? (
                   /* Pre-selected from grid cell — read-only */
                   <Box>
-                    <ColumnLabel>Bucket</ColumnLabel>
+                    <ColumnLabel>Mentoring Circle</ColumnLabel>
                     <Box
                       sx={{
                         p: 1.5,
@@ -623,7 +631,7 @@ export function AddSlotClassModal({
                   </Box>
                 ) : (
                   <Box>
-                    <ColumnLabel required>Bucket</ColumnLabel>
+                    <ColumnLabel required>Mentoring Circle</ColumnLabel>
                     <BucketPicker
                       buckets={buckets}
                       loading={false}
@@ -657,7 +665,12 @@ export function AddSlotClassModal({
 
                 {/* Volunteers */}
                 <Box>
-                  <ColumnLabel required>Volunteers</ColumnLabel>
+                  <ColumnLabel
+                    required
+                    info="A mentoring circle holds up to 5 children, and a slot-class can have up to 5 volunteers too — but never more volunteers than the mentoring circle's active children. For example, with 3 children, at most 3 volunteers can be assigned."
+                  >
+                    Volunteers
+                  </ColumnLabel>
                   <Controller
                     name="volunteer_ids"
                     control={control}
@@ -682,7 +695,7 @@ export function AddSlotClassModal({
                     <Typography
                       sx={{ fontSize: "11px", color: overCapacity ? "#EF4444" : MUTED, mt: 1 }}
                     >
-                      {volunteerIds.length} of {MAX_CAP} selected. Bucket has{" "}
+                      {volunteerIds.length} of {MAX_CAP} selected. Mentoring circle has{" "}
                       {selectedBucket.activeChildrenCount} children — max {maxAllowed} volunteer
                       {maxAllowed !== 1 ? "s" : ""}.
                     </Typography>
@@ -709,7 +722,7 @@ export function AddSlotClassModal({
                         style={{ flexShrink: 0, marginTop: 1 }}
                       />
                       <Typography sx={{ fontSize: "11px", color: "#B91C1C", lineHeight: 1.5 }}>
-                        Cannot assign {volunteerIds.length} volunteers — bucket has only{" "}
+                        Cannot assign {volunteerIds.length} volunteers — mentoring circle has only{" "}
                         {selectedBucket.activeChildrenCount} child(ren). Maximum{" "}
                         {selectedBucket.activeChildrenCount} volunteer(s) allowed.
                       </Typography>

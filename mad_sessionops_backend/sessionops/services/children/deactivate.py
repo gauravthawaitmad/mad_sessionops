@@ -11,10 +11,12 @@ from sessionops.models import (
     ChildClassSection,
     ChildProgram,
     ChildRemovalLog,
+    ClassSection,
     User,
 )
 from sessionops.schemas.children import DeactivateIn
 from sessionops.services.rbac.scope import get_school_or_403
+from sessionops.services.structure.bucket_children import assert_bucket_not_over_volunteered
 
 
 def deactivate_child(child_id: int, payload: DeactivateIn, user: User) -> None:
@@ -27,6 +29,19 @@ def deactivate_child(child_id: int, payload: DeactivateIn, user: User) -> None:
             raise NotFound(f"Child {child_id} not found.")
 
         get_school_or_403(user, child.school_id)
+
+        # R-bucket: deactivating a child vacates their bucket the same way
+        # remove_child_from_bucket does — must not silently leave a scheduled
+        # slot-class over-volunteered. Lock the bucket before checking to
+        # avoid a lost-update race against a concurrent deactivation/move.
+        current_ccs = ChildClassSection.objects.filter(
+            child_id=child_id, is_active=True, removed=False
+        ).first()
+        if current_ccs is not None:
+            bucket = ClassSection.objects.select_for_update().get(
+                pk=current_ccs.class_section_id_id
+            )
+            assert_bucket_not_over_volunteered(bucket, current_ccs.child_class_section_id)
 
         now = timezone.now()
 

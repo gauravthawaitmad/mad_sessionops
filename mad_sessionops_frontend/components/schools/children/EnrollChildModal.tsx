@@ -251,7 +251,7 @@ function BucketPicker({
 }) {
   return (
     <Box>
-      <FieldLabel>Bucket</FieldLabel>
+      <FieldLabel>Mentoring Circle</FieldLabel>
 
       {loading ? (
         <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1 }}>
@@ -435,7 +435,7 @@ export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollC
     setBucketsLoading(true);
     fetchBuckets(schoolId)
       .then(setBuckets)
-      .catch(() => toast.error("Could not load buckets"))
+      .catch(() => toast.error("Could not load mentoring circles"))
       .finally(() => setBucketsLoading(false));
   }, [open, schoolId]);
 
@@ -716,7 +716,7 @@ export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollC
 
               {/* ── Class & Bucket ── */}
               <Box sx={{ pt: 2, borderTop: `1px solid ${BORDER}` }}>
-                <SectionHeading>Class &amp; Bucket</SectionHeading>
+                <SectionHeading>Class &amp; Mentoring Circle</SectionHeading>
 
                 {/* Class chips — required */}
                 <Box sx={{ mb: 2 }}>

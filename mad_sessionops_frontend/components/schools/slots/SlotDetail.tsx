@@ -7,11 +7,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import LinearProgress from "@mui/material/LinearProgress";
 import Tooltip from "@mui/material/Tooltip";
-import { Plus, Users, Trash2 } from "lucide-react";
+import { Plus, Users, Trash2, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 import { fetchSlotClasses, type SlotClassItem } from "@/lib/api/services/slot_classes.service";
 import type { SlotItem } from "@/lib/api/services/slots.service";
 import { AddSlotClassModal } from "./AddSlotClassModal";
+import { EditSlotClassModal } from "./EditSlotClassModal";
 import { DeleteSlotClassModal } from "./DeleteSlotClassModal";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -46,10 +47,12 @@ function initials(name: string): string {
 function SlotClassCard({
   scs,
   canModify,
+  onEdit,
   onDelete,
 }: {
   scs: SlotClassItem;
   canModify: boolean;
+  onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 }) {
   const bucketName = scs.sectionDisplayName ?? scs.sectionName;
@@ -69,6 +72,7 @@ function SlotClassCard({
         "&:hover": {
           borderColor: "#93C5FD",
           bgcolor: "#F8FBFF",
+          "& .edit-btn": { opacity: 1 },
           "& .del-btn": { opacity: 1 },
         },
       }}
@@ -145,22 +149,38 @@ function SlotClassCard({
           </Typography>
         </Box>
 
-        {/* Delete — hover reveal */}
+        {/* Edit / Delete — hover reveal */}
         {canModify && (
-          <IconButton
-            className="del-btn"
-            size="small"
-            onClick={() => onDelete(scs.slotClassSectionId)}
-            sx={{
-              p: 0.5,
-              opacity: 0,
-              color: MUTED,
-              transition: "opacity 0.15s ease, color 0.12s ease",
-              "&:hover": { color: "#EF4444", bgcolor: "#FEF2F2" },
-            }}
-          >
-            <Trash2 size={13} />
-          </IconButton>
+          <Box sx={{ display: "flex", gap: 0.25, flexShrink: 0 }}>
+            <IconButton
+              className="edit-btn"
+              size="small"
+              onClick={() => onEdit(scs.slotClassSectionId)}
+              sx={{
+                p: 0.5,
+                opacity: 0,
+                color: MUTED,
+                transition: "opacity 0.15s ease, color 0.12s ease",
+                "&:hover": { color: "#2563EB", bgcolor: "#EFF6FF" },
+              }}
+            >
+              <Pencil size={13} />
+            </IconButton>
+            <IconButton
+              className="del-btn"
+              size="small"
+              onClick={() => onDelete(scs.slotClassSectionId)}
+              sx={{
+                p: 0.5,
+                opacity: 0,
+                color: MUTED,
+                transition: "opacity 0.15s ease, color 0.12s ease",
+                "&:hover": { color: "#EF4444", bgcolor: "#FEF2F2" },
+              }}
+            >
+              <Trash2 size={13} />
+            </IconButton>
+          </Box>
         )}
       </Box>
 
@@ -244,6 +264,7 @@ export function SlotDetail({ slot, schoolId, canModify, onSlotClassCountChange }
   const [slotClasses, setSlotClasses] = useState<SlotClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<SlotClassItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SlotClassItem | null>(null);
 
   const load = useCallback(async () => {
@@ -261,6 +282,18 @@ export function SlotDetail({ slot, schoolId, canModify, onSlotClassCountChange }
   useEffect(() => {
     load();
   }, [load]);
+
+  function handleEdit(scsId: number) {
+    const target = slotClasses.find((s) => s.slotClassSectionId === scsId) ?? null;
+    setEditTarget(target);
+  }
+
+  function handleUpdated(scs: SlotClassItem) {
+    setSlotClasses((prev) =>
+      prev.map((s) => (s.slotClassSectionId === scs.slotClassSectionId ? scs : s))
+    );
+    toast.success("Volunteers updated.");
+  }
 
   function handleDelete(scsId: number) {
     const target = slotClasses.find((s) => s.slotClassSectionId === scsId) ?? null;
@@ -292,6 +325,7 @@ export function SlotDetail({ slot, schoolId, canModify, onSlotClassCountChange }
               key={scs.slotClassSectionId}
               scs={scs}
               canModify={canModify}
+              onEdit={handleEdit}
               onDelete={handleDelete}
             />
           ))}
@@ -354,6 +388,16 @@ export function SlotDetail({ slot, schoolId, canModify, onSlotClassCountChange }
         existingSlotClasses={slotClasses}
         onClose={() => setAddOpen(false)}
         onAdded={handleAdded}
+      />
+
+      <EditSlotClassModal
+        open={editTarget !== null}
+        schoolId={schoolId}
+        slotId={slot.slotId}
+        slotClass={editTarget}
+        existingSlotClasses={slotClasses}
+        onClose={() => setEditTarget(null)}
+        onUpdated={handleUpdated}
       />
 
       <DeleteSlotClassModal

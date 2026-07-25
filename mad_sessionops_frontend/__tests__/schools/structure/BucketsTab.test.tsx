@@ -80,17 +80,17 @@ describe("BucketsTab — F-M6-6", () => {
     render(<BucketsTab schoolId={580} />);
 
     await waitFor(() => {
-      expect(screen.getByText("No buckets added yet.")).toBeInTheDocument();
+      expect(screen.getByText("No mentoring circles added yet.")).toBeInTheDocument();
     });
   });
 
-  it("test_tab_shows_buckets_heading_not_structure", async () => {
+  it("test_tab_shows_mentoring_circles_heading_not_structure", async () => {
     vi.mocked(fetchBuckets).mockResolvedValue([]);
 
     render(<BucketsTab schoolId={580} />);
 
     await waitFor(() => {
-      expect(screen.getByText("Buckets")).toBeInTheDocument();
+      expect(screen.getByText("Mentoring Circles")).toBeInTheDocument();
     });
     expect(screen.queryByText("Structure")).not.toBeInTheDocument();
   });
@@ -109,7 +109,7 @@ describe("BucketsTab — F-M6-6", () => {
     render(<BucketsTab schoolId={580} />);
 
     await waitFor(() => {
-      expect(screen.getByText("Failed to load buckets.")).toBeInTheDocument();
+      expect(screen.getByText("Failed to load mentoring circles.")).toBeInTheDocument();
     });
   });
 
@@ -163,7 +163,8 @@ describe("BucketsTab — F-M6-6", () => {
 
     await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByRole("button", { name: "Remove Grade 5" }));
+    await userEvent.click(screen.getByRole("button", { name: "Grade 5 options" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
 
     await waitFor(() => {
       expect(screen.getByText("Remove Class")).toBeInTheDocument();
@@ -185,7 +186,7 @@ describe("BucketsTab — F-M6-6", () => {
 
     await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
 
-    expect(screen.queryByRole("button", { name: "Remove Grade 5" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Grade 5 options" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add Class" })).not.toBeInTheDocument();
   });
 });
