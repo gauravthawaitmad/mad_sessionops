@@ -39,16 +39,21 @@ def assert_bucket_not_over_volunteered(
         .count()
     )
 
-    active_slot_classes = SlotClassSection.objects.filter(
-        class_section_id=bucket,
-        is_active=True,
-        removed=False,
-    ).select_related("slot_id").annotate(
-        vol_count=Count(
-            "slotclasssectionvolunteer",
-            filter=Q(
-                slotclasssectionvolunteer__is_active=True, slotclasssectionvolunteer__removed=False
-            ),
+    active_slot_classes = (
+        SlotClassSection.objects.filter(
+            class_section_id=bucket,
+            is_active=True,
+            removed=False,
+        )
+        .select_related("slot_id")
+        .annotate(
+            vol_count=Count(
+                "slotclasssectionvolunteer",
+                filter=Q(
+                    slotclasssectionvolunteer__is_active=True,
+                    slotclasssectionvolunteer__removed=False,
+                ),
+            )
         )
     )
     bucket_name = bucket.section_display_name or bucket.section_name

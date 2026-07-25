@@ -110,6 +110,4 @@ def get_active_volunteers_count(partner_ids: list[int]) -> int:
         .values_list("worknode_id", flat=True)
         .distinct()
     )
-    return (
-        User.objects.filter(worknode_id__in=worknode_ids, is_active=True).distinct().count()
-    )
+    return User.objects.filter(worknode_id__in=worknode_ids, is_active=True).distinct().count()

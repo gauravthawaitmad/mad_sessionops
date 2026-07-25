@@ -116,22 +116,25 @@ export function VolunteerListTab({ schoolId }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
 
-    fetchVolunteers(schoolId)
-      .then((res) => {
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetchVolunteers(schoolId);
         if (!cancelled) {
           setData(res);
           setLoading(false);
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setError("Failed to load volunteers. Please try again.");
           setLoading(false);
         }
-      });
+      }
+    }
+
+    load();
 
     return () => {
       cancelled = true;
@@ -179,8 +182,14 @@ export function VolunteerListTab({ schoolId }: Props) {
           "No volunteers found for this school. To see volunteers here, add this school's workplace for that user in Platform Commons' user management — once tagged, they'll appear here and can be assigned to slots and mentoring circles."
         }
         bullets={[
-          { icon: Building2, text: "Add this school as the volunteer's workplace in Platform Commons" },
-          { icon: Clock, text: "Assign them to teaching slots and mentoring circles once they appear" },
+          {
+            icon: Building2,
+            text: "Add this school as the volunteer's workplace in Platform Commons",
+          },
+          {
+            icon: Clock,
+            text: "Assign them to teaching slots and mentoring circles once they appear",
+          },
           { icon: Heart, text: "Every volunteer mapped means one more class can run" },
         ]}
         accent="#7C3AED"

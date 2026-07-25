@@ -149,7 +149,9 @@
       "PowerShell([System.Environment]::GetEnvironmentVariable\\(\"DBHOST\",\"Machine\"\\); \"---User---\"; [System.Environment]::GetEnvironmentVariable\\(\"DBHOST\",\"User\"\\); \"---DBADMINUSER Machine---\"; [System.Environment]::GetEnvironmentVariable\\(\"DBADMINUSER\",\"Machine\"\\); \"---DBADMINUSER User---\"; [System.Environment]::GetEnvironmentVariable\\(\"DBADMINUSER\",\"User\"\\); \"---Process DBHOST---\"; $env:DBHOST; \"---Process DBADMINUSER---\"; $env:DBADMINUSER)",
       "Bash(powershell -Command \"Get-Process | Where-Object { \\\\$_.ProcessName -match 'pytest' } | Select-Object Id,ProcessName,StartTime\" 2>&1)",
       "Bash(awk '/EditSlotClassModal.tsx/,/end_of_record/' coverage/lcov.info)",
-      "Bash(awk *)"
+      "Bash(awk *)",
+      "Bash(npx prettier *)",
+      "Bash(grep -A 65 \"SF:components\\\\\\\\\\\\\\\\schools\\\\\\\\\\\\\\\\volunteers\\\\\\\\\\\\\\\\VolunteerListTab.tsx\" coverage/lcov.info)"
     ]
   }
 }

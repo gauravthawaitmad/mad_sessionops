@@ -18,17 +18,7 @@ import IconButton from "@mui/material/IconButton";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
-import {
-  Plus,
-  Search,
-  X,
-  User,
-  Pencil,
-  UserMinus,
-  UserCheck,
-  BookOpen,
-  Heart,
-} from "lucide-react";
+import { Plus, Search, X, User, Pencil, UserMinus, UserCheck, BookOpen, Heart } from "lucide-react";
 import {
   fetchChildren,
   type ChildItem,
@@ -178,7 +168,10 @@ function EmptyState({ onEnroll }: { onEnroll?: () => void }) {
           ? [
               { icon: BookOpen, text: "Enroll children into classes and mentoring circles" },
               { icon: UserCheck, text: "Track attendance and progress through the year" },
-              { icon: Heart, text: "Every child enrolled is a step closer to the difference you're making" },
+              {
+                icon: Heart,
+                text: "Every child enrolled is a step closer to the difference you're making",
+              },
             ]
           : undefined
       }

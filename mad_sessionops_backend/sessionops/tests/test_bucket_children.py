@@ -319,9 +319,7 @@ class TestDeactivateChildRBucket:
         _make_slot_class_with_volunteers(bucket, css, 420, user, n_volunteers=3)
 
         with pytest.raises(ConflictError, match="3 volunteers"):
-            deactivate_child(
-                children[0].child_id, DeactivateIn(removed_reason="dropped_out"), user
-            )
+            deactivate_child(children[0].child_id, DeactivateIn(removed_reason="dropped_out"), user)
 
         # Blocked — no partial state change
         assert Child.objects.get(child_id=children[0].child_id).is_active is True
