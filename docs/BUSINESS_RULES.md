@@ -203,6 +203,20 @@ At most 2 may be assigned; `Vol1` is required, `Vol2` is optional.
 **Enforcement:** Sync tasks use upsert patterns keyed on Hasura IDs, not blind inserts. Tests verify replay.
 
 ---
+
+### R17 — A converted school that reverts to a non-removed, non-converted CRM state has its full operational footprint cascade-deactivated
+
+**Rule:** During partner sync, if a Hasura partner row reports `crm_partner_removed=false AND converted=false` while the partner was previously `is_active=true` **and previously `converted=true`** in Session-Ops, the entire school is treated as dropped from the CRM's active pipeline: every active row across `slot_class_section_volunteer`, `slot_class_section`, `slot`, `class_section_subject`, `school_volunteer`, `child_class_section`, `child` (with a `ChildRemovalLog` per child), `child_class`, `class_section`, `school_class`, `school_academic_year`, `school_session_details`, and `school_holiday` is soft-deactivated, and `Partner.is_active` is forced to `false`.
+
+**Rationale:** This condition is independent of, and takes priority over, F-M1-2's existing `crm_partner_removed`-only flag flip (`Partner.is_active = not crm_partner_removed`) — under that logic alone, `removed=false` would leave (or make) the partner active. Without R17, a school that the CRM no longer counts as converted — but that was never formally marked "removed" — leaves fully-staffed, fully-scheduled ghost data in Session-Ops indefinitely.
+
+**The previous-`converted=true` requirement is load-bearing, not incidental.** An earlier version of this rule fired on "previously active" alone, without checking previous `converted` status. That broke a real production case: a partner that has *never* been converted (a plain lead) is still created with `is_active=true` on its very first sync — `is_active` is driven only by `crm_partner_removed`, unrelated to `converted`. Checking only "previously active" meant every never-converted lead matched "removed=false, converted=false" again on its *second* sync (nothing had changed), and got wrongly cascade-deactivated — and would keep re-matching on every sync after that. Requiring the partner to have previously been `converted=true` restricts R17 to an actual converted→reverted transition, never a lead that was never converted in the first place.
+
+**Enforcement:** Service layer, `services/sync/partner_deactivation.py::cascade_deactivate_school`, called from the single shared upsert path `services/sync/upsert.py::bulk_upsert_partners` (used by both the cron incremental sync and the manual "Sync now" trigger — see F-M4-9). Both the "previously active" and "previously converted" checks are snapshotted before the upsert overwrites those fields, so a brand-new partner seen for the first time never triggers this (nothing to deactivate yet, and never previously converted), and an already-cascaded partner is a no-op on repeat syncs (every cascade query filters `is_active=true`).
+
+**Note:** Every write is `is_active=false` + `removed=true` (or `is_active=false` alone for `Partner`, which has no `removed` field) + `deleted_at` — no hard deletes, consistent with R9. `ChildRemovalLog.removed_reason` is always written as `"other"` with `other_details="School dropped from CRM"`, satisfying R10's mandatory-reason requirement in an automated context with no human operator to ask. There is no automatic reactivation: if the partner's CRM state later reverts to `converted=true`, cascaded child records stay deactivated — confirmed as permanently out of scope, not just deferred.
+
+---
 ---
 
 ## Conventions, not rules

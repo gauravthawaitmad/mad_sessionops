@@ -232,6 +232,26 @@ The `tokenUtils` direct localStorage wrapper is deleted.
 
 ---
 
+## FD011 — Wire up `updateActivity` to real user interaction (bug fix)
+
+**Date:** 2026-07-28
+**Status:** Accepted
+
+**Context:** `authSlice.ts` implements a 30-minute idle-logout: `checkSessionTimeout` (polled every 60s from `AuthInitializer.tsx`) force-logs-out the user if `Date.now() - lastActivity > sessionTimeout`, with `state.error = "Session expired due to inactivity"`. `lastActivity` was only ever stamped by login and token-refresh code paths (`loginSuccess`, `updateTokens`, the `fulfilled` cases of the auth thunks) — never by actual user interaction. The `updateActivity` reducer existed and was exported, and `AUTH_FLOW_ARCHITECTURE.md` documented it as part of the intended flow, but no click/keydown/mousemove listener anywhere ever dispatched it. Effect: every session force-expired exactly `sessionTimeout` ms (30 min) after login or the last token refresh — regardless of whether the user was actively using the app the whole time. Users on staging reported being kicked to `/login` with the inactivity message after ordinary use.
+
+**Decision:** `AuthInitializer.tsx` now registers `click`/`keydown`/`mousemove`/`scroll`/`touchstart` listeners (passive, throttled to one `updateActivity()` dispatch per 10s — `checkSessionTimeout` only samples every 60s anyway, so higher resolution buys nothing) for the component's lifetime, alongside the existing `checkSessionTimeout` interval. No change to `authSlice.ts` itself — `updateActivity` already existed and worked correctly once actually called.
+
+**Consequences:**
+
+- Idle-logout now behaves as originally intended: 30 minutes of genuine inactivity (no click, keypress, mouse movement, scroll, or touch) logs the user out; ongoing activity keeps the session alive indefinitely (bounded by the 12h access / 30d refresh token lifetimes on the backend, a separate mechanism).
+- The listeners are registered once at the app root (`AuthInitializer` wraps the whole tree), not per-page — no per-route wiring needed.
+
+**Alternatives:**
+
+- **`react-idle-timer` library** — would replace the hand-rolled interval + listeners. Not adopted here since the existing `checkSessionTimeout`/`updateActivity` design already covered the logic correctly; only the event wiring was missing. Revisit if idle-timeout needs grow more complex (e.g. a warning modal before logout).
+
+---
+
 ## Frontend-only conventions (not ADRs, just rules)
 
 Smaller decisions that didn't warrant a full entry:

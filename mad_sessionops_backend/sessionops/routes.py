@@ -36,6 +36,7 @@ from sessionops.api.auth_api import auth_router
 from sessionops.api.children_api import children_router
 from sessionops.api.holidays_api import holidays_router
 from sessionops.api.migration_api import router as migration_router
+from sessionops.api.partner_sync_internal_api import router as partner_sync_internal_router
 from sessionops.api.realtime_sync_api import router as realtime_sync_router
 from sessionops.api.schedule_api import schedule_router
 from sessionops.api.schools_api import schools_router
@@ -240,6 +241,11 @@ api.add_router("/api/admin/realtime-events", admin_realtime_events_router)
 # Internal realtime sync endpoint (path from env var, auth handled inside the router)
 _internal_sync_path = os.getenv("INTERNAL_SYNC_ENDPOINT_PATH", "/sync-user-internal")
 api.add_router(_internal_sync_path, realtime_sync_router)
+
+# Internal partner-sync trigger endpoint (path from env var, auth handled inside the
+# router) — n8n scheduler replaces the crontab entry, calling this on its own schedule
+_partner_sync_path = os.getenv("PARTNER_SYNC_ENDPOINT_PATH", "/sync-partner-internal")
+api.add_router(_partner_sync_path, partner_sync_internal_router)
 
 # Internal migration loader endpoints (F-M7-1) — fixed prefix, token-only auth
 # handled inside the router (see sessionops/api/migration_api.py)

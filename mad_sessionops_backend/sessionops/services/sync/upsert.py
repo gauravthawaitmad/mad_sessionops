@@ -15,6 +15,7 @@ from django.db import close_old_connections as _close_old_connections
 from django.db import connection, transaction
 
 from sessionops.models import Partner, PartnerWorknode, User
+from sessionops.services.sync.partner_deactivation import cascade_deactivate_school
 
 logger = logging.getLogger(__name__)
 
@@ -275,6 +276,19 @@ def bulk_upsert_partners(batch_rows: list[dict], now: datetime) -> tuple[int, in
     Bulk upsert partners using INSERT ... ON CONFLICT DO UPDATE.
     Uses all_objects manager so soft-deleted rows are found and reactivated.
     Returns (created, updated).
+
+    F-M4-9: after the upsert, any partner that was previously active AND
+    previously converted=True, and now reports crm_partner_removed=False AND
+    converted=False, is cascade-deactivated (see
+    services/sync/partner_deactivation.py) — i.e. a real converted partner
+    reverting to a non-converted CRM stage, not a plain lead that was never
+    converted in the first place. Requiring previous converted=True (not just
+    previous is_active=True) matters: without it, a never-converted lead
+    (crm_partner_removed=False, converted=False from creation) would get
+    cascade-deactivated on every sync after its first, since it's already
+    "previously active" and its row never stops matching removed=False/
+    converted=False — nothing about it ever actually changed. Both snapshots
+    must be taken before bulk_create runs, since that call overwrites them.
     """
     objects = [obj for row in batch_rows if (obj := build_partner_obj(row, now))]
     if not objects:
@@ -283,6 +297,16 @@ def bulk_upsert_partners(batch_rows: list[dict], now: datetime) -> tuple[int, in
     batch_ids = [o.partner_id for o in objects]
     existing_ids = set(
         Partner.all_objects.filter(partner_id__in=batch_ids).values_list("partner_id", flat=True)
+    )
+    previously_active_ids = set(
+        Partner.all_objects.filter(partner_id__in=batch_ids, is_active=True).values_list(
+            "partner_id", flat=True
+        )
+    )
+    previously_converted_ids = set(
+        Partner.all_objects.filter(partner_id__in=batch_ids, converted=True).values_list(
+            "partner_id", flat=True
+        )
     )
 
     for attempt in range(2):
@@ -295,6 +319,32 @@ def bulk_upsert_partners(batch_rows: list[dict], now: datetime) -> tuple[int, in
             )
             created = sum(1 for o in objects if o.partner_id not in existing_ids)
             updated = len(objects) - created
+
+            for row in batch_rows:
+                partner_id = to_int(row.get("partner_id"))
+                if (
+                    partner_id is None
+                    or partner_id not in previously_active_ids
+                    or partner_id not in previously_converted_ids
+                ):
+                    continue
+                crm_removed = bool(row.get("crm_partner_removed", False))
+                converted = bool(row.get("converted", False))
+                if not crm_removed and not converted:
+                    logger.warning(
+                        "bulk_upsert_partners: partner_id=%s reverted to "
+                        "crm_partner_removed=False, converted=False after being "
+                        "previously active and converted — running F-M4-9 cascade "
+                        "deactivation",
+                        partner_id,
+                    )
+                    counts = cascade_deactivate_school(partner_id, now)
+                    logger.warning(
+                        "bulk_upsert_partners: F-M4-9 cascade DONE for partner_id=%s — %s",
+                        partner_id,
+                        counts,
+                    )
+
             return created, updated
         except OperationalError:
             if attempt == 0:

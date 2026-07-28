@@ -1,0 +1,23 @@
+# Secrets — never bake these into an image layer. COPY . . in the builder
+# stage would otherwise include any of these if present in the build context.
+# NEXT_PUBLIC_* values are passed as build ARGs instead (see Dockerfile).
+.env
+.env.*
+
+# Version control / IDE
+.git
+.gitignore
+.vscode/
+.idea/
+
+# Node / Next.js build artifacts (rebuilt inside the image anyway)
+node_modules/
+.next/
+out/
+coverage/
+
+# Local data / logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

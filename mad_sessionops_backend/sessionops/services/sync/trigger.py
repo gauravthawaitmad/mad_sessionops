@@ -197,7 +197,10 @@ def _execute_partner_sync(run: SyncRun) -> None:
             )
 
         partner_ids = [
-            {"partner_id": row.get("partner_id"), "partner_name": row.get("partner_name") or ""}
+            {
+                "partner_id": row.get("partner_id"),
+                "partner_name": row.get("partner_name") or "",
+            }
             for row in rows
             if row.get("partner_id") is not None
         ]
@@ -297,7 +300,10 @@ _EXECUTE_MAP = {
 
 
 def _trigger_entities(
-    entity_types: list[str], triggered_by: User, global_lock: bool
+    entity_types: list[str],
+    triggered_by: User,
+    global_lock: bool,
+    run_type: str = SyncRun.RUN_TYPE_MANUAL,
 ) -> dict[str, int]:
     if global_lock:
         if SyncRun.objects.filter(status=SyncRun.STATUS_RUNNING).exists():
@@ -312,14 +318,17 @@ def _trigger_entities(
         runs[et] = SyncRun.objects.create(
             entity_type=et,
             entity_sync_type=_ENTITY_SYNC_TYPE_MAP[et],
-            run_type=SyncRun.RUN_TYPE_MANUAL,
+            run_type=run_type,
             status=SyncRun.STATUS_RUNNING,
             triggered_by=triggered_by,
         )
 
-    triggered_by_name = triggered_by.user_display_name if triggered_by else "cron"
+    triggered_by_name = triggered_by.user_display_name if triggered_by else run_type
     logger.info(
-        "trigger: starting manual sync for %s — triggered_by=%s", entity_types, triggered_by_name
+        "trigger: starting %s sync for %s — triggered_by=%s",
+        run_type,
+        entity_types,
+        triggered_by_name,
     )
 
     def _background() -> None:
@@ -351,13 +360,22 @@ def _trigger_entities(
 # ---------------------------------------------------------------------------
 
 
-def trigger_entity_sync(entity_type: str, triggered_by: User) -> int:
-    """Trigger sync for a single entity. Per-entity concurrent guard."""
+def trigger_entity_sync(
+    entity_type: str, triggered_by: User, run_type: str = SyncRun.RUN_TYPE_MANUAL
+) -> int:
+    """
+    Trigger sync for a single entity. Per-entity concurrent guard.
+
+    run_type defaults to "manual" (the admin "Sync now" button). Pass
+    SyncRun.RUN_TYPE_AUTO for scheduler-triggered calls (e.g. the n8n
+    partner-sync endpoint) so the audit trail correctly distinguishes an
+    automated schedule from a human clicking the dashboard button.
+    """
     if entity_type not in _ENTITY_SYNC_TYPE_MAP:
         from sessionops.exceptions import ValidationError
 
         raise ValidationError(f"Unknown entity type: {entity_type}")
-    result = _trigger_entities([entity_type], triggered_by, global_lock=False)
+    result = _trigger_entities([entity_type], triggered_by, global_lock=False, run_type=run_type)
     return result[entity_type]
 
 

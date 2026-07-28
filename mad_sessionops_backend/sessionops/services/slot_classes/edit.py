@@ -173,13 +173,20 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
     # ── Volunteer-only swap ───────────────────────────────────────────────────
 
     if vols_changing:
-        check_r_bucket_capacity(scs.class_section_id_id, len(new_volunteer_ids))
-
         old_vol_ids = list(
             SlotClassSectionVolunteer.objects.filter(
                 slot_class_section_id=scs, is_active=True, removed=False
             ).values_list("volunteer_id_id", flat=True)
         )
+
+        if set(new_volunteer_ids) == set(old_vol_ids):
+            # Same volunteers, no actual change (e.g. the client resubmitted the
+            # current list unchanged). Avoid deactivating and recreating rows
+            # that would otherwise look like a spurious removal+reassignment
+            # in the audit history.
+            return scs
+
+        check_r_bucket_capacity(scs.class_section_id_id, len(new_volunteer_ids))
 
         SlotClassSectionVolunteer.objects.filter(
             slot_class_section_id=scs, is_active=True, removed=False
@@ -200,7 +207,13 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
 
 
 def _replace_volunteers(
-    scs: SlotClassSection, vol_ids: list[int], slot: Slot, school_id: int, say, user: User, now
+    scs: SlotClassSection,
+    vol_ids: list[int],
+    slot: Slot,
+    school_id: int,
+    say,
+    user: User,
+    now,
 ) -> None:
     """Validate and create new SCSV rows + ensure SchoolVolunteer.
 

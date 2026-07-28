@@ -151,7 +151,10 @@
       "Bash(awk '/EditSlotClassModal.tsx/,/end_of_record/' coverage/lcov.info)",
       "Bash(awk *)",
       "Bash(npx prettier *)",
-      "Bash(grep -A 65 \"SF:components\\\\\\\\\\\\\\\\schools\\\\\\\\\\\\\\\\volunteers\\\\\\\\\\\\\\\\VolunteerListTab.tsx\" coverage/lcov.info)"
+      "Bash(grep -A 65 \"SF:components\\\\\\\\\\\\\\\\schools\\\\\\\\\\\\\\\\volunteers\\\\\\\\\\\\\\\\VolunteerListTab.tsx\" coverage/lcov.info)",
+      "Bash(xargs grep -ilE \"idle|inactivity|logged out|session.?timeout|auto.?logout\")",
+      "Bash(xargs grep -lE \"401|refresh\")",
+      "Bash(openssl rand *)"
     ]
   }
 }

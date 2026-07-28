@@ -5,6 +5,7 @@ F-M6-5 replaced volunteer_1_id/volunteer_2_id with volunteer_ids: list[int] and
 dropped subject_id from client input. Every create_slot_class call here needs
 the section to have at least as many active children as volunteers (R-bucket).
 """
+
 from datetime import time
 from types import SimpleNamespace
 
@@ -89,7 +90,11 @@ def _make_section(school_id: int, user: User, class_code: str = "5") -> ClassSec
     program, _ = Program.objects.get_or_create(program_name="Foundation Program")
     cls, _ = Class.objects.get_or_create(
         class_code=class_code,
-        defaults={"class_name": f"{class_code}th", "program_id": program, "is_active": True},
+        defaults={
+            "class_name": f"{class_code}th",
+            "program_id": program,
+            "is_active": True,
+        },
     )
     year, _ = AcademicYear.objects.get_or_create(
         label="2026-2027",
@@ -357,6 +362,58 @@ def test_edit_slot_class_multiple_volunteers_replaces_all():
         ).values_list("volunteer_id_id", flat=True)
     )
     assert active_vol_ids == {vol1.user_id, vol2.user_id, vol3.user_id}
+
+
+@pytest.mark.django_db
+def test_edit_slot_class_same_single_volunteer_is_noop():
+    """
+    Regression: resubmitting the same volunteer_ids the client already had
+    (e.g. an edit form that always sends its current state) must not
+    deactivate and recreate the SlotClassSectionVolunteer row — that would
+    show up in audit history as a spurious removal+reassignment.
+    """
+    co, school, section, vol1, slot = _setup()
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
+
+    original = SlotClassSectionVolunteer.objects.get(slot_class_section_id=scs, volunteer_id=vol1)
+
+    edit_slot_class(scs.slot_class_section_id, _edit_payload(volunteers=[vol1]), co)
+
+    assert SlotClassSectionVolunteer.objects.filter(slot_class_section_id=scs).count() == 1
+    unchanged = SlotClassSectionVolunteer.objects.get(slot_class_section_id=scs, volunteer_id=vol1)
+    assert unchanged.slot_class_section_volunteer_id == original.slot_class_section_volunteer_id
+    assert unchanged.is_active is True
+    assert unchanged.removed is False
+    assert unchanged.deleted_at is None
+
+
+@pytest.mark.django_db
+def test_edit_slot_class_same_volunteers_reordered_is_noop():
+    """Same set of volunteers submitted in a different order is still a no-op."""
+    co = _make_co()
+    school = _make_school(co)
+    sid = school.partner_id
+    section = _make_section(sid, co)
+    _add_children(section, 2, co)
+    vol1 = _make_volunteer(sid, co)
+    vol2 = _make_volunteer(sid, co)
+    slot = _make_slot(sid, co)
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1, vol2), co)
+
+    original_ids = set(
+        SlotClassSectionVolunteer.objects.filter(
+            slot_class_section_id=scs, is_active=True, removed=False
+        ).values_list("slot_class_section_volunteer_id", flat=True)
+    )
+
+    edit_slot_class(scs.slot_class_section_id, _edit_payload(volunteers=[vol2, vol1]), co)
+
+    unchanged_ids = set(
+        SlotClassSectionVolunteer.objects.filter(
+            slot_class_section_id=scs, is_active=True, removed=False
+        ).values_list("slot_class_section_volunteer_id", flat=True)
+    )
+    assert unchanged_ids == original_ids
 
 
 @pytest.mark.django_db
