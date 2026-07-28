@@ -301,7 +301,7 @@ _EXECUTE_MAP = {
 
 def _trigger_entities(
     entity_types: list[str],
-    triggered_by: User,
+    triggered_by: User | None,
     global_lock: bool,
     run_type: str = SyncRun.RUN_TYPE_MANUAL,
 ) -> dict[str, int]:
@@ -361,7 +361,7 @@ def _trigger_entities(
 
 
 def trigger_entity_sync(
-    entity_type: str, triggered_by: User, run_type: str = SyncRun.RUN_TYPE_MANUAL
+    entity_type: str, triggered_by: User | None, run_type: str = SyncRun.RUN_TYPE_MANUAL
 ) -> int:
     """
     Trigger sync for a single entity. Per-entity concurrent guard.
@@ -370,6 +370,9 @@ def trigger_entity_sync(
     SyncRun.RUN_TYPE_AUTO for scheduler-triggered calls (e.g. the n8n
     partner-sync endpoint) so the audit trail correctly distinguishes an
     automated schedule from a human clicking the dashboard button.
+
+    triggered_by is None for scheduler/system-triggered calls (n8n, cron) —
+    SyncRun.triggered_by is nullable at the model level for exactly this case.
     """
     if entity_type not in _ENTITY_SYNC_TYPE_MAP:
         from sessionops.exceptions import ValidationError

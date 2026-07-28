@@ -1,8 +1,14 @@
-# Secrets — never bake these into an image layer. COPY . . in the Dockerfile
-# would otherwise include any of these if present in the build context.
-.env
-.env.*
-!.env.development.example
+# NOTE: .env* files are intentionally NOT excluded here. sessionops/settings.py
+# requires a physical .env.{ENVIRONMENT} file to exist inside the container at
+# runtime (BASE_DIR / f".env.{ENVIRONMENT}") — it's not just relying on
+# docker-compose's `env_file:` process-env injection, it re-reads the file from
+# disk itself. Excluding .env.* here breaks every deployment (confirmed: staging
+# failed to boot with "Env file not found: /app/.env.staging" after this was
+# tried). The correct fix for "don't bake secrets into random dev environments'
+# images" is per-developer discipline (don't build from a directory with .env
+# files you don't want in that image) or a settings.py change to accept
+# injected env vars without requiring the physical file — not a blanket
+# .dockerignore exclusion, since this app's config loader genuinely needs it.
 
 # Version control / IDE
 .git
