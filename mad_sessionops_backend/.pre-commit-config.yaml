@@ -32,13 +32,62 @@ repos:
 
   - repo: local
     hooks:
+      # IMPORTANT: pre-commit always runs `entry` commands, and matches
+      # `files:` patterns, relative to the git repository ROOT
+      # (C:\MAD_WORKSPACE\mad_sessionops) — never relative to this config
+      # file's own directory (mad_sessionops_backend/), even when invoked via
+      # `cd mad_sessionops_backend && pre-commit run` (confirmed empirically
+      # 2026-07-29: a hook that just runs `pwd` prints the repo root). Every
+      # local hook below must therefore `cd mad_sessionops_backend` inside its
+      # own entry, and every `files:` pattern must include that prefix.
+      #
+      # check-migration-db-alias had neither of those before this fix — its
+      # `entry: python scripts/check_migration_db_alias.py` and
+      # `files: ^sessionops/migrations/.*\.py$` both silently assumed cwd was
+      # already mad_sessionops_backend/. Since that's never true when pre-commit
+      # actually runs it, the pattern never matched any real staged path
+      # (which is always `mad_sessionops_backend/sessionops/migrations/...`),
+      # so this safety check has been a permanent no-op locally — it only ever
+      # ran for real in CI (backend-ci.yml sets
+      # `defaults.run.working-directory: mad_sessionops_backend` for every step).
       - id: check-migration-db-alias
         name: Migration DB-alias check
         description: RunPython migrations must pin .using(schema_editor.connection.alias)
-        entry: python scripts/check_migration_db_alias.py
+        entry: bash -c 'cd mad_sessionops_backend && python scripts/check_migration_db_alias.py'
         language: system
         pass_filenames: false
-        files: ^sessionops/migrations/.*\.py$
+        files: ^mad_sessionops_backend/sessionops/migrations/.*\.py$
+
+      # mypy/pylint/bandit run via `uv run` (language: system) rather than
+      # pre-commit's own mirrored hook repos, so they use the exact same
+      # pinned versions from pyproject.toml/uv.lock that backend-ci.yml's
+      # `lint` job runs — no drift between what passes locally and what CI
+      # checks. Added 2026-07-29 after a mypy-only failure passed every local
+      # hook and only surfaced after push; these three were CI-only before.
+      - id: mypy
+        name: mypy
+        entry: bash -c 'cd mad_sessionops_backend && uv run mypy sessionops/'
+        language: system
+        pass_filenames: false
+        files: ^mad_sessionops_backend/sessionops/.*\.py$
+
+      - id: pylint
+        name: pylint
+        # PYTHONIOENCODING=utf-8: pylint's colored/box-drawing output crashes
+        # Python's default Windows console encoding (cp1252) with
+        # UnicodeEncodeError. CI runs on Ubuntu (UTF-8 by default) so this
+        # only ever surfaced locally on Windows.
+        entry: bash -c 'cd mad_sessionops_backend && PYTHONIOENCODING=utf-8 uv run pylint sessionops/'
+        language: system
+        pass_filenames: false
+        files: ^mad_sessionops_backend/sessionops/.*\.py$
+
+      - id: bandit
+        name: bandit
+        entry: bash -c 'cd mad_sessionops_backend && uv run bandit -r sessionops/ -c .bandit'
+        language: system
+        pass_filenames: false
+        files: ^mad_sessionops_backend/sessionops/.*\.py$
 
 default_language_version:
   python: python3.12

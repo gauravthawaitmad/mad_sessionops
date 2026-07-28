@@ -1,0 +1,6 @@
+# Normalize line endings to LF for all text files, regardless of the
+# committer's OS or local core.autocrlf setting. Without this, Windows
+# checkouts with core.autocrlf=true convert LF -> CRLF on checkout, which
+# pylint's unexpected-line-ending-format check (and potentially a CRLF
+# shebang breaking a shell script inside a Linux Docker container) can catch.
+* text=auto eol=lf

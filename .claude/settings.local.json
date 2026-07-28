@@ -154,7 +154,9 @@
       "Bash(grep -A 65 \"SF:components\\\\\\\\\\\\\\\\schools\\\\\\\\\\\\\\\\volunteers\\\\\\\\\\\\\\\\VolunteerListTab.tsx\" coverage/lcov.info)",
       "Bash(xargs grep -ilE \"idle|inactivity|logged out|session.?timeout|auto.?logout\")",
       "Bash(xargs grep -lE \"401|refresh\")",
-      "Bash(openssl rand *)"
+      "Bash(openssl rand *)",
+      "Bash(PYTHONIOENCODING=utf-8 uv run --project mad_sessionops_backend pre-commit run -c /tmp/real-pc.yaml pylint --files mad_sessionops_backend/sessionops/api/partner_sync_internal_api.py)",
+      "Bash(grep -m1 '\\\\\\\\r')"
     ]
   }
 }
