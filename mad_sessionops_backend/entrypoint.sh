@@ -36,11 +36,9 @@ PYEOF
 
     # Run Hasura sync only on staging and production.
     # Development uses local/test data — skip sync to avoid hitting real Hasura.
+    # User sync is no longer run here — it's handled by the n8n workflow instead.
     ENV="${ENVIRONMENT:-development}"
     if [ "$ENV" = "staging" ] || [ "$ENV" = "production" ]; then
-        echo ">>> [$ENV] Syncing users from Hasura..."
-        python manage.py sync_users
-
         echo ">>> [$ENV] Syncing partners from Hasura..."
         python manage.py sync_partners
 

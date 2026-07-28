@@ -1,0 +1,31 @@
+# Secrets — never bake these into an image layer. COPY . . in the Dockerfile
+# would otherwise include any of these if present in the build context.
+.env
+.env.*
+!.env.development.example
+
+# Version control / IDE
+.git
+.gitignore
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Local data / logs — not needed in the image, may contain sensitive output
+sessionops/logs/*.log*
+db.sqlite3
+secrets/
+data/

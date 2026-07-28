@@ -265,8 +265,15 @@ server {
         proxy_read_timeout 120s;
     }
 
-    # Django admin
-    location /admin/ {
+    # Django admin — moved to /django-admin/ (not /admin/) so the frontend's own
+    # Admin dashboard page (F-M4-4) can own /admin. Corrected 2026-07-28 — this
+    # block used to say `location /admin/`, which proxied straight to Django
+    # after that path stopped having any matching urlpattern there (see
+    # sessionops/urls.py's comment on the /admin → /django-admin move), causing
+    # Django's own 404 page instead of the frontend's dashboard. If the live
+    # nginx config on the deploy host still has the old `/admin/` block, that's
+    # the fix — update it to /django-admin/ as below.
+    location /django-admin/ {
         proxy_pass http://backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -279,7 +286,8 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
-    # Everything else → frontend
+    # Everything else → frontend, including /admin (the frontend's own sync
+    # admin dashboard page, not Django's admin — see note above)
     location / {
         proxy_pass http://frontend;
         proxy_set_header Host $host;
