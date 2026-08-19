@@ -4,6 +4,7 @@ URL configuration for mad_backend project.
 Following Dalgo backend best practices for URL routing.
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import include, path
@@ -29,11 +30,14 @@ urlpatterns = [
     # the frontend page). Proxy config must route /django-admin/ here instead.
     path("django-admin/", admin.site.urls),
     path("healthcheck", healthcheck),
-    path("sentry-debug/", trigger_error),
     path("prometheus/", include("django_prometheus.urls")),
     path("", api.urls),  # Authenticated API
     path("", public_api.urls),  # Public API without auth
 ]
+
+if settings.DEBUG:
+    # Only reachable locally — never registered in staging/production.
+    urlpatterns.append(path("sentry-debug/", trigger_error))
 
 # WebSocket URL patterns (for future use)
 ws_urlpatterns: list = [

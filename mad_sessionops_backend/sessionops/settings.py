@@ -12,6 +12,7 @@ Following Dalgo backend best practices:
 
 import logging
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -50,7 +51,7 @@ sentry_sdk.init(
     traces_sample_rate=float(os.getenv("SENTRY_TSR", "1.0")),
     profiles_sample_rate=float(os.getenv("SENTRY_PSR", "1.0")),
     enable_logs=os.getenv("SENTRY_ENABLE_LOGS", "True") == "True",
-    send_default_pii=os.getenv("SENTRY_SEND_DEFAULT_PII", "True") == "True",
+    send_default_pii=os.getenv("SENTRY_SEND_DEFAULT_PII", "False") == "True",
     environment=ENVIRONMENT,
 )
 
@@ -160,13 +161,11 @@ ASGI_APPLICATION = "sessionops.asgi.application"
 # =============================================================================
 DBSCHEMA = os.getenv("DBSCHEMA", "public")
 
-_DB_OPTIONS = {"options": f"-c search_path={DBSCHEMA},public"}
+_DB_OPTIONS = {"options": f"-c search_path={DBSCHEMA},public"}  # noqa: E231
 
 # Tests run as admin user because the app user lacks CREATEDB. The test DB is
 # destroyed after each run — no lasting privilege escalation.
-import sys as _sys
-
-_TESTING = any("pytest" in a for a in _sys.argv) or os.environ.get("PYTEST_CURRENT_TEST")
+_TESTING = any("pytest" in a for a in sys.argv) or os.environ.get("PYTEST_CURRENT_TEST")
 
 _conn_max_age_env = os.getenv("CONN_MAX_AGE")
 _CONN_MAX_AGE: int | None = int(_conn_max_age_env) if _conn_max_age_env else None
@@ -336,7 +335,7 @@ def print_startup_info():
     print(f"  Env File    : {env_file}")
     print("-" * 60)
     print(f"  Database    : {db['NAME']}")
-    print(f"  DB Host     : {db['HOST']}:{db['PORT']}")
+    print(f"  DB Host     : {db['HOST']}:{db['PORT']}")  # noqa: E231
     print(f"  DB User     : {db['USER']}")
     print("-" * 60)
     print("  API Docs    : http://localhost:8000/api/docs")
@@ -345,7 +344,5 @@ def print_startup_info():
 
 
 # Only print on actual server start (not during migrations, shell, etc.)
-import sys
-
 if "runserver" in sys.argv or "uvicorn" in sys.argv[0] if sys.argv else False:
     print_startup_info()

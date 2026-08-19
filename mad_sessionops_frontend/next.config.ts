@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- this file is loaded as CommonJS (module.exports below), not compiled as an ES module
+const { withSentryConfig } = require("@sentry/nextjs");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
@@ -24,4 +27,12 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withSentryConfig(nextConfig, {
+  // Which Sentry org/project source maps upload to — set once DSN/project exist.
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // Build-time only; never exposed to the client. See Dockerfile for how this
+  // is passed in as a BuildKit secret rather than a persisted build ARG.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+});
