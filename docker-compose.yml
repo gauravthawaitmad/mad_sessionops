@@ -72,6 +72,11 @@ services:
         NEXT_PUBLIC_ENABLE_MOCK_API: "false"
         NEXT_PUBLIC_LOG_LEVEL: debug
         NEXT_PUBLIC_API_TIMEOUT: "30000"
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        SENTRY_ORG: ${SENTRY_ORG:-}
+        SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+      secrets:
+        - sentry_auth_token
     restart: unless-stopped
     networks:
       - sessionops-net
@@ -87,3 +92,10 @@ networks:
 volumes:
   redis-data:
   staticfiles:
+
+secrets:
+  # Only needed for source-map upload during the frontend build (see Dockerfile).
+  # Set SENTRY_AUTH_TOKEN in the host's root .env file; blank is fine locally
+  # (source-map upload is just skipped).
+  sentry_auth_token:
+    environment: SENTRY_AUTH_TOKEN

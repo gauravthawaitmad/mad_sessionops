@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { Box, Button, Typography, Container } from "@mui/material";
 import { ErrorOutline } from "@mui/icons-material";
 
@@ -42,8 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
     // Log error
     console.error("Error Boundary caught:", error, errorInfo);
 
-    // TODO: Report to error tracking service
-    // Sentry.captureException(error, { extra: errorInfo });
+    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
   }
 
   handleReset = () => {
@@ -79,7 +79,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </Typography>
 
             <Typography variant="body1" color="text.secondary">
-              We're sorry for the inconvenience. Please try refreshing the page.
+              We&apos;re sorry for the inconvenience. Please try refreshing the page.
             </Typography>
 
             {process.env.NODE_ENV === "development" && this.state.error && (

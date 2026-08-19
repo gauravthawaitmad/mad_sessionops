@@ -2,6 +2,10 @@
 # On EC2, set BACKEND_ENV_FILE in the root .env file:
 #   echo "BACKEND_ENV_FILE=./mad_sessionops_backend/.env.staging" >> .env
 #   echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=xxx" >> .env
+#   echo "NEXT_PUBLIC_SENTRY_DSN=xxx" >> .env
+#   echo "SENTRY_ORG=make-a-difference-dk" >> .env       # optional, only for source-map upload
+#   echo "SENTRY_PROJECT=sessionops-frontend" >> .env    # optional, only for source-map upload
+#   echo "SENTRY_AUTH_TOKEN=xxx" >> .env                 # optional, only for source-map upload
 #
 # Usage (on EC2):
 #   docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
@@ -20,3 +24,4 @@ services:
         NEXT_PUBLIC_ENABLE_MOCK_API: "false"
         NEXT_PUBLIC_LOG_LEVEL: info
         NEXT_PUBLIC_API_TIMEOUT: "30000"
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
