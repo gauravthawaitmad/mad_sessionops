@@ -12,9 +12,15 @@ from sessionops.models import (
     SchoolVolunteer,
     SlotClassSection,
     SlotClassSectionVolunteer,
+    User,
 )
+from sessionops.services.academic_year.queries import get_or_create_school_academic_year
 from sessionops.services.realtime_sync.flows import FlowResult
 from sessionops.services.realtime_sync.utils import apply_common_fields
+
+# Realtime sync runs with no human actor. New SchoolVolunteer / SchoolAcademicYear
+# rows created here are attributed to this designated admin user.
+SYSTEM_ADMIN_USER_ID = 485003
 
 # ── School resolver ────────────────────────────────────────────────────────────
 
@@ -153,7 +159,8 @@ def _ensure_school_volunteer(user, school_id: int, now, cascaded_changes: list) 
     Create a SchoolVolunteer row if user is not already active at school_id.
     Skips silently when the row already exists — preserving an existing assignment
     is the correct behaviour when the new worknode resolves to the same school.
-    school_academic_year_id and created_by are nullable after migration 0023.
+    Binds the new row to school_id's currently-active SchoolAcademicYear, attributed
+    to SYSTEM_ADMIN_USER_ID since this flow has no human actor.
     """
     already_active = SchoolVolunteer.objects.filter(
         school_id=school_id,
@@ -162,9 +169,13 @@ def _ensure_school_volunteer(user, school_id: int, now, cascaded_changes: list) 
         removed=False,
     ).exists()
     if not already_active:
+        admin_user = User.objects.get(user_id=SYSTEM_ADMIN_USER_ID)
+        say = get_or_create_school_academic_year(school_id, admin_user)
         SchoolVolunteer.objects.create(
             school_id=school_id,
+            school_academic_year_id=say,
             volunteer_id=user,
+            created_by=admin_user,
         )
         cascaded_changes.append(
             {

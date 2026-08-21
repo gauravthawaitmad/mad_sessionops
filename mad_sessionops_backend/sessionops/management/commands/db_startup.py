@@ -1,5 +1,5 @@
 """
-Startup DB check: migrate, seed catalog, and print a readable status summary.
+Startup DB check: migrate and print a readable status summary.
 Called from entrypoint.sh before the server starts.
 Run locally: just dbcheck
 """
@@ -19,27 +19,22 @@ def _ok(msg):
     return f"  [OK]   {msg}"
 
 
-def _warn(msg):
-    return f"  [WARN] {msg}"
-
-
 def _fail(msg):
     return f"  [FAIL] {msg}"
 
 
 class Command(BaseCommand):
-    help = "Run migrations + seed catalog, print structured startup summary."
+    help = "Run migrations, print structured startup summary."
 
     def handle(self, *args, **options):
         self._print_header()
         self._print_db_info()
 
         migration_ok = self._run_migrations()
-        seed_ok = self._run_seed()
 
-        self._print_footer(migration_ok and seed_ok)
+        self._print_footer(migration_ok)
 
-        if not (migration_ok and seed_ok):
+        if not migration_ok:
             sys.exit(1)
 
     # ── Header ─────────────────────────────────────────────────────────────────
@@ -99,92 +94,6 @@ class Command(BaseCommand):
         except Exception as exc:
             self.stdout.write(_fail(f"Migration error: {exc}"))
             return False
-
-    # ── Seed ───────────────────────────────────────────────────────────────────
-
-    def _run_seed(self) -> bool:
-        self.stdout.write(f"{SEP}")
-        self.stdout.write("  CATALOG SEED")
-        self.stdout.write(f"{SEP}")
-
-        try:
-            self._seed_academic_year()
-            self._seed_program_and_classes()
-            self._seed_subjects()
-            self.stdout.write("")
-            return True
-        except Exception as exc:
-            self.stdout.write(_fail(f"Seed error: {exc}"))
-            return False
-
-    def _seed_academic_year(self):
-        from sessionops.models import AcademicYear, User
-
-        if AcademicYear.objects.filter(label="2026-2027", removed=False).exists():
-            self.stdout.write(_ok("AcademicYear 2026-2027  (already seeded)"))
-            return
-
-        system_user = (
-            User.objects.filter(user_login="system@makeadiff.in").first() or User.objects.first()
-        )
-        if system_user is None:
-            self.stdout.write(
-                _warn("AcademicYear -- no users in DB, skipping. Run user setup first.")
-            )
-            return
-
-        AcademicYear.objects.create(label="2026-2027", is_active=True, created_by=system_user)
-        self.stdout.write(_ok("AcademicYear 2026-2027  (created)"))
-
-    def _seed_program_and_classes(self):
-        from sessionops.models import Class, Program
-
-        program, created = Program.objects.get_or_create(
-            program_name="Foundation Program",
-            defaults={"is_active": True},
-        )
-        label = "(created)" if created else "(already seeded)"
-        self.stdout.write(_ok(f"Program: Foundation Program  {label}"))
-
-        catalog = [("5th", "5"), ("6th", "6"), ("7th", "7"), ("8th", "8")]
-        created_count = 0
-        for class_name, class_code in catalog:
-            _, c = Class.objects.get_or_create(
-                class_code=class_code,
-                defaults={"class_name": class_name, "program_id": program, "is_active": True},
-            )
-            if c:
-                created_count += 1
-
-        existing = len(catalog) - created_count
-        if created_count:
-            self.stdout.write(
-                _ok(f"Classes 5th-8th  ({created_count} created, {existing} already existed)")
-            )
-        else:
-            self.stdout.write(_ok("Classes 5th-8th  (already seeded)"))
-
-    def _seed_subjects(self):
-        from sessionops.models import Program, Subject
-
-        program, _ = Program.objects.get_or_create(program_name="Foundation Program")
-        catalog = ["Foundation Day 1", "Foundation Day 2"]
-        created_count = 0
-        for name in catalog:
-            _, c = Subject.objects.get_or_create(
-                subject_name=name,
-                defaults={"program_id": program},
-            )
-            if c:
-                created_count += 1
-
-        existing = len(catalog) - created_count
-        if created_count:
-            self.stdout.write(
-                _ok(f"Subjects  ({created_count} created, {existing} already existed)")
-            )
-        else:
-            self.stdout.write(_ok("Subjects  (already seeded)"))
 
     # ── Footer ─────────────────────────────────────────────────────────────────
 

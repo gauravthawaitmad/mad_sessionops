@@ -5,7 +5,7 @@ Tests for F-M6-2: Bucket CRUD with slug normalization.
 import pytest
 
 from sessionops.exceptions import ConflictError, NotFound, ValidationError
-from sessionops.models import ClassSection, User
+from sessionops.models import AcademicYear, ClassSection, User
 from sessionops.services.sections.slug import next_default_display_name, normalize_section_slug
 from sessionops.services.structure.sections import (
     create_bucket,
@@ -24,6 +24,20 @@ def _make_user(login: str = "admin@test.com", role: str = "Function Lead") -> Us
         user_role=role,
         is_active=True,
     )
+
+
+@pytest.fixture(autouse=True)
+def _active_academic_year(db):
+    """create_bucket() now binds every new bucket to the active AcademicYear
+    (see get_or_create_school_academic_year) — needed for every test in this file."""
+    if not AcademicYear.objects.filter(is_active=True, removed=False).exists():
+        creator = User.objects.create(
+            user_login="ay_fixture@test.com",
+            user_display_name="AY Fixture",
+            email="ay_fixture@test.com",
+            is_active=True,
+        )
+        AcademicYear.objects.create(label="2026-2027", is_active=True, created_by=creator)
 
 
 # ── normalize_section_slug ───────────────────────────────────────────────────────

@@ -37,6 +37,20 @@ from sessionops.services.structure.sections import create_bucket
 _UID = iter(range(9_800_000, 9_900_000))
 
 
+@pytest.fixture(autouse=True)
+def _active_academic_year(db):
+    """create_bucket() now binds every new bucket to the active AcademicYear
+    (see get_or_create_school_academic_year) — needed for every test in this file."""
+    if not AcademicYear.objects.filter(is_active=True, removed=False).exists():
+        creator = User.objects.create(
+            user_login="ay_fixture@test.com",
+            user_display_name="AY Fixture",
+            email="ay_fixture@test.com",
+            is_active=True,
+        )
+        AcademicYear.objects.create(label="2026-2027", is_active=True, created_by=creator)
+
+
 def _make_user(role: str = "Function Lead") -> User:
     uid = next(_UID)
     return User.objects.create(
