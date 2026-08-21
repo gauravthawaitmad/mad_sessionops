@@ -8,7 +8,7 @@ from sessionops.models import (
     Partner,
     PartnerWorknode,
     SchoolVolunteer,
-    Slot,
+    SlotClassSection,
     SlotClassSectionVolunteer,
     Subject,
     User,
@@ -58,12 +58,16 @@ def check_r_bucket_capacity(class_section_id: int, volunteer_count: int) -> None
         )
 
 
-def resolve_volunteer_list(volunteer_ids: list[int], school_id: int, slot: Slot) -> list[User]:
+def resolve_volunteer_list(volunteer_ids: list[int], school_id: int) -> list[User]:
     """Resolve, validate (worknode match, R4, R6), and return User objects for volunteer_ids.
 
-    R3 (uniqueness) is already enforced by the schema validator before this runs.
-    Used by create_slot_class only — edit_slot_class's _replace_volunteers has its
-    own resolution loop because its R6 check must exclude the slot-class being edited.
+    R4 runs before R6: if the conflict is a different-school assignment, R4's
+    message names the school (more actionable for the CO) — checking R6's
+    system-wide "any active assignment" first would mask that behind its
+    generic message. R3 (uniqueness) is already enforced by the schema
+    validator before this runs. Used by create_slot_class only —
+    edit_slot_class's _replace_volunteers has its own resolution loop because
+    its R6 check must exclude the slot-class being edited.
     """
     volunteers = []
     for vid in volunteer_ids:
@@ -72,8 +76,8 @@ def resolve_volunteer_list(volunteer_ids: list[int], school_id: int, slot: Slot)
         except User.DoesNotExist:
             raise NotFound(f"Volunteer {vid} not found.")
         validate_volunteer_worknode_match(school_id, vol)
-        check_r6_volunteer_in_slot(slot, vol)
         check_r4_volunteer(vol, school_id)
+        check_r6_volunteer_single_assignment(vol)
         volunteers.append(vol)
     return volunteers
 
@@ -95,18 +99,29 @@ def validate_volunteer_worknode_match(school_id: int, volunteer: User) -> None:
         )
 
 
-def check_r6_volunteer_in_slot(slot: Slot, volunteer: User) -> None:
-    """Raise ConflictError (R6) if volunteer is already in another slot-class in this slot."""
-    if SlotClassSectionVolunteer.objects.filter(
+def check_r6_volunteer_single_assignment(
+    volunteer: User, exclude_scs: SlotClassSection | None = None
+) -> None:
+    """Raise ConflictError (R6) if volunteer already has an active slot-class assignment.
+
+    Scope: system-wide, not just "in this slot" — combined with R4 (one school per
+    volunteer), a volunteer holds at most one active slot-class commitment at a time.
+    `exclude_scs` lets edit_slot_class's volunteer-swap flow re-check a volunteer
+    against everything except the slot-class currently being edited.
+    """
+    qs = SlotClassSectionVolunteer.objects.filter(
         volunteer_id=volunteer,
         is_active=True,
         removed=False,
-        slot_class_section_id__slot_id=slot.slot_id,
         slot_class_section_id__is_active=True,
         slot_class_section_id__removed=False,
-    ).exists():
+    )
+    if exclude_scs is not None:
+        qs = qs.exclude(slot_class_section_id=exclude_scs)
+    if qs.exists():
         raise ConflictError(
-            f"{volunteer.user_display_name} is already assigned to another class " "in this slot."
+            f"{volunteer.user_display_name} is already assigned to another class. "
+            "Remove them from it first."
         )
 
 

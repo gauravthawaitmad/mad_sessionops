@@ -717,7 +717,6 @@ export function SlotGridView({
         schoolId={schoolId}
         slotId={editTarget?.slot.slotId ?? 0}
         slotClass={editTarget?.scs ?? null}
-        existingSlotClasses={editTarget ? (bySlot.get(editTarget.slot.slotId) ?? []) : []}
         onClose={() => setEditTarget(null)}
         onUpdated={handleUpdated}
       />

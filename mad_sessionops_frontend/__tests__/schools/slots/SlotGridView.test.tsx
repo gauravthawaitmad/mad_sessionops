@@ -78,6 +78,7 @@ function makeVolunteer(id: number, name: string): VolunteerCard {
     city: null,
     state: null,
     activeSlotClassCount: 0,
+    activeSlotClassSectionId: null,
   };
 }
 

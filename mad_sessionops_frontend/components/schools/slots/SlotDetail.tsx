@@ -395,7 +395,6 @@ export function SlotDetail({ slot, schoolId, canModify, onSlotClassCountChange }
         schoolId={schoolId}
         slotId={slot.slotId}
         slotClass={editTarget}
-        existingSlotClasses={slotClasses}
         onClose={() => setEditTarget(null)}
         onUpdated={handleUpdated}
       />

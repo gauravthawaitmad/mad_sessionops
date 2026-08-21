@@ -179,8 +179,13 @@ def _make_volunteer(school_id: int, user: User) -> User:
     return vol
 
 
-def _make_slot(school_id: int, user: User) -> Slot:
-    """Create a simple Monday 9-10 slot at the school."""
+def _make_slot(
+    school_id: int,
+    user: User,
+    start: tuple[int, int] = (9, 0),
+    end: tuple[int, int] = (10, 0),
+) -> Slot:
+    """Create a simple Monday slot at the school (default 9-10)."""
     year, _ = AcademicYear.objects.get_or_create(
         label="2026-2027",
         defaults={"is_active": True, "created_by": user},
@@ -193,10 +198,10 @@ def _make_slot(school_id: int, user: User) -> Slot:
     return Slot.objects.create(
         school_id=school_id,
         school_academic_year_id=say,
-        slot_name="Monday 09:00",
+        slot_name=f"Monday {start[0]:02d}:{start[1]:02d}",
         day_of_week="monday",
-        start_time=time(9, 0),
-        end_time=time(10, 0),
+        start_time=time(*start),
+        end_time=time(*end),
         recurring=True,
         is_active=True,
         created_by=user,
@@ -449,6 +454,36 @@ def test_create_slot_class_volunteer_already_in_slot_returns_409():
 
     with pytest.raises(ConflictError) as exc_info:
         create_slot_class(slot.slot_id, _payload(section_b, vol1), co)
+
+    assert "already assigned" in exc_info.value.message.lower()
+
+
+@pytest.mark.django_db
+def test_create_slot_class_volunteer_already_in_different_slot_returns_409():
+    """
+    R6 (revised): a volunteer can have at most one active slot-class assignment
+    system-wide, not just within the same slot. Slot A and Slot B are different
+    (non-overlapping, per R7) time windows at the same school — the old R6 scoping
+    would have allowed this; the revised rule blocks it.
+    """
+    admin = _make_admin()
+    co = _make_co(0)
+    school = _make_school(co)
+    sid = school.partner_id
+    _make_active_year(admin)
+    vol1 = _make_volunteer(sid, co)
+    slot_a = _make_slot(sid, co, start=(9, 0), end=(10, 0))
+    slot_b = _make_slot(sid, co, start=(11, 0), end=(12, 0))
+
+    section_a = _make_section(sid, co, class_code="5")
+    section_b = _make_section(sid, co, class_code="6")
+    _add_children(section_a, 1, co)
+    _add_children(section_b, 1, co)
+
+    create_slot_class(slot_a.slot_id, _payload(section_a, vol1), co)
+
+    with pytest.raises(ConflictError) as exc_info:
+        create_slot_class(slot_b.slot_id, _payload(section_b, vol1), co)
 
     assert "already assigned" in exc_info.value.message.lower()
 

@@ -36,6 +36,7 @@ function makeVolunteer(id: number, name: string): VolunteerCard {
     city: null,
     state: null,
     activeSlotClassCount: 0,
+    activeSlotClassSectionId: null,
   };
 }
 
@@ -95,7 +96,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={null}
-        existingSlotClasses={[]}
         onClose={noop}
         onUpdated={noop}
       />
@@ -111,7 +111,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS]}
         onClose={noop}
         onUpdated={noop}
       />
@@ -131,7 +130,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={noDisplayName}
-        existingSlotClasses={[noDisplayName]}
         onClose={noop}
         onUpdated={noop}
       />
@@ -147,7 +145,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS]}
         onClose={noop}
         onUpdated={noop}
       />
@@ -160,13 +157,26 @@ describe("EditSlotClassModal", () => {
   });
 
   it("test_busy_volunteers_from_other_slot_classes_are_excluded_not_self", async () => {
+    // R6 (revised): busy-ness now comes from the volunteer's own
+    // activeSlotClassSectionId (school-wide), not from sibling slot-classes
+    // in this slot. Asha holds THIS slot-class (99) — not busy against
+    // herself. Rahul holds a DIFFERENT slot-class (100) — busy.
+    vi.mocked(fetchVolunteers).mockResolvedValue({
+      status: "ok",
+      volunteers: [
+        { ...VOLUNTEERS[0], activeSlotClassSectionId: SLOT_CLASS.slotClassSectionId },
+        { ...VOLUNTEERS[1], activeSlotClassSectionId: null },
+        { ...VOLUNTEERS[2], activeSlotClassSectionId: null },
+        { ...VOLUNTEERS[3], activeSlotClassSectionId: OTHER_SLOT_CLASS.slotClassSectionId },
+      ],
+    });
+
     render(
       <EditSlotClassModal
         open={true}
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS, OTHER_SLOT_CLASS]}
         onClose={noop}
         onUpdated={noop}
       />
@@ -182,6 +192,9 @@ describe("EditSlotClassModal", () => {
 
     const kiranOption = screen.getByRole("option", { name: /Kiran Rao/ });
     expect(kiranOption).not.toHaveAttribute("aria-disabled", "true");
+
+    const ashaOption = screen.getAllByRole("option", { name: /Asha Kumar/ })[0];
+    expect(ashaOption).not.toHaveAttribute("aria-disabled", "true");
   });
 
   it("test_over_capacity_shows_banner_and_disables_submit", async () => {
@@ -191,7 +204,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS]}
         onClose={noop}
         onUpdated={noop}
       />
@@ -219,7 +231,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS]}
         onClose={onClose}
         onUpdated={onUpdated}
       />
@@ -251,7 +262,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS]}
         onClose={onClose}
         onUpdated={onUpdated}
       />
@@ -274,7 +284,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS]}
         onClose={noop}
         onUpdated={noop}
       />
@@ -298,7 +307,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS]}
         onClose={onClose}
         onUpdated={noop}
       />
@@ -318,7 +326,6 @@ describe("EditSlotClassModal", () => {
         schoolId={580}
         slotId={1}
         slotClass={SLOT_CLASS}
-        existingSlotClasses={[SLOT_CLASS]}
         onClose={onClose}
         onUpdated={noop}
       />
