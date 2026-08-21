@@ -20,9 +20,11 @@ Two API instances:
 """
 
 import os
+from typing import Literal
 
 from django.http import JsonResponse
 
+import sentry_sdk
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
 from ninja.responses import Response
@@ -109,8 +111,47 @@ api = NinjaAPI(
 # =============================================================================
 # EXCEPTION HANDLERS
 # =============================================================================
-# These handlers convert exceptions to consistent JSON responses
+# These handlers convert exceptions to consistent JSON responses.
+#
+# Ninja catches exceptions here before they reach Django's own exception
+# machinery, so Sentry's DjangoIntegration never sees them on its own —
+# each handler must explicitly report to Sentry, tagged with the HTTP
+# status so issues can be filtered/segregated in the Sentry UI
+# (e.g. `http_status:401`, or `level:error` for real 500s).
 # =============================================================================
+
+
+def _client_ip(request) -> str:
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if forwarded_for:
+        return str(forwarded_for).split(",")[0].strip()
+    return str(request.META.get("REMOTE_ADDR", "unknown"))
+
+
+SentryLevel = Literal["fatal", "critical", "error", "warning", "info", "debug"]
+
+
+def _report_to_sentry(
+    request, exc: Exception, status_code: int, level: SentryLevel = "warning"
+) -> None:
+    """
+    Report an exception with request context regardless of SENTRY_SEND_DEFAULT_PII —
+    that setting only controls the DjangoIntegration's own automatic capture, not
+    tags we set explicitly here, so caller IP/UA are always available for triage.
+    """
+    with sentry_sdk.new_scope() as scope:
+        scope.set_tag("http_status", status_code)
+        scope.set_tag("client_ip", _client_ip(request))
+        scope.set_tag("path", request.path)
+        scope.set_context(
+            "request_meta",
+            {
+                "user_agent": request.META.get("HTTP_USER_AGENT", "unknown"),
+                "has_authorization_header": bool(request.headers.get("Authorization")),
+            },
+        )
+        scope.set_level(level)
+        sentry_sdk.capture_exception(exc)
 
 
 @api.exception_handler(ValidationError)
@@ -121,6 +162,7 @@ def ninja_validation_error_handler(request, exc):
     These are raised when request payload doesn't match the expected schema.
     Returns 422 Unprocessable Entity with error details.
     """
+    _report_to_sentry(request, exc, 422)
     return Response({"detail": exc.errors}, status=422)
 
 
@@ -132,11 +174,13 @@ def pydantic_validation_error_handler(request, exc: PydanticValidationError):
     These are raised during schema validation (both request and response).
     Returns 400 Bad Request with error details.
     """
+    _report_to_sentry(request, exc, 400)
     return Response({"detail": exc.errors()}, status=400)
 
 
 @api.exception_handler(AuthenticationError)
 def auth_error_handler(request, exc: AuthenticationError):
+    _report_to_sentry(request, exc, 401)
     return JsonResponse(
         {"error": {"code": "auth_failed", "message": "Authentication failed"}},
         status=401,
@@ -145,6 +189,7 @@ def auth_error_handler(request, exc: AuthenticationError):
 
 @api.exception_handler(PermissionDenied)
 def permission_denied_handler(request, exc: PermissionDenied):
+    _report_to_sentry(request, exc, 403)
     return JsonResponse(
         {"error": {"code": "permission_denied", "message": "Permission denied"}},
         status=403,
@@ -153,6 +198,7 @@ def permission_denied_handler(request, exc: PermissionDenied):
 
 @api.exception_handler(BusinessValidationError)
 def business_validation_error_handler(request, exc: BusinessValidationError):
+    _report_to_sentry(request, exc, 400)
     return JsonResponse(
         {"error": {"code": "validation_error", "message": exc.message}},
         status=400,
@@ -161,6 +207,7 @@ def business_validation_error_handler(request, exc: BusinessValidationError):
 
 @api.exception_handler(NotFound)
 def not_found_handler(request, exc: NotFound):
+    _report_to_sentry(request, exc, 404)
     return JsonResponse(
         {"error": {"code": "not_found", "message": exc.message}},
         status=404,
@@ -169,6 +216,7 @@ def not_found_handler(request, exc: NotFound):
 
 @api.exception_handler(ConflictError)
 def conflict_error_handler(request, exc: ConflictError):
+    _report_to_sentry(request, exc, 409)
     return JsonResponse(
         {"error": {"code": "conflict", "message": exc.message}},
         status=409,
@@ -178,6 +226,7 @@ def conflict_error_handler(request, exc: ConflictError):
 @api.exception_handler(Exception)
 def ninja_default_error_handler(request, exc: Exception):
     """Catch-all — prevents raw tracebacks leaking to clients."""
+    _report_to_sentry(request, exc, 500, level="error")
     return Response({"detail": str(exc)}, status=500)
 
 

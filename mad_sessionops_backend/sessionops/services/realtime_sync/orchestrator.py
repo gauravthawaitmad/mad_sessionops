@@ -78,10 +78,19 @@ def process_sync_event(
             handle_update,
         )
 
-        if classified_event == "insert" or diff.is_reactivation:
-            result = handle_insert(local_user, payload, diff, user_id)
-        elif classified_event == "deactivate":
+        # Role-based deactivate intent takes priority over is_reactivation (a purely
+        # local-state signal) — otherwise an Alumni/None-role event for a currently
+        # inactive local user would be misrouted to handle_insert and reactivated.
+        #
+        # "not diff.user_exists_locally" catches events whose upstream event_type
+        # says "update" (the row always existed in the source system) even though
+        # we never created it locally — e.g. a user was skipped on first INSERT for
+        # having a disallowed role, then later became allowed via an UPDATE-shaped
+        # event. Without this, handle_update would run against local_user=None.
+        if classified_event == "deactivate":
             result = handle_deactivate(local_user, payload, diff, user_id)
+        elif classified_event == "insert" or diff.is_reactivation or not diff.user_exists_locally:
+            result = handle_insert(local_user, payload, diff, user_id)
         else:
             result = handle_update(local_user, payload, diff, user_id)
 

@@ -275,3 +275,106 @@ def test_reactivation_sets_is_active_true(client):
     assert resp.status_code == 200
     assert resp.json()["action_taken"] == "user_created"
     assert User.objects.get(user_id=uid).is_active is True
+
+
+# ── Skipped-role-then-later-allowed (dispatch bug regression) ──────────────────
+
+
+@pytest.mark.django_db
+def test_update_event_creates_user_previously_skipped_for_disallowed_role(client):
+    """
+    A user first arrives with a disallowed role via an INSERT event and is
+    correctly skipped (no local row created). When their role later becomes
+    allowed, the upstream event is an UPDATE (the row always existed in the
+    source system) — but locally the user still doesn't exist. The dispatcher
+    must route this to handle_insert based on local existence, not the
+    event_type label, or it crashes trying to update a None user.
+    """
+    admin = _admin()
+    uid = next(_UID)
+    login = f"skip{uid}@test.com"
+
+    skipped_resp = client.post(
+        _url(uid),
+        data=json.dumps(
+            {
+                "user_login": login,
+                "user_email": login,
+                "user_display_name": "Not Yet Allowed",
+                "user_role": "Intern",
+                "event_type": "insert",
+            }
+        ),
+        content_type="application/json",
+        **_auth(admin),
+    )
+    assert skipped_resp.status_code == 200
+    assert skipped_resp.json()["status"] == "skipped_role_not_allowed"
+    assert not User.objects.filter(user_id=uid).exists()
+
+    promoted_resp = client.post(
+        _url(uid),
+        data=json.dumps(
+            {
+                "user_login": login,
+                "user_email": login,
+                "user_display_name": "Now Allowed",
+                "user_role": "Youth",
+                "event_type": "update",
+            }
+        ),
+        content_type="application/json",
+        **_auth(admin),
+    )
+    assert promoted_resp.status_code == 200
+    assert promoted_resp.json()["status"] == "success"
+    assert promoted_resp.json()["action_taken"] == "user_created"
+
+    user = User.objects.get(user_id=uid)
+    assert user.user_display_name == "Now Allowed"
+    assert user.user_role == "Youth"
+    assert user.is_active is True
+
+
+# ── Deactivate priority over is_reactivation (dispatch ordering regression) ────
+
+
+@pytest.mark.django_db
+def test_deactivate_role_does_not_reactivate_already_inactive_user(client):
+    """
+    A user already soft-deleted locally (is_active=False) receives another
+    event whose role is Alumni (deactivate-classified). is_reactivation is
+    True purely because the local row happens to be inactive right now —
+    deactivate intent must still win, not get misrouted to handle_insert's
+    reactivation branch.
+    """
+    admin = _admin()
+    uid = next(_UID)
+    login = f"deact{uid}@test.com"
+    User.objects.create(
+        user_id=uid,
+        user_login=login,
+        user_display_name="Former Volunteer",
+        email=login,
+        user_role="Youth",
+        is_active=False,
+    )
+
+    resp = client.post(
+        _url(uid),
+        data=json.dumps(
+            {
+                "user_login": login,
+                "user_email": login,
+                "user_display_name": "Former Volunteer",
+                "user_role": "Alumni",
+                "event_type": "update",
+            }
+        ),
+        content_type="application/json",
+        **_auth(admin),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "skipped_no_change"
+
+    assert User.objects.get(user_id=uid).is_active is False

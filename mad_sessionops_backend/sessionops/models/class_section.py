@@ -21,6 +21,17 @@ class ClassSection(models.Model):
     )
     section_name = models.CharField(max_length=100)  # "5th - A", or a normalized bucket slug (M6)
     section_display_name = models.CharField(max_length=255, null=True, blank=True)
+    # Sole source of truth for "which AY is this section in" — school_class_id no longer
+    # suffices since buckets (school_class_id=None) have no chain to SchoolAcademicYear.
+    # Nullable for now to allow the warehouse backfill of pre-existing rows; every write
+    # path (create_bucket, add_section_to_class) sets it unconditionally on new rows.
+    school_academic_year_id = models.ForeignKey(
+        "SchoolAcademicYear",
+        on_delete=models.PROTECT,
+        db_column="school_academic_year_id",
+        null=True,
+        blank=True,
+    )
     is_active = models.BooleanField(default=True)
     removed = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)

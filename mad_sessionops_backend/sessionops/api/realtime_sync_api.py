@@ -2,8 +2,15 @@
 Internal realtime sync endpoint.
 
 Security model:
-  - auth=None disables the default CustomJwtAuthMiddleware for this route.
-  - _resolve_auth manually validates either an admin JWT or a service token.
+  - auth=_resolve_auth runs as a Ninja auth callback, which Ninja evaluates
+    before it parses/validates the request body. This matters: if auth were
+    checked inside the view body instead, a malformed/unauthenticated probe
+    would trip Pydantic's 422 validation error (leaking the payload schema)
+    before auth ever ran. Routing it through `auth=` means bad/missing
+    credentials always get a clean 401 first.
+  - _resolve_auth validates either an admin JWT or a service token, and sets
+    request.auth to the authenticated User (admin JWT) or SERVICE_PRINCIPAL
+    (service token) for the view to read.
   - The endpoint URL is a non-guessable path set via INTERNAL_SYNC_ENDPOINT_PATH env var.
   - Service token value is never logged.
 """
@@ -22,32 +29,23 @@ _log = logging.getLogger(__name__)
 
 router = Router(tags=["internal-sync"])
 
-
-@router.post("/{user_id}", auth=None)
-def sync_user_endpoint(request, user_id: int, payload: RealtimeSyncUserPayload):
-    triggered_by = _resolve_auth(request)
-    log = process_sync_event(user_id, payload, triggered_by=triggered_by)
-    return {
-        "log_id": log.realtime_sync_log_id,
-        "status": log.status,
-        "action_taken": log.action_taken,
-        "field_changes": log.field_changes,
-        "cascaded_changes": log.cascaded_changes,
-        "deferred_operations": log.deferred_operations,
-    }
+# Truthy sentinel for request.auth when a service token (not an admin user) authenticated.
+SERVICE_PRINCIPAL = "service"
 
 
-def _resolve_auth(request) -> User | None:
+def _resolve_auth(request) -> User | str:
     """
-    Returns the authenticated User for admin JWT callers, or None for service token callers.
-    Raises AuthenticationError if neither auth method passes.
+    Ninja auth callback: returns the authenticated User for admin JWT callers,
+    or SERVICE_PRINCIPAL for service token callers. Raising AuthenticationError
+    here is handled by Ninja's on_exception dispatch the same as if it were
+    raised from inside a view, so the existing 401 response/format is unchanged.
     """
     auth_header = request.headers.get("Authorization", "")
 
     # Service token path (M8b automated callers)
     if validate_service_token(auth_header):
         _log.info("realtime_sync: service token auth succeeded")
-        return None
+        return SERVICE_PRINCIPAL
 
     # Admin JWT path (M8a manual admin trigger)
     if auth_header.startswith("Bearer "):
@@ -69,3 +67,17 @@ def _resolve_auth(request) -> User | None:
             pass
 
     raise AuthenticationError("Valid admin JWT or service token required")
+
+
+@router.post("/{user_id}", auth=_resolve_auth)
+def sync_user_endpoint(request, user_id: int, payload: RealtimeSyncUserPayload):
+    triggered_by = request.auth if isinstance(request.auth, User) else None
+    log = process_sync_event(user_id, payload, triggered_by=triggered_by)
+    return {
+        "log_id": log.realtime_sync_log_id,
+        "status": log.status,
+        "action_taken": log.action_taken,
+        "field_changes": log.field_changes,
+        "cascaded_changes": log.cascaded_changes,
+        "deferred_operations": log.deferred_operations,
+    }

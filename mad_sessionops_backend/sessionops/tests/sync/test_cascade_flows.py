@@ -31,6 +31,7 @@ from sessionops.models import (
 )
 from sessionops.services.realtime_sync.diff import UserDiff
 from sessionops.services.realtime_sync.flows.cascade import (
+    SYSTEM_ADMIN_USER_ID,
     _resolve_school_for_worknode,
     cascade_worknode_added,
     cascade_worknode_removed,
@@ -44,6 +45,24 @@ from sessionops.services.realtime_sync.schema import RealtimeSyncUserPayload
 _UID = iter(range(8_000_000, 8_200_000))
 _SID = iter(range(30_000, 40_000))
 _WID = iter(range(50_000, 60_000))
+
+
+@pytest.fixture(autouse=True)
+def _system_admin_user(db):
+    """_ensure_school_volunteer() attributes new SchoolVolunteer/SchoolAcademicYear
+    rows to SYSTEM_ADMIN_USER_ID — must exist for every test in this file."""
+    admin, _ = User.objects.get_or_create(
+        user_id=SYSTEM_ADMIN_USER_ID,
+        defaults={
+            "user_login": "system_admin@cascade.test",
+            "user_display_name": "System Admin",
+            "email": "system_admin@cascade.test",
+            "user_role": "Project Lead",
+            "is_active": True,
+        },
+    )
+    if not AcademicYear.objects.filter(is_active=True, removed=False).exists():
+        AcademicYear.objects.create(label="2026-2027", is_active=True, created_by=admin)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

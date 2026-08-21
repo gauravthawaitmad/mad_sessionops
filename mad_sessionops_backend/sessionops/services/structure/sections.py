@@ -5,6 +5,7 @@ from django.utils import timezone
 from sessionops.exceptions import ConflictError, NotFound
 from sessionops.models import ChildClassSection, ClassSection, SchoolClass, SlotClassSection
 from sessionops.models.class_section import SECTION_CODES
+from sessionops.services.academic_year.queries import get_or_create_school_academic_year
 from sessionops.services.sections.slug import next_default_display_name, normalize_section_slug
 
 
@@ -61,6 +62,10 @@ def add_section_to_class(
             school_id=school_id,
             section_code=section_code,
             section_name=section_name,
+            # Denormalized from the parent SchoolClass at creation time — never
+            # re-derived later, so a section can't drift onto a different AY than
+            # the class it was created under.
+            school_academic_year_id_id=sc.school_academic_year_id_id,
             created_by=user,
         )
     except IntegrityError:
@@ -124,6 +129,8 @@ def create_bucket(school_id: int, display_name: str | None, user) -> ClassSectio
     if ClassSection.objects.filter(school_id=school_id, section_name=slug, removed=False).exists():
         raise ConflictError(f'A bucket named "{name}" already exists in this school.')
 
+    say = get_or_create_school_academic_year(school_id, user)
+
     try:
         bucket = ClassSection.objects.create(
             school_id=school_id,
@@ -131,6 +138,7 @@ def create_bucket(school_id: int, display_name: str | None, user) -> ClassSectio
             section_display_name=name,
             school_class_id=None,
             section_code=None,
+            school_academic_year_id=say,
             created_by=user,
         )
     except IntegrityError:

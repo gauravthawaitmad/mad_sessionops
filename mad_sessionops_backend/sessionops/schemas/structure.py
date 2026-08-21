@@ -69,7 +69,13 @@ class SectionOut(Schema):
     class_section_id: int
     section_code: str
     section_name: str
+    school_academic_year_id: int | None
     active_children_count: int
+
+    @staticmethod
+    def resolve_school_academic_year_id(obj) -> int | None:
+        say_id = obj.school_academic_year_id_id
+        return int(say_id) if say_id is not None else None
 
     @staticmethod
     def resolve_active_children_count(obj) -> int:
@@ -108,6 +114,7 @@ class BucketOut(Schema):
     section_display_name: str | None
     school_id: int
     school_class_id: int | None  # legacy-row backward-compat only; never set by bucket writes
+    school_academic_year_id: int | None
     active_children_count: int
     is_active: bool
 
@@ -115,6 +122,11 @@ class BucketOut(Schema):
     def resolve_school_class_id(obj) -> int | None:
         school_class_id = obj.school_class_id_id
         return int(school_class_id) if school_class_id is not None else None
+
+    @staticmethod
+    def resolve_school_academic_year_id(obj) -> int | None:
+        say_id = obj.school_academic_year_id_id
+        return int(say_id) if say_id is not None else None
 
     @staticmethod
     def resolve_active_children_count(obj) -> int:
