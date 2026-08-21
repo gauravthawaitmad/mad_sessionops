@@ -61,9 +61,9 @@ def create_slot_class(slot_id: int, payload, user: User) -> SlotClassSection:
     # 6. R-bucket: volunteer count vs active children in the bucket
     check_r_bucket_capacity(section.class_section_id, len(payload.volunteer_ids))
 
-    # 7. Resolve + validate each volunteer (worknode match, R4, R6). R3 (uniqueness)
+    # 7. Resolve + validate each volunteer (worknode match, R6, R4). R3 (uniqueness)
     # is already enforced by the schema validator.
-    volunteers = resolve_volunteer_list(payload.volunteer_ids, slot.school_id, slot)
+    volunteers = resolve_volunteer_list(payload.volunteer_ids, slot.school_id)
 
     # 8. R5: section not already in this slot
     if SlotClassSection.objects.filter(

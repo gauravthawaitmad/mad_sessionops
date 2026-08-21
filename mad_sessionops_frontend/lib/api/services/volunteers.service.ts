@@ -12,6 +12,8 @@ export interface VolunteerCard {
   city: string | null;
   state: string | null;
   activeSlotClassCount: number;
+  /** The slot-class this volunteer currently holds, if any (R6: at most one, school-wide). */
+  activeSlotClassSectionId: number | null;
 }
 
 export type VolunteerListStatus = "ok" | "no_worknode" | "no_volunteers";
@@ -34,6 +36,7 @@ interface RawVolunteerCard {
   city: string | null;
   state: string | null;
   active_slot_class_count: number;
+  active_slot_class_section_id: number | null;
 }
 
 interface RawVolunteerListResponse {
@@ -55,6 +58,7 @@ function mapVolunteer(raw: RawVolunteerCard): VolunteerCard {
     city: raw.city,
     state: raw.state,
     activeSlotClassCount: raw.active_slot_class_count,
+    activeSlotClassSectionId: raw.active_slot_class_section_id,
   };
 }
 

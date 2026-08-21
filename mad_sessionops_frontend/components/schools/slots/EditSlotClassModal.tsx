@@ -87,7 +87,6 @@ interface EditSlotClassModalProps {
   schoolId: number;
   slotId: number;
   slotClass: SlotClassItem | null;
-  existingSlotClasses: SlotClassItem[];
   onClose: () => void;
   onUpdated: (scs: SlotClassItem) => void;
 }
@@ -99,7 +98,6 @@ export function EditSlotClassModal({
   schoolId,
   slotId,
   slotClass,
-  existingSlotClasses,
   onClose,
   onUpdated,
 }: EditSlotClassModalProps) {
@@ -126,14 +124,6 @@ export function EditSlotClassModal({
   const bucketName = slotClass.sectionDisplayName ?? slotClass.sectionName;
   const overCapacity = volunteerIds.length > slotClass.activeChildrenCount;
   const maxAllowed = Math.min(slotClass.activeChildrenCount, MAX_CAP);
-
-  // Volunteers busy in OTHER slot-classes for this slot — excludes this
-  // slot-class's own current volunteers so editing doesn't self-block.
-  const busyVolIds = new Set(
-    existingSlotClasses
-      .filter((s) => s.slotClassSectionId !== slotClass.slotClassSectionId)
-      .flatMap((s) => s.volunteers.map((v) => v.userId))
-  );
 
   function handleClose() {
     if (isSubmitting) return;
@@ -205,7 +195,7 @@ export function EditSlotClassModal({
                 value={field.value}
                 onChange={field.onChange}
                 maxSelectable={MAX_CAP}
-                busyVolunteerIds={busyVolIds}
+                excludeSlotClassSectionId={slotClass.slotClassSectionId}
               />
             )}
           />

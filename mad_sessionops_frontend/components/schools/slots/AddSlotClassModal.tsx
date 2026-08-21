@@ -480,7 +480,6 @@ export function AddSlotClassModal({
   }, [open, schoolId, reset, prefillBucket]);
 
   const usedBucketIds = new Set(existingSlotClasses.map((s) => s.classSectionId));
-  const usedVolIds = new Set(existingSlotClasses.flatMap((s) => s.volunteers.map((v) => v.userId)));
 
   // R2 hard cap (5) is enforced by the picker itself via maxSelectable=MAX_CAP.
   // R-bucket (volunteers <= bucket's active children) is enforced only via the
@@ -680,7 +679,6 @@ export function AddSlotClassModal({
                         value={field.value}
                         onChange={field.onChange}
                         maxSelectable={MAX_CAP}
-                        busyVolunteerIds={usedVolIds}
                       />
                     )}
                   />

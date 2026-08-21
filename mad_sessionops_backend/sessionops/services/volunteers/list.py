@@ -45,12 +45,19 @@ def list_school_volunteers(school_id: int, requesting_user) -> dict:
 
     serialized = []
     for v in volunteers:
-        active_slot_class_count = SlotClassSectionVolunteer.objects.filter(
-            volunteer_id=v,
-            is_active=True,
-            removed=False,
-            slot_class_section_id__slot_id__school_id=school_id,
-        ).count()
+        # active_slot_class_section_id: which slot-class (if any) this volunteer
+        # currently holds. Since R6 (business_rules.md) limits a volunteer to at
+        # most one active slot-class assignment system-wide, this is normally
+        # 0-or-1 rows; .values_list(...)[0] picks whichever the DB returns first
+        # if legacy/manually-inserted data ever has more than one.
+        active_scs_ids = list(
+            SlotClassSectionVolunteer.objects.filter(
+                volunteer_id=v,
+                is_active=True,
+                removed=False,
+                slot_class_section_id__slot_id__school_id=school_id,
+            ).values_list("slot_class_section_id_id", flat=True)
+        )
         serialized.append(
             {
                 "user_id": v.user_id,
@@ -61,7 +68,8 @@ def list_school_volunteers(school_id: int, requesting_user) -> dict:
                 "contact": v.contact,
                 "city": v.city,
                 "state": v.state,
-                "active_slot_class_count": active_slot_class_count,
+                "active_slot_class_count": len(active_scs_ids),
+                "active_slot_class_section_id": active_scs_ids[0] if active_scs_ids else None,
             }
         )
 

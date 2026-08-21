@@ -249,13 +249,25 @@ def test_delete_slot_class_reconciles_school_volunteer():
 
 
 @pytest.mark.django_db
-def test_delete_slot_class_keeps_school_volunteer_if_other_classes_remain():
-    """If the volunteer still has another slot-class at the school, SchoolVolunteer stays."""
+def test_delete_slot_class_does_not_affect_other_volunteers_school_volunteer_row():
+    """
+    Deleting one volunteer's only slot-class reconciles only their own
+    SchoolVolunteer row — a different volunteer's row at the same school,
+    from an unrelated slot-class, is untouched.
+
+    (This scenario previously used a single volunteer holding two active
+    slot-classes across different slots to prove SchoolVolunteer "stays if
+    other classes remain" — that's no longer constructible under the revised
+    R6: a volunteer can hold at most one active slot-class assignment
+    system-wide, so a second create_slot_class() call for the same volunteer
+    now raises ConflictError instead of succeeding.)
+    """
     admin = _make_admin()
     co = _make_co()
     school = _make_school(co)
     sid = school.partner_id
     vol1 = _make_volunteer(sid, co)
+    vol2 = _make_volunteer(sid, co)
 
     section_a = _make_section(sid, co, class_code="5")
     section_b = _make_section(sid, co, class_code="6")
@@ -283,14 +295,64 @@ def test_delete_slot_class_keeps_school_volunteer_if_other_classes_remain():
     )
 
     scs_a = create_slot_class(slot_a.slot_id, _payload(section_a, vol1), co)
-    create_slot_class(slot_b.slot_id, _payload(section_b, vol1), co)
+    create_slot_class(slot_b.slot_id, _payload(section_b, vol2), co)
 
     delete_slot_class(scs_a.slot_class_section_id, co)
 
-    # Volunteer still has scs_b → SchoolVolunteer stays
-    assert SchoolVolunteer.objects.filter(
+    # vol1's only assignment is gone → their SchoolVolunteer row is reconciled away
+    assert not SchoolVolunteer.objects.filter(
         school_id=sid, volunteer_id=vol1, is_active=True, removed=False
     ).exists()
+    # vol2's unrelated assignment/SchoolVolunteer row is untouched
+    assert SchoolVolunteer.objects.filter(
+        school_id=sid, volunteer_id=vol2, is_active=True, removed=False
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_create_slot_class_same_volunteer_across_slots_returns_409():
+    """
+    R6 (revised): a volunteer already active in one slot-class cannot be added
+    to a second slot-class in a DIFFERENT slot at the same school — the two
+    slots don't overlap in time (R7 guarantees that), but the volunteer is
+    still limited to one active assignment system-wide.
+    """
+    admin = _make_admin()
+    co = _make_co()
+    school = _make_school(co)
+    sid = school.partner_id
+    vol1 = _make_volunteer(sid, co)
+
+    section_a = _make_section(sid, co, class_code="5")
+    section_b = _make_section(sid, co, class_code="6")
+    _add_children(section_a, 1, co)
+    _add_children(section_b, 1, co)
+
+    slot_a = _make_slot(sid, co)
+    year, _ = AcademicYear.objects.get_or_create(
+        label="2026-2027", defaults={"is_active": True, "created_by": admin}
+    )
+    say, _ = SchoolAcademicYear.objects.get_or_create(
+        school_id=sid, academic_year_id=year, defaults={"created_by": co}
+    )
+    slot_b = Slot.objects.create(
+        school_id=sid,
+        school_academic_year_id=say,
+        slot_name="Tuesday 09:00",
+        day_of_week="tuesday",
+        start_time=time(9, 0),
+        end_time=time(10, 0),
+        recurring=True,
+        is_active=True,
+        created_by=co,
+    )
+
+    create_slot_class(slot_a.slot_id, _payload(section_a, vol1), co)
+
+    with pytest.raises(ConflictError) as exc_info:
+        create_slot_class(slot_b.slot_id, _payload(section_b, vol1), co)
+
+    assert "already assigned" in exc_info.value.message.lower()
 
 
 @pytest.mark.django_db
@@ -338,6 +400,46 @@ def test_edit_slot_class_volunteer_removes_school_volunteer_when_last():
     assert SchoolVolunteer.objects.filter(
         school_id=school.partner_id, volunteer_id=vol2, is_active=True, removed=False
     ).exists()
+
+
+@pytest.mark.django_db
+def test_edit_slot_class_volunteer_swap_into_busy_volunteer_returns_409():
+    """
+    R6 (revised): swapping in a volunteer who already has an active slot-class
+    in a DIFFERENT slot at the same school must be blocked, same as create.
+    """
+    admin = _make_admin()
+    co, school, section, vol1, slot = _setup()
+    sid = school.partner_id
+    scs = create_slot_class(slot.slot_id, _payload(section, vol1), co)
+
+    busy_vol = _make_volunteer(sid, co)
+    other_section = _make_section(sid, co, class_code="6")
+    _add_children(other_section, 1, co)
+
+    year, _ = AcademicYear.objects.get_or_create(
+        label="2026-2027", defaults={"is_active": True, "created_by": admin}
+    )
+    say, _ = SchoolAcademicYear.objects.get_or_create(
+        school_id=sid, academic_year_id=year, defaults={"created_by": co}
+    )
+    other_slot = Slot.objects.create(
+        school_id=sid,
+        school_academic_year_id=say,
+        slot_name="Tuesday 09:00",
+        day_of_week="tuesday",
+        start_time=time(9, 0),
+        end_time=time(10, 0),
+        recurring=True,
+        is_active=True,
+        created_by=co,
+    )
+    create_slot_class(other_slot.slot_id, _payload(other_section, busy_vol), co)
+
+    with pytest.raises(ConflictError) as exc_info:
+        edit_slot_class(scs.slot_class_section_id, _edit_payload(volunteers=[busy_vol]), co)
+
+    assert "already assigned" in exc_info.value.message.lower()
 
 
 @pytest.mark.django_db

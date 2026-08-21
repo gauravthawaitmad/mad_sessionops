@@ -1,3 +1,9 @@
 # Root-level gitignore
 # Protects docker compose env substitution file from accidental commit
 .env
+
+# Defensive: node_modules should only ever exist inside mad_sessionops_frontend/
+# (which has its own .gitignore), but a stray root-level one can appear if a
+# tool like `npx` is accidentally invoked from the repo root instead of that
+# subdirectory. This rule ensures such an accident is never stageable.
+node_modules/

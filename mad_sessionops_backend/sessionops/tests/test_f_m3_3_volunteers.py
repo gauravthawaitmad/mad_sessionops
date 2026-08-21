@@ -367,6 +367,7 @@ class TestActiveSlotClassCount:
 
         assert result["status"] == "ok"
         assert result["volunteers"][0]["active_slot_class_count"] == 1
+        assert result["volunteers"][0]["active_slot_class_section_id"] == scs.slot_class_section_id
 
     def test_active_slot_class_count_zero_when_no_assignments(self):
         """Count is 0 when the volunteer has no slot-class assignments."""
@@ -383,6 +384,7 @@ class TestActiveSlotClassCount:
 
         assert result["status"] == "ok"
         assert result["volunteers"][0]["active_slot_class_count"] == 0
+        assert result["volunteers"][0]["active_slot_class_section_id"] is None
 
     def test_active_slot_class_count_ignores_other_school_assignments(self):
         """Assignments at a different school do not inflate the count."""

@@ -119,6 +119,7 @@ describe("VolunteerListTab", () => {
             city: "Pune",
             state: "MH",
             activeSlotClassCount: 2,
+            activeSlotClassSectionId: null,
           },
           {
             userId: 2,
@@ -130,6 +131,7 @@ describe("VolunteerListTab", () => {
             city: null,
             state: null,
             activeSlotClassCount: 0,
+            activeSlotClassSectionId: null,
           },
         ],
       })
@@ -159,6 +161,7 @@ describe("VolunteerListTab", () => {
             city: "Pune",
             state: "MH",
             activeSlotClassCount: 2,
+            activeSlotClassSectionId: null,
           },
         ],
       })

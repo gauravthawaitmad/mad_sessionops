@@ -72,6 +72,7 @@ function makeVolunteer(id: number, name: string): VolunteerCard {
     city: null,
     state: null,
     activeSlotClassCount: 0,
+    activeSlotClassSectionId: null,
   };
 }
 
@@ -171,6 +172,44 @@ describe("AddSlotClassModal — F-M6-8", () => {
 
     await waitFor(() => expect(screen.getByText("Group 3")).toBeInTheDocument());
     expect(screen.getByText("In slot")).toBeInTheDocument();
+  });
+
+  it("test_volunteer_busy_in_another_slot_at_school_is_disabled", async () => {
+    // R6 (revised): busy-ness is school-wide, not scoped to this slot — Rahul
+    // already holds a slot-class in a completely different slot (id 200) and
+    // must still show as disabled here.
+    vi.mocked(fetchVolunteers).mockResolvedValue({
+      status: "ok",
+      volunteers: [
+        VOLUNTEERS[0],
+        VOLUNTEERS[1],
+        VOLUNTEERS[2],
+        { ...VOLUNTEERS[3], activeSlotClassSectionId: 200 },
+      ],
+    });
+
+    render(
+      <AddSlotClassModal
+        open={true}
+        schoolId={580}
+        slot={SLOT}
+        existingSlotClasses={[]}
+        onClose={noop}
+        onAdded={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Group 1")).toBeInTheDocument());
+
+    const input = screen.getByPlaceholderText("Select volunteers");
+    await userEvent.click(input);
+
+    const rahulOption = await screen.findByRole("option", { name: /Rahul Mehta/ });
+    expect(rahulOption).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("In slot")).toBeInTheDocument();
+
+    const kiranOption = screen.getByRole("option", { name: /Kiran Rao/ });
+    expect(kiranOption).not.toHaveAttribute("aria-disabled", "true");
   });
 
   it("test_submit_disabled_until_bucket_and_volunteer_selected", async () => {

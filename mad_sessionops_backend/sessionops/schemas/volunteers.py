@@ -11,6 +11,7 @@ class VolunteerCardSchema(Schema):
     city: str | None = None
     state: str | None = None
     active_slot_class_count: int
+    active_slot_class_section_id: int | None = None
 
 
 class VolunteerListResponseSchema(Schema):

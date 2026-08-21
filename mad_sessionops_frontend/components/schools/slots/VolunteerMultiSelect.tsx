@@ -21,8 +21,11 @@ interface VolunteerMultiSelectProps {
   onChange: (ids: number[]) => void;
   maxSelectable: number;
   disabled?: boolean;
-  /** Volunteers already assigned to another slot-class in this slot (R6 UX hint). */
-  busyVolunteerIds?: Set<number>;
+  /**
+   * When editing an existing slot-class, its own id — so the volunteer(s)
+   * already on it aren't flagged as "busy" against themselves.
+   */
+  excludeSlotClassSectionId?: number | null;
 }
 
 export function VolunteerMultiSelect({
@@ -31,13 +34,12 @@ export function VolunteerMultiSelect({
   onChange,
   maxSelectable,
   disabled = false,
-  busyVolunteerIds = new Set(),
+  excludeSlotClassSectionId = null,
 }: VolunteerMultiSelectProps) {
   const [volunteers, setVolunteers] = useState<VolunteerCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
     fetchVolunteers(schoolId)
       .then((res) => setVolunteers(res.volunteers))
       .catch(() => setVolunteers([]))
@@ -46,6 +48,19 @@ export function VolunteerMultiSelect({
 
   const selected = volunteers.filter((v) => value.includes(v.userId));
   const atMax = value.length >= maxSelectable;
+  // R6: a volunteer holds at most one active slot-class assignment school-wide.
+  // activeSlotClassSectionId comes straight from the volunteers list already
+  // fetched above, so this needs no extra data — just excludes the slot-class
+  // currently being edited (if any) from counting as "busy".
+  const busyVolunteerIds = new Set(
+    volunteers
+      .filter(
+        (v) =>
+          v.activeSlotClassSectionId !== null &&
+          v.activeSlotClassSectionId !== excludeSlotClassSectionId
+      )
+      .map((v) => v.userId)
+  );
 
   return (
     <Autocomplete
@@ -75,7 +90,7 @@ export function VolunteerMultiSelect({
             >
               <Typography sx={{ fontSize: "13px" }}>{option.userDisplayName}</Typography>
               {busy && (
-                <Tooltip title="Already assigned to another class in this slot">
+                <Tooltip title="Already assigned to another class — remove them there first">
                   <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#EF4444" }}>
                     In slot
                   </Typography>

@@ -76,13 +76,15 @@ At most 2 may be assigned; `Vol1` is required, `Vol2` is optional.
 
 ---
 
-### R6 — Same volunteer cannot be in two slot-classes in the same slot
+### R6 — Same volunteer cannot have more than one active slot-class assignment
 
-**Rule:** If a slot has multiple slot-classes running in parallel, a single volunteer can be in at most one of them.
+**Rule:** A volunteer can be assigned to at most one slot-class at any time — system-wide, not just within the same slot.
 
-**Rationale:** A volunteer teaches one section at a time.
+**Rationale:** A volunteer teaches one section at a time. Combined with R4 (one school per volunteer), MAD's volunteering model is one committed weekly teaching slot per volunteer.
 
-**Enforcement:** Service layer, checked against both `Vol1` and `Vol2` fields on all slot-classes in the same slot.
+**Revised 2026-08-21:** originally scoped to "not two sections in the same slot" only. Broadened after discovering the narrower scope let a volunteer be scheduled into two different (non-overlapping, per R7) slots at the same school — allowed by the old rule's wording, but not an intended real-world commitment pattern.
+
+**Enforcement:** Service layer on slot-class create/edit (`check_r6_volunteer_single_assignment` in `services/slot_classes/helpers.py`). Query: does the volunteer have any other active `SlotClassSectionVolunteer` row at all (any slot, any school)? If yes, raise `ConflictError`.
 
 ## Scheduling integrity
 

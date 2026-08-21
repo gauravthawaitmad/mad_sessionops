@@ -7,7 +7,6 @@ from sessionops.models import (
     ChildSubject,
     ClassSection,
     ClassSectionSubject,
-    Slot,
     SlotClassSection,
     SlotClassSectionVolunteer,
     User,
@@ -16,6 +15,7 @@ from sessionops.services.academic_year.queries import get_or_create_school_acade
 from sessionops.services.rbac.scope import can_modify_school, get_school_or_403
 from sessionops.services.slot_classes.helpers import (
     check_r4_volunteer,
+    check_r6_volunteer_single_assignment,
     check_r_bucket_capacity,
     ensure_school_volunteer,
     get_foundation_subject,
@@ -50,7 +50,6 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
         raise PermissionDenied()
 
     school_id = scs.slot_id.school_id
-    slot: Slot = scs.slot_id
     now = timezone.now()
 
     # ── Determine what is changing ────────────────────────────────────────────
@@ -154,7 +153,7 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
 
         # Re-create volunteers (reuse new list if provided, else carry over the old list)
         if new_volunteer_ids is not None:
-            _replace_volunteers(scs, new_volunteer_ids, slot, school_id, say, user, now)
+            _replace_volunteers(scs, new_volunteer_ids, school_id, say, user)
         else:
             for vol_id in old_vol_ids:
                 try:
@@ -192,7 +191,7 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
             slot_class_section_id=scs, is_active=True, removed=False
         ).update(is_active=False, removed=True, deleted_at=now, updated_at=now)
 
-        _replace_volunteers(scs, new_volunteer_ids, slot, school_id, say, user, now)
+        _replace_volunteers(scs, new_volunteer_ids, school_id, say, user)
 
         # Reconcile removed volunteers
         staying = set(new_volunteer_ids)
@@ -209,11 +208,9 @@ def edit_slot_class(scs_id: int, payload, user: User) -> SlotClassSection:
 def _replace_volunteers(
     scs: SlotClassSection,
     vol_ids: list[int],
-    slot: Slot,
     school_id: int,
     say,
     user: User,
-    now,
 ) -> None:
     """Validate and create new SCSV rows + ensure SchoolVolunteer.
 
@@ -226,25 +223,13 @@ def _replace_volunteers(
         except User.DoesNotExist:
             raise NotFound(f"Volunteer {vid} not found.")
         validate_volunteer_worknode_match(school_id, vol)
-        # R6: exclude the scs itself from the in-slot check
-        if (
-            SlotClassSectionVolunteer.objects.filter(
-                volunteer_id=vol,
-                is_active=True,
-                removed=False,
-                slot_class_section_id__slot_id=slot.slot_id,
-                slot_class_section_id__is_active=True,
-                slot_class_section_id__removed=False,
-            )
-            .exclude(slot_class_section_id=scs)
-            .exists()
-        ):
-            from sessionops.exceptions import ConflictError
-
-            raise ConflictError(
-                f"{vol.user_display_name} is already assigned to another class in this slot."
-            )
+        # R4 before R6 — see resolve_volunteer_list's docstring for why the order
+        # matters (R4's message names the school; R6 alone would mask it).
         check_r4_volunteer(vol, school_id)
+        # exclude the scs itself — its own old rows may not be soft-deleted yet
+        # depending on call order, but the volunteer being re-added to the same
+        # slot-class they're already on isn't a real conflict.
+        check_r6_volunteer_single_assignment(vol, exclude_scs=scs)
         volunteers.append(vol)
 
     for vol in volunteers:
