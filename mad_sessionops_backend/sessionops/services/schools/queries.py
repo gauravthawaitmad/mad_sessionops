@@ -12,6 +12,7 @@ from sessionops.models import (
     User,
 )
 from sessionops.services.academic_year.queries import get_active_academic_year
+from sessionops.services.auth.role_helpers import parse_user_roles
 
 
 def get_active_academic_year_label() -> str | None:
@@ -111,3 +112,28 @@ def get_active_volunteers_count(partner_ids: list[int]) -> int:
         .distinct()
     )
     return User.objects.filter(worknode_id__in=worknode_ids, is_active=True).distinct().count()
+
+
+def get_chos_for_school(school_id: int) -> list[User]:
+    """
+    Active Users with the CHO role whose worknode_id maps to this school via
+    PartnerWorknode — same worknode-matching pattern as CHO scope resolution
+    (rbac/scope.py) and the Volunteers tab (services/volunteers/list.py). CHOs
+    have platform access like a CO, but a chapter can have more than one, so
+    this returns a list rather than a single name like Partner.co_name.
+
+    user_role is a comma-separated multi-role string (see role_helpers), so the
+    role check is done in Python via parse_user_roles rather than an exact-match
+    filter, matching how CHO scope itself is classified in rbac/scope.py.
+    """
+    worknode_ids = list(
+        PartnerWorknode.objects.filter(partner_id=str(school_id))
+        .values_list("worknode_id", flat=True)
+        .distinct()
+    )
+    if not worknode_ids:
+        return []
+    candidates = User.objects.filter(worknode_id__in=worknode_ids, is_active=True).order_by(
+        "user_display_name"
+    )
+    return [u for u in candidates if "CHO" in parse_user_roles(u.user_role)]

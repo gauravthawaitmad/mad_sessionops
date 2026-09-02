@@ -18,6 +18,7 @@ from sessionops.models import (
     User,
 )
 from sessionops.schemas.children import ChildEnrollIn
+from sessionops.services.structure.queries import assert_class_not_blocked_for_assignment
 
 FOUNDATION_PROGRAM_ID = 1
 MAX_CHILDREN_PER_SECTION = 5
@@ -36,6 +37,10 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
             )
         except SchoolClass.DoesNotExist:
             raise NotFound(f"School class {payload.school_class_id} not found.")
+
+        assert_class_not_blocked_for_assignment(
+            school_class.class_id.class_code, school_class.class_id.class_name
+        )
 
         # 2. If a bucket is given, lock + validate + capacity check (R1). Bucket
         # assignment is optional at enrollment (M6 decision #9).

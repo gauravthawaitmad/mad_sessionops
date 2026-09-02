@@ -37,6 +37,11 @@ class SchoolListResponseSchema(Schema):
     scope_warning: Optional[ScopeWarningSchema] = None
 
 
+class ChoOut(Schema):
+    user_id: int
+    user_display_name: str
+
+
 class SchoolDetailSchema(Schema):
     partner_id: int
     partner_name: str
@@ -57,9 +62,11 @@ class SchoolDetailSchema(Schema):
     mou_url: Optional[str] = None
     co_id: Optional[int] = None
     co_name: Optional[str] = None
+    chos: list[ChoOut] = []
     synced_at: Optional[datetime] = None
     configuration_status: str = "awaiting_setup"
     children_count: int = 0
+    confirmed_child_count: Optional[int] = None
     classes_count: int = 0
     volunteers_count: int = 0
     assignments_count: int = 0

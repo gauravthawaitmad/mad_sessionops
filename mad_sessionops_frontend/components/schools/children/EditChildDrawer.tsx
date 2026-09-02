@@ -18,7 +18,11 @@ import { X, ArrowLeftRight } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { fetchSchoolClasses, type SchoolClassItem } from "@/lib/api/services/structure.service";
+import {
+  fetchSchoolClasses,
+  filterAssignableClasses,
+  type SchoolClassItem,
+} from "@/lib/api/services/structure.service";
 import { fetchBuckets, type BucketItem } from "@/lib/api/services/buckets.service";
 import {
   updateChild,
@@ -438,10 +442,20 @@ export function EditChildDrawer({
   useEffect(() => {
     setClassesLoading(true);
     fetchSchoolClasses(schoolId)
-      .then(setClasses)
+      .then((cs) => {
+        const assignable = filterAssignableClasses(cs);
+        // Keep the child's own current class visible even if it's blocked for
+        // NEW assignment (e.g. class 8 reached via legacy progression) — this
+        // is an edit of an existing child, not a fresh assignment into it.
+        const current = cs.find((c) => c.schoolClassId === originalClassId);
+        if (current && !assignable.some((c) => c.schoolClassId === originalClassId)) {
+          assignable.push(current);
+        }
+        setClasses(assignable);
+      })
       .catch(() => toast.error("Could not load classes"))
       .finally(() => setClassesLoading(false));
-  }, [schoolId]);
+  }, [schoolId, originalClassId]);
 
   // Load buckets once on mount — independent of class selection (buckets are class-agnostic)
   useEffect(() => {

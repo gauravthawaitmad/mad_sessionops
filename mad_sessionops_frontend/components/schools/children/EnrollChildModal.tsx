@@ -17,7 +17,11 @@ import { X } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { fetchSchoolClasses, type SchoolClassItem } from "@/lib/api/services/structure.service";
+import {
+  fetchSchoolClasses,
+  filterAssignableClasses,
+  type SchoolClassItem,
+} from "@/lib/api/services/structure.service";
 import { fetchBuckets, type BucketItem } from "@/lib/api/services/buckets.service";
 import { enrollChild, type EnrollChildInput } from "@/lib/api/services/children.service";
 import toast from "react-hot-toast";
@@ -424,7 +428,7 @@ export function EnrollChildModal({ open, schoolId, onClose, onSuccess }: EnrollC
     if (!open) return;
     setClassesLoading(true);
     fetchSchoolClasses(schoolId)
-      .then(setClasses)
+      .then((cs) => setClasses(filterAssignableClasses(cs)))
       .catch(() => toast.error("Could not load classes"))
       .finally(() => setClassesLoading(false));
   }, [open, schoolId]);

@@ -25,6 +25,7 @@ from sessionops.models import (
     SchoolAcademicYear,
     SchoolClass,
     Slot,
+    Subject,
     User,
 )
 from sessionops.services.slot_classes.create import create_slot_class
@@ -38,7 +39,14 @@ _WID = iter(range(70_000, 79_999))
 
 
 @pytest.fixture(autouse=True)
-def _reset_foundation_subject_cache():
+def _reset_foundation_subject_cache(db):
+    """Also ensures the "Foundation" Subject row exists — see
+    test_create_slot_class.py's identical fixture for why (migration 0027 no
+    longer seeds it)."""
+    program, _ = Program.objects.get_or_create(
+        program_name="Foundation Program", defaults={"is_active": True}
+    )
+    Subject.objects.get_or_create(subject_name="Foundation", defaults={"program_id": program})
     slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
     yield
     slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None

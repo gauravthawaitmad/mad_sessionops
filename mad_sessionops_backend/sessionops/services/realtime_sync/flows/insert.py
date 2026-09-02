@@ -7,6 +7,24 @@ from sessionops.services.realtime_sync.schema import RealtimeSyncUserPayload
 from sessionops.services.realtime_sync.utils import apply_common_fields
 
 
+def _finish(user: User, payload: RealtimeSyncUserPayload, diff, now) -> FlowResult:
+    """
+    Common fields are already applied/staged on `user` (and it has a pk). Delegate
+    the worknode_id assignment to the cascade flows so a worknode_id present at
+    insert/reactivation time creates SchoolVolunteer etc. exactly like an update
+    would — otherwise a user can end up with worknode_id stamped on the row and no
+    backing SchoolVolunteer until some later event happens to change worknode_id
+    again.
+    """
+    if diff.worknode_action != "none":
+        from sessionops.services.realtime_sync.flows.cascade import handle_worknode_change
+
+        return handle_worknode_change(user, payload, diff, now)
+
+    user.save()
+    return FlowResult(status="success", action_taken="user_created")
+
+
 def handle_insert(
     local_user: User | None,
     payload: RealtimeSyncUserPayload,
@@ -16,7 +34,6 @@ def handle_insert(
     """
     INSERT flow: create a new User row, OR reactivate an existing soft-deleted row.
 
-    worknode_id is set from the payload (no cascade — F-M8a-4 handles cascade).
     Runs inside the orchestrator's transaction.atomic() context.
     """
     now = timezone.now()
@@ -30,21 +47,24 @@ def handle_insert(
         # request — then re-fetch and apply the payload as an update instead of
         # surfacing a raw 500 for what is, from the caller's perspective, a
         # successful sync of that user.
+        #
+        # The row must exist (have a pk) before _finish's cascade can create
+        # SchoolVolunteer rows that FK to it, so worknode_id is intentionally left
+        # unset here — _finish applies it via cascade.
         user = User(user_id=user_id)
         apply_common_fields(user, payload, now)
-        user.worknode_id = payload.worknode_id
         try:
             with transaction.atomic():
                 user.save()
         except IntegrityError:
             user = User.objects.select_for_update().get(user_id=user_id)
             apply_common_fields(user, payload, now)
-            user.worknode_id = payload.worknode_id
             user.save()
     else:
         # Re-activation: existing row with is_active=False
-        apply_common_fields(local_user, payload, now)
-        local_user.worknode_id = payload.worknode_id
-        local_user.save()
+        user = local_user
+        user.deleted_at = None
+        user.deleted_by = None
+        apply_common_fields(user, payload, now)
 
-    return FlowResult(status="success", action_taken="user_created")
+    return _finish(user, payload, diff, now)

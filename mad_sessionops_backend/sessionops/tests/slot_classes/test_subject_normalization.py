@@ -169,13 +169,20 @@ def _make_legacy_slot_class(school_id: int, co: User, legacy_subject_name: str):
     """Create a slot-class the normal way (always Foundation), then rewrite its
     ClassSectionSubject to point at a legacy pre-M6 subject row — simulating data
     that predates the M6 pivot."""
+    program, _ = Program.objects.get_or_create(
+        program_name="Foundation Program", defaults={"is_active": True}
+    )
+    # create_slot_class always resolves get_foundation_subject() — migration 0027
+    # no longer seeds it (see the migration file), so it must exist before this
+    # call, same as the real Bubble import will provide it.
+    Subject.objects.get_or_create(subject_name="Foundation", defaults={"program_id": program})
+
     section = _make_section(school_id, co)
     _add_children(section, 1, co)
     vol = _make_volunteer(school_id)
     slot = _make_slot(school_id, co)
     scs = create_slot_class(slot.slot_id, _payload(section, vol), co)
 
-    program, _ = Program.objects.get_or_create(program_name="Foundation Program")
     legacy_subject, _ = Subject.objects.get_or_create(
         subject_name=legacy_subject_name, defaults={"program_id": program}
     )

@@ -22,6 +22,7 @@ from sessionops.models import (
 from sessionops.schemas.children import ReactivateIn
 from sessionops.services.children.enroll import FOUNDATION_PROGRAM_ID, MAX_CHILDREN_PER_SECTION
 from sessionops.services.rbac.scope import get_school_or_403
+from sessionops.services.structure.queries import assert_class_not_blocked_for_assignment
 
 
 def reactivate_child(child_id: int, payload: ReactivateIn, user: User) -> Child:
@@ -50,6 +51,19 @@ def reactivate_child(child_id: int, payload: ReactivateIn, user: User) -> Child:
             )
         except SchoolClass.DoesNotExist:
             raise NotFound(f"School class {payload.school_class_id} not found.")
+
+        # A blocked class (e.g. 8) is only reachable via year-end progression —
+        # UNLESS this child is being restored into the exact class they were
+        # already in before deactivation (their most recent ChildClass row,
+        # soft-deleted by deactivate_child but never hard-deleted). That's a
+        # restoration of their own history, not a new manual assignment.
+        prior_cc = (
+            ChildClass.objects.filter(child_id=child.child_id).order_by("-child_class_id").first()
+        )
+        if prior_cc is None or prior_cc.school_class_id_id != school_class.school_class_id:
+            assert_class_not_blocked_for_assignment(
+                school_class.class_id.class_code, school_class.class_id.class_name
+            )
 
         # 4. If a bucket is given, lock + validate + capacity check (R1). Bucket
         # assignment is optional on reactivation, same as enrollment.

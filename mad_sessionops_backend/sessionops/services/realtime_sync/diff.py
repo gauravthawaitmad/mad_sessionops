@@ -67,8 +67,13 @@ def compute_diff(local_user, payload: RealtimeSyncUserPayload) -> UserDiff:
     Returns UserDiff with is_stale=True when the incoming event is older than synced_at.
     """
     if local_user is None:
+        # A worknode_id present on a true INSERT payload is a same-shape "added"
+        # transition (old=None → new=worknode_id) — routes handle_insert through
+        # the same cascade flow an update would use, so SchoolVolunteer etc. get
+        # created instead of only stamping worknode_id on the row.
         return UserDiff(
             user_exists_locally=False,
+            worknode_action="added" if payload.worknode_id is not None else "none",
             incoming_role=payload.user_role,
         )
 

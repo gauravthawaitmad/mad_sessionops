@@ -3,29 +3,31 @@
 from django.db import migrations
 
 
-def seed_foundation_subject(apps, schema_editor):
-    Program = apps.get_model("sessionops", "Program")
-    Subject = apps.get_model("sessionops", "Subject")
-    alias = schema_editor.connection.alias
-
-    # Reuse the existing "Foundation Program" row (seeded by db_startup.py /
-    # seed_m2_catalog.py) — the same Program that already backs the legacy
-    # "Foundation Day 1" / "Foundation Day 2" subjects and the hardcoded
-    # FOUNDATION_PROGRAM_ID=1 in services/children/enroll.py.
-    program, _ = Program.objects.using(alias).get_or_create(
-        program_name="Foundation Program",
-        defaults={"is_active": True},
-    )
-    Subject.objects.using(alias).get_or_create(
-        subject_name="Foundation",
-        defaults={"program_id": program},
-    )
+def noop_seed_foundation_subject(apps, schema_editor):
+    """
+    Intentionally neutered (2026-09-02): this used to auto-create a "Foundation"
+    Subject row on every fresh deploy. Subject is NOT part of the M7 Bubble
+    migration pipeline (decision #18 — class_section_subject/child_subject's
+    subject_id FK checks validate against whatever Subject rows already exist,
+    rather than importing subject itself). In practice Bubble has several real
+    historical subjects (not just one) with child_subject/class_section_subject
+    rows FK'd to their real subject_id values, so auto-seeding a "Foundation"
+    row here — with whatever PK Django's sequence happened to assign — collided
+    with that: either the later data import's insert failed outright on the
+    subject_name unique constraint, or (worse) an upsert silently renamed the
+    seeded row away from "Foundation", breaking get_foundation_subject() for
+    every slot-class create/edit.
+    The exact same "Foundation" name+row for get_foundation_subject() to find
+    now comes from the external migration itself (renaming one of the existing
+    legacy subject rows in place, same subject_id, so historical FKs stay
+    intact) — never from this migration. Left as a no-op rather than deleted:
+    0028 depends on this migration by name, and deleting it would break the
+    migration graph on any fresh database.
+    """
 
 
 def noop_reverse(apps, schema_editor):
-    # Intentionally a no-op: if M6 is rolled back, deleting the seeded row is
-    # safe in principle, but leaving it is harmless and avoids ever deleting a
-    # Subject row that later M6-era ClassSectionSubject rows may reference.
+    # Already a no-op before this migration was neutered; nothing to reverse.
     pass
 
 
@@ -35,5 +37,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(seed_foundation_subject, noop_reverse),
+        migrations.RunPython(noop_seed_foundation_subject, noop_reverse),
     ]

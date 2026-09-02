@@ -146,34 +146,32 @@ class TestSlugUniquePerSchool:
         assert ClassSection.objects.filter(school_id=1, section_name="care_monster").count() == 2
 
 
-# ── Foundation subject seed (0027) ──────────────────────────────────────────────
+# ── Foundation subject seed (0027) — neutered 2026-09-02 ────────────────────────
 
 
 @pytest.mark.django_db
 class TestFoundationSubjectSeed:
-    def test_foundation_subject_exists(self):
-        """Migration 0027 seeds a 'Foundation' Subject row pointing at the same
-        'Foundation Program' used by legacy Foundation Day 1/2 subjects."""
-        subject = Subject.objects.get(subject_name="Foundation")
-        assert subject.program_id.program_name == "Foundation Program"
+    """
+    Migration 0027 no longer seeds a 'Foundation' Subject row (see the migration
+    file for why: Subject isn't part of the M7 Bubble migration — decision #18 —
+    and auto-seeding here collided with the real historical subjects that
+    migration brings in with their own subject_id values). These tests assert
+    the no-op behavior instead of the old auto-seed.
+    """
 
-    def test_seed_is_idempotent(self):
-        """Re-running the seed logic does not create a duplicate row."""
-        before = Subject.objects.filter(subject_name="Foundation").count()
-        program, _ = Program.objects.get_or_create(
-            program_name="Foundation Program", defaults={"is_active": True}
-        )
-        Subject.objects.get_or_create(subject_name="Foundation", defaults={"program_id": program})
-        after = Subject.objects.filter(subject_name="Foundation").count()
-        assert before == after == 1
+    def test_foundation_subject_not_auto_seeded(self):
+        """Nothing named 'Foundation' exists unless a test (or the real Bubble
+        import) explicitly creates it — the migration itself creates nothing."""
+        assert not Subject.objects.filter(subject_name="Foundation").exists()
 
-    def test_legacy_foundation_subjects_untouched(self):
-        """Pre-existing 'Foundation Day 1'/'Foundation Day 2' subjects (if seeded
-        by other fixtures/tests) are not merged into or deleted by the new seed."""
+    def test_legacy_foundation_subjects_unaffected(self):
+        """Pre-existing 'Foundation Day 1'/'Foundation Day 2'-style subjects
+        (as seeded by other fixtures, or as they'll exist for real once migrated
+        from Bubble) are completely unaffected by the now-inert migration."""
         program, _ = Program.objects.get_or_create(program_name="Foundation Program")
         Subject.objects.get_or_create(
             subject_name="Foundation Day 1", defaults={"program_id": program}
         )
         assert Subject.objects.filter(subject_name="Foundation Day 1").exists()
-        assert Subject.objects.filter(subject_name="Foundation").exists()
         assert Subject.objects.filter(subject_name="Foundation Day 1").count() == 1
+        assert not Subject.objects.filter(subject_name="Foundation").exists()
