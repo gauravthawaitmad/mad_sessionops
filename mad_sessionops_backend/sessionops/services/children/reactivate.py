@@ -20,7 +20,7 @@ from sessionops.models import (
     User,
 )
 from sessionops.schemas.children import ReactivateIn
-from sessionops.services.children.enroll import FOUNDATION_PROGRAM_ID, MAX_CHILDREN_PER_SECTION
+from sessionops.services.children.enroll import MAX_CHILDREN_PER_SECTION, get_foundation_program_id
 from sessionops.services.rbac.scope import get_school_or_403
 from sessionops.services.structure.queries import assert_class_not_blocked_for_assignment
 
@@ -144,7 +144,7 @@ def reactivate_child(child_id: int, payload: ReactivateIn, user: User) -> Child:
             created_by=user,
         )
         ChildProgram.objects.create(
-            program_id_id=FOUNDATION_PROGRAM_ID,
+            program_id_id=get_foundation_program_id(),
             child_id=child,
             created_by=user,
         )
