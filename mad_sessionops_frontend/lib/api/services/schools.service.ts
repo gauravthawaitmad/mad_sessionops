@@ -94,6 +94,11 @@ function mapItem(raw: RawSchoolItem): SchoolListItem {
 
 // ── School detail types ───────────────────────────────────────────────────────
 
+export interface ChoItem {
+  userId: number;
+  userDisplayName: string;
+}
+
 export interface SchoolDetail {
   partnerId: number;
   partnerName: string;
@@ -114,9 +119,11 @@ export interface SchoolDetail {
   mouUrl: string | null;
   coId: number | null;
   coName: string | null;
+  chos: ChoItem[];
   syncedAt: string | null;
   configurationStatus: string;
   childrenCount: number;
+  confirmedChildCount: number | null;
   classesCount: number;
   volunteersCount: number;
   assignmentsCount: number;
@@ -143,9 +150,11 @@ interface RawSchoolDetail {
   mou_url: string | null;
   co_id: number | null;
   co_name: string | null;
+  chos: { user_id: number; user_display_name: string }[];
   synced_at: string | null;
   configuration_status: string;
   children_count: number;
+  confirmed_child_count: number | null;
   classes_count: number;
   volunteers_count: number;
   assignments_count: number;
@@ -173,9 +182,11 @@ function mapDetail(raw: RawSchoolDetail): SchoolDetail {
     mouUrl: raw.mou_url,
     coId: raw.co_id,
     coName: raw.co_name,
+    chos: raw.chos.map((c) => ({ userId: c.user_id, userDisplayName: c.user_display_name })),
     syncedAt: raw.synced_at,
     configurationStatus: raw.configuration_status,
     childrenCount: raw.children_count,
+    confirmedChildCount: raw.confirmed_child_count,
     classesCount: raw.classes_count,
     volunteersCount: raw.volunteers_count,
     assignmentsCount: raw.assignments_count,

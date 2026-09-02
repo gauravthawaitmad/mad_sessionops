@@ -329,3 +329,64 @@ class TestReactivateRBAC:
             admin,
         )
         assert result.is_active is True
+
+
+@pytest.mark.django_db
+class TestReactivateBlockedClass:
+    def test_reactivate_into_new_class_8_raises_validation_error(self):
+        # Child was in (and is being reactivated into) a DIFFERENT class than
+        # class 8 — attempting to reactivate them straight into class 8 instead
+        # must be blocked, same as a fresh enrollment would be.
+        user = _make_user("r9@t.com")
+        _make_partner(511)
+        section_7 = _make_section(511, user, class_code="7")
+        section_8 = _make_section(511, user, code="A", class_code="8")
+        child = _enroll(511, section_7, user)
+        _deactivate(child, user)
+
+        with pytest.raises(ValidationError):
+            reactivate_child(
+                child.child_id,
+                ReactivateIn(
+                    school_class_id=section_8.school_class_id_id,
+                    class_section_id=section_8.class_section_id,
+                ),
+                user,
+            )
+
+    def test_reactivate_into_own_prior_class_8_is_allowed(self):
+        # Child already legitimately in class 8 (as if progressed in via the
+        # legacy Bubble flow — built directly here, bypassing enroll_child,
+        # which now blocks class 8 for NEW assignments). Reactivating them back
+        # into that SAME class must be allowed — it's restoring their own
+        # history, not a new manual assignment.
+        user = _make_user("r10@t.com")
+        _make_partner(512)
+        section_8 = _make_section(512, user, class_code="8")
+
+        child = Child.objects.create(
+            school_id=512,
+            first_name="Legacy",
+            last_name="Eighth",
+            gender="male",
+            age=14,
+            created_by=user,
+        )
+        cc = ChildClass.objects.create(
+            child_id=child,
+            school_class_id_id=section_8.school_class_id_id,
+            created_by=user,
+        )
+        # Simulate deactivate_child's soft-delete of the ChildClass row.
+        cc.is_active = False
+        cc.removed = True
+        cc.save(update_fields=["is_active", "removed"])
+        child.is_active = False
+        child.save(update_fields=["is_active"])
+
+        result = reactivate_child(
+            child.child_id,
+            ReactivateIn(school_class_id=section_8.school_class_id_id),
+            user,
+        )
+        assert result.is_active is True

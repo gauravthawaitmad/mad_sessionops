@@ -32,6 +32,18 @@ export interface ClassCatalogItem {
   programName: string;
 }
 
+// Class 8 is reachable only via year-end progression, never a fresh manual
+// assignment — mirrors BLOCKED_NEW_CLASS_CODES in the backend
+// (services/academic_year and services/structure/queries.py). Used to hide it
+// from class pickers used when enrolling/editing/reactivating a child; the
+// school's Structure tab and the class-filter dropdown still show it, since a
+// school can legitimately already have it (migrated data).
+const BLOCKED_CHILD_ASSIGNMENT_CLASS_CODES = new Set(["8"]);
+
+export function filterAssignableClasses(classes: SchoolClassItem[]): SchoolClassItem[] {
+  return classes.filter((c) => !BLOCKED_CHILD_ASSIGNMENT_CLASS_CODES.has(c.classCode));
+}
+
 // ── Raw backend shapes (snake_case) ────────────────────────────────────────────
 
 interface RawAcademicYear {

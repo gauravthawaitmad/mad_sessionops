@@ -3,6 +3,7 @@ from ninja import Router
 from sessionops.exceptions import NotFound
 from sessionops.models import Partner
 from sessionops.schemas.schools import (
+    ChoOut,
     SchoolDetailSchema,
     SchoolListItemSchema,
     SchoolListResponseSchema,
@@ -12,6 +13,7 @@ from sessionops.services.rbac import get_scope_warning, schools_visible_to
 from sessionops.services.schools.queries import (
     get_active_academic_year_label,
     get_active_volunteers_count,
+    get_chos_for_school,
     get_school_stats,
 )
 
@@ -83,6 +85,10 @@ def get_school(request, partner_id: int):
         raise NotFound("School not found")
 
     stats = get_school_stats([partner_id]).get(partner_id, {})
+    chos = [
+        ChoOut(user_id=u.user_id, user_display_name=u.user_display_name)
+        for u in get_chos_for_school(partner_id)
+    ]
 
     return SchoolDetailSchema(
         partner_id=partner.partner_id,
@@ -104,9 +110,11 @@ def get_school(request, partner_id: int):
         mou_url=partner.mou_url,
         co_id=partner.co_id,
         co_name=partner.co_name,
+        chos=chos,
         synced_at=partner.synced_at,
         configuration_status="awaiting_setup",
         children_count=stats.get("children_count", 0),
+        confirmed_child_count=partner.confirmed_child_count,
         classes_count=stats.get("classes_count", 0),
         volunteers_count=stats.get("volunteers_count", 0),
         assignments_count=stats.get("assignments_count", 0),

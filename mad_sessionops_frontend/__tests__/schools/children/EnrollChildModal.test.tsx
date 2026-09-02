@@ -10,6 +10,8 @@ import type { ChildItem } from "@/lib/api/services/children.service";
 
 vi.mock("@/lib/api/services/structure.service", () => ({
   fetchSchoolClasses: vi.fn(),
+  filterAssignableClasses: (classes: SchoolClassItem[]) =>
+    classes.filter((c) => c.classCode !== "8"),
 }));
 
 vi.mock("@/lib/api/services/buckets.service", () => ({
@@ -35,6 +37,16 @@ const MOCK_CLASS: SchoolClassItem = {
   gradeClassId: 5,
   className: "Grade 5",
   classCode: "G5",
+  programName: "Foundation",
+  sectionsCount: 0,
+  sections: [],
+};
+
+const MOCK_CLASS_8: SchoolClassItem = {
+  schoolClassId: 8,
+  gradeClassId: 8,
+  className: "Grade 8",
+  classCode: "8",
   programName: "Foundation",
   sectionsCount: 0,
   sections: [],
@@ -89,6 +101,15 @@ describe("EnrollChildModal — F-M6-7", () => {
       expect(screen.getByText("Select a class")).toBeInTheDocument();
     });
     expect(enrollChild).not.toHaveBeenCalled();
+  });
+
+  it("test_class_8_hidden_from_picker", async () => {
+    vi.mocked(fetchSchoolClasses).mockResolvedValue([MOCK_CLASS, MOCK_CLASS_8]);
+
+    render(<EnrollChildModal open={true} schoolId={580} onClose={noop} onSuccess={noop} />);
+
+    await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
+    expect(screen.queryByText("Grade 8")).not.toBeInTheDocument();
   });
 
   it("test_submit_without_bucket_omits_class_section_id", async () => {

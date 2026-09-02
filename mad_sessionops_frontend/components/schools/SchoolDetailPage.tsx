@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Skeleton from "@mui/material/Skeleton";
@@ -300,11 +300,41 @@ function formatEnum(v: string | null | undefined): string {
 
 // ── Info strip (horizontal pill row under header) ─────────────────────────────
 
+const _noopSubscribe = () => () => {};
+
+/**
+ * Reads Date.now() the React-sanctioned way for a value that comes from
+ * outside React: useSyncExternalStore, not Date.now() in render (impure —
+ * react-hooks/purity) or a useEffect+setState pair (cascading render —
+ * react-hooks/set-state-in-effect). The subscribe callback is a no-op since
+ * this only ever needs the value once, not a live-ticking clock. getServerSnapshot
+ * returns null so SSR and the client's first paint agree — Date.now() only
+ * ever runs client-side here, avoiding a real hydration-mismatch risk.
+ *
+ * getSnapshot MUST return the same value across calls until subscribe fires
+ * (React compares snapshots via Object.is on every render to detect tears) —
+ * cached in a ref so it's read once, not `() => Date.now()` directly, which
+ * returns a different value every call and causes an infinite render loop.
+ */
+function useNow(): number | null {
+  const cached = useRef<number | null>(null);
+  return useSyncExternalStore(
+    _noopSubscribe,
+    () => {
+      if (cached.current === null) cached.current = Date.now();
+      return cached.current;
+    },
+    () => null
+  );
+}
+
 function InfoStrip({ school }: { school: SchoolDetail }) {
+  const now = useNow();
+
   const mouChip = (() => {
-    if (!school.mouEndDate) return null;
+    if (!school.mouEndDate || now === null) return null;
     const end = new Date(school.mouEndDate);
-    const daysLeft = Math.ceil((end.getTime() - Date.now()) / 86_400_000);
+    const daysLeft = Math.ceil((end.getTime() - now) / 86_400_000);
     if (daysLeft < 0) return { text: "MOU expired", color: colors.error[600] };
     if (daysLeft < 90) return { text: `MOU expires in ${daysLeft}d`, color: colors.warning[600] };
     return { text: `MOU until ${formatDate(school.mouEndDate)}`, color: colors.success[600] };
@@ -357,7 +387,15 @@ function InfoStrip({ school }: { school: SchoolDetail }) {
 
 // ── Overview metrics ──────────────────────────────────────────────────────────
 
-function StatCard({ label, value, accent }: { label: string; value: number; accent: string }) {
+function StatCard({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number | null;
+  accent: string;
+}) {
   return (
     <Box
       sx={{
@@ -383,7 +421,7 @@ function StatCard({ label, value, accent }: { label: string; value: number; acce
       <Typography
         sx={{ fontSize: "22px", fontWeight: 700, color: accent, lineHeight: 1.2, mt: 0.5 }}
       >
-        {value.toLocaleString()}
+        {value === null ? "—" : value.toLocaleString()}
       </Typography>
     </Box>
   );
@@ -408,6 +446,11 @@ function OverviewContent({ school }: { school: SchoolDetail }) {
       {/* Metrics row */}
       <Box sx={{ display: "flex", gap: 1.5, mb: 4 }}>
         <StatCard label="Children enrolled" value={school.childrenCount} accent="#7C3AED" />
+        <StatCard
+          label="Confirmed children (CRM)"
+          value={school.confirmedChildCount}
+          accent="#DB2777"
+        />
         <StatCard label="Classes" value={school.classesCount} accent="#0284C7" />
         <StatCard label="Volunteers" value={school.volunteersCount} accent="#059669" />
         <StatCard label="Teaching sessions" value={school.assignmentsCount} accent="#d97706" />
@@ -488,6 +531,16 @@ function OverviewContent({ school }: { school: SchoolDetail }) {
       <Section title="Community Organizer" cols={3}>
         <Field label="Name" value={school.coName} />
       </Section>
+
+      <Section title="Chapter Organizer(s)" cols={3}>
+        {school.chos.length > 0 ? (
+          school.chos.map((cho) => (
+            <Field key={cho.userId} label="Name" value={cho.userDisplayName} />
+          ))
+        ) : (
+          <Field label="Name" />
+        )}
+      </Section>
     </Box>
   );
 }
@@ -551,7 +604,7 @@ function ContentSkeleton() {
       </Box>
       {/* Metrics skeleton */}
       <Box sx={{ display: "flex", gap: 1.5, mb: 4 }}>
-        {[1, 2, 3, 4].map((i) => (
+        {[1, 2, 3, 4, 5].map((i) => (
           <Box
             key={i}
             sx={{
@@ -607,9 +660,10 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
   const { canModify } = useUserCan(partnerId);
 
   useEffect(() => {
+    // No manual reset of loading/notFound here: the route (app/schools/[partnerId]/page.tsx)
+    // keys this component by partnerId, so a school change remounts it fresh —
+    // the useState initial values above already supply the correct starting state.
     let cancelled = false;
-    setLoading(true);
-    setNotFound(false);
 
     Promise.all([fetchSchool(partnerId), fetchActiveYear()])
       .then(([data, year]) => {
@@ -664,7 +718,7 @@ export function SchoolDetailPage({ partnerId }: { partnerId: number }) {
         <Typography
           sx={{ fontSize: "14px", color: colors.gray[500], textAlign: "center", maxWidth: 320 }}
         >
-          This school doesn't exist or you don't have access to it.
+          This school doesn&apos;t exist or you don&apos;t have access to it.
         </Typography>
         <Link href="/schools" style={{ textDecoration: "none" }}>
           <Box

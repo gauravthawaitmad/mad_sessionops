@@ -158,3 +158,27 @@ class TestSchoolAcademicYearAutoCreate:
         say2 = get_or_create_school_academic_year(school_id, user)
         assert say1.school_academic_year_id == say2.school_academic_year_id
         assert SchoolAcademicYear.objects.filter(school_id=school_id).count() == 1
+
+    def test_reuses_existing_active_binding_when_global_year_has_rolled_over(self):
+        """
+        Regression: a school already active on an older AcademicYear must NOT get
+        a second active SchoolAcademicYear row created just because the globally-
+        active AcademicYear has since moved on. The school's existing active
+        binding must be returned untouched.
+        """
+        user = _make_user()
+        old_year = AcademicYear.objects.create(label="2025-2026", is_active=False, created_by=user)
+        school_id = 1003
+        existing_say = SchoolAcademicYear.objects.create(
+            school_id=school_id, academic_year_id=old_year, is_active=True, created_by=user
+        )
+        _make_active_year(user, label="2026-2027")  # new global active year
+
+        say = get_or_create_school_academic_year(school_id, user)
+
+        assert say.school_academic_year_id == existing_say.school_academic_year_id
+        assert say.academic_year_id_id == old_year.academic_year_id
+        active_says = SchoolAcademicYear.objects.filter(
+            school_id=school_id, is_active=True, removed=False
+        )
+        assert active_says.count() == 1

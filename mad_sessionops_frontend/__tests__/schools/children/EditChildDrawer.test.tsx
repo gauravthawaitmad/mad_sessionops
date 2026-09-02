@@ -10,6 +10,8 @@ import type { ChildItem } from "@/lib/api/services/children.service";
 
 vi.mock("@/lib/api/services/structure.service", () => ({
   fetchSchoolClasses: vi.fn(),
+  filterAssignableClasses: (classes: SchoolClassItem[]) =>
+    classes.filter((c) => c.classCode !== "8"),
 }));
 
 vi.mock("@/lib/api/services/buckets.service", () => ({
@@ -50,6 +52,16 @@ const CLASS_6: SchoolClassItem = {
   sections: [],
 };
 
+const CLASS_8: SchoolClassItem = {
+  schoolClassId: 8,
+  gradeClassId: 8,
+  className: "Grade 8",
+  classCode: "8",
+  programName: "Foundation",
+  sectionsCount: 0,
+  sections: [],
+};
+
 const BUCKET_1: BucketItem = {
   classSectionId: 10,
   sectionName: "group_1",
@@ -83,6 +95,45 @@ describe("EditChildDrawer — F-M6-7", () => {
     vi.clearAllMocks();
     vi.mocked(fetchSchoolClasses).mockResolvedValue([CLASS_5, CLASS_6]);
     vi.mocked(fetchBuckets).mockResolvedValue([BUCKET_1]);
+  });
+
+  it("test_class_8_hidden_from_picker_when_child_not_already_in_it", async () => {
+    vi.mocked(fetchSchoolClasses).mockResolvedValue([CLASS_5, CLASS_6, CLASS_8]);
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={CHILD_WITH_BUCKET}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
+    expect(screen.queryByText("Grade 8")).not.toBeInTheDocument();
+  });
+
+  it("test_class_8_still_shown_when_it_is_the_childs_current_class", async () => {
+    vi.mocked(fetchSchoolClasses).mockResolvedValue([CLASS_5, CLASS_6, CLASS_8]);
+    const childInClass8: ChildItem = {
+      ...CHILD_WITH_BUCKET,
+      currentSchoolClass: { schoolClassId: 8, className: "Grade 8" },
+    };
+
+    render(
+      <EditChildDrawer
+        open={true}
+        schoolId={580}
+        child={childInClass8}
+        onClose={noop}
+        onSuccess={noop}
+      />
+    );
+
+    // Editing this child (e.g. their bucket, or unrelated fields) must not
+    // hide the class they're already sitting in.
+    await waitFor(() => expect(screen.getByText("Grade 8")).toBeInTheDocument());
   });
 
   it("test_prepopulates_class_and_bucket_from_nested_shape", async () => {

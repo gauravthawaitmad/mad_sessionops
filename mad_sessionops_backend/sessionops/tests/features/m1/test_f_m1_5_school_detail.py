@@ -16,7 +16,7 @@ import pytest
 from ninja.testing import TestClient
 from rest_framework_simplejwt.tokens import AccessToken
 
-from sessionops.models import Partner, User
+from sessionops.models import Partner, PartnerWorknode, User
 from sessionops.routes import api
 
 CLIENT = TestClient(api)
@@ -48,6 +48,7 @@ def _make_partner(name: str, co_id: int | None = None, **kwargs) -> Partner:
         poc_name=kwargs.get("poc_name"),
         mou_url=kwargs.get("mou_url"),
         synced_at=kwargs.get("synced_at"),
+        confirmed_child_count=kwargs.get("confirmed_child_count"),
     )
 
 
@@ -80,6 +81,103 @@ def test_school_detail_returns_full_data_for_co_owner():
     assert data["city"] == "Hyderabad"
     assert data["state"] == "Telangana"
     assert data["configuration_status"] == "awaiting_setup"
+
+
+@pytest.mark.django_db
+def test_school_detail_returns_confirmed_child_count():
+    co = _make_user("CO Full Time")
+    school = _make_partner("Govt. HS Shaikpet", co_id=co.user_id, confirmed_child_count=42)
+
+    resp = CLIENT.get(f"/api/schools/{school.partner_id}", **_auth_header(co))
+
+    assert resp.status_code == 200
+    assert resp.json()["confirmed_child_count"] == 42
+
+
+@pytest.mark.django_db
+def test_school_detail_confirmed_child_count_null_when_unsynced():
+    co = _make_user("CO Full Time")
+    school = _make_partner("Govt. HS Shaikpet", co_id=co.user_id)
+
+    resp = CLIENT.get(f"/api/schools/{school.partner_id}", **_auth_header(co))
+
+    assert resp.status_code == 200
+    assert resp.json()["confirmed_child_count"] is None
+
+
+@pytest.mark.django_db
+def test_school_detail_returns_chos_mapped_via_worknode():
+    co = _make_user("CO Full Time")
+    school = _make_partner("Govt. HS Shaikpet", co_id=co.user_id)
+    worknode_id = random.randint(1, 999_999)
+    PartnerWorknode.objects.create(partner_id=str(school.partner_id), worknode_id=worknode_id)
+
+    cho = User.objects.create(
+        user_login=f"{uuid.uuid4().hex[:8]}@test.com",
+        user_display_name="Chapter Org",
+        email=f"{uuid.uuid4().hex[:8]}@test.com",
+        user_role="CHO",
+        worknode_id=worknode_id,
+        is_active=True,
+    )
+    # Not a CHO — same worknode, must be excluded.
+    User.objects.create(
+        user_login=f"{uuid.uuid4().hex[:8]}@test.com",
+        user_display_name="Some Volunteer",
+        email=f"{uuid.uuid4().hex[:8]}@test.com",
+        user_role="Youth",
+        worknode_id=worknode_id,
+        is_active=True,
+    )
+
+    resp = CLIENT.get(f"/api/schools/{school.partner_id}", **_auth_header(co))
+
+    assert resp.status_code == 200
+    chos = resp.json()["chos"]
+    assert [c["user_display_name"] for c in chos] == ["Chapter Org"]
+    assert chos[0]["user_id"] == cho.user_id
+
+
+@pytest.mark.django_db
+def test_school_detail_returns_multiple_chos_for_same_school():
+    co = _make_user("CO Full Time")
+    school = _make_partner("Govt. HS Shaikpet", co_id=co.user_id)
+    worknode_id = random.randint(1, 999_999)
+    PartnerWorknode.objects.create(partner_id=str(school.partner_id), worknode_id=worknode_id)
+
+    User.objects.create(
+        user_login=f"{uuid.uuid4().hex[:8]}@test.com",
+        user_display_name="Beta Cho",
+        email=f"{uuid.uuid4().hex[:8]}@test.com",
+        user_role="CHO",
+        worknode_id=worknode_id,
+        is_active=True,
+    )
+    User.objects.create(
+        user_login=f"{uuid.uuid4().hex[:8]}@test.com",
+        user_display_name="Alpha Cho",
+        email=f"{uuid.uuid4().hex[:8]}@test.com",
+        user_role="CHO, CO Full Time",
+        worknode_id=worknode_id,
+        is_active=True,
+    )
+
+    resp = CLIENT.get(f"/api/schools/{school.partner_id}", **_auth_header(co))
+
+    assert resp.status_code == 200
+    names = [c["user_display_name"] for c in resp.json()["chos"]]
+    assert names == ["Alpha Cho", "Beta Cho"]  # ordered by display name
+
+
+@pytest.mark.django_db
+def test_school_detail_chos_empty_when_no_worknode_mapping():
+    co = _make_user("CO Full Time")
+    school = _make_partner("Govt. HS Shaikpet", co_id=co.user_id)
+
+    resp = CLIENT.get(f"/api/schools/{school.partner_id}", **_auth_header(co))
+
+    assert resp.status_code == 200
+    assert resp.json()["chos"] == []
 
 
 # ---------------------------------------------------------------------------

@@ -105,9 +105,11 @@ const MOCK_SCHOOL = {
   mouUrl: null,
   coId: 1784194,
   coName: "Ipshita Das",
+  chos: [],
   syncedAt: "2026-04-29T10:00:00Z",
   configurationStatus: "awaiting_setup",
   childrenCount: 25,
+  confirmedChildCount: 30,
   classesCount: 3,
   volunteersCount: 5,
   assignmentsCount: 10,
@@ -273,6 +275,24 @@ describe("SchoolDetailPage — F-M1-5", () => {
     expect(coNames.length).toBeGreaterThan(0);
 
     expect(screen.getByText("Ramesh Kumar")).toBeInTheDocument();
+  });
+
+  it("test_school_detail_renders_multiple_chapter_organizers", async () => {
+    vi.mocked(fetchSchool).mockResolvedValue({
+      ...MOCK_SCHOOL,
+      chos: [
+        { userId: 1, userDisplayName: "Alpha Cho" },
+        { userId: 2, userDisplayName: "Beta Cho" },
+      ],
+    });
+
+    render(<SchoolDetailPage partnerId={580} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Chapter Organizer(s)")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Alpha Cho")).toBeInTheDocument();
+    expect(screen.getByText("Beta Cho")).toBeInTheDocument();
   });
 
   it("test_school_detail_all_tabs_enabled_in_m4", async () => {

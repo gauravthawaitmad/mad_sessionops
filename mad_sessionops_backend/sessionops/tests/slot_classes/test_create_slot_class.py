@@ -31,6 +31,7 @@ from sessionops.models import (
     Slot,
     SlotClassSection,
     SlotClassSectionVolunteer,
+    Subject,
     User,
 )
 from sessionops.services.slot_classes.create import create_slot_class
@@ -44,8 +45,18 @@ _WID = iter(range(100, 10_000))
 
 
 @pytest.fixture(autouse=True)
-def _reset_foundation_subject_cache():
-    """Module-level cache in helpers.py isn't rolled back by test transactions."""
+def _reset_foundation_subject_cache(db):
+    """Module-level cache in helpers.py isn't rolled back by test transactions.
+
+    Also ensures the "Foundation" Subject row exists — migration 0027 no longer
+    seeds it (Subject isn't part of the M7 Bubble migration; see the migration
+    file), so every test that exercises create_slot_class/get_foundation_subject
+    needs it created directly, same as the real Bubble import will provide it.
+    """
+    program, _ = Program.objects.get_or_create(
+        program_name="Foundation Program", defaults={"is_active": True}
+    )
+    Subject.objects.get_or_create(subject_name="Foundation", defaults={"program_id": program})
     slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None
     yield
     slot_class_helpers._FOUNDATION_SUBJECT_CACHE = None

@@ -13,14 +13,33 @@ from sessionops.models import (
     ClassSection,
     ClassSectionSubject,
     Partner,
+    Program,
     SchoolAcademicYear,
     SchoolClass,
     User,
 )
 from sessionops.schemas.children import ChildEnrollIn
+from sessionops.services.structure.queries import assert_class_not_blocked_for_assignment
 
-FOUNDATION_PROGRAM_ID = 1
 MAX_CHILDREN_PER_SECTION = 5
+
+
+def get_foundation_program_id() -> int:
+    """
+    Return the PK of the "Foundation Program" row by name, not a hardcoded
+    literal. A literal PK assumption isn't safe: Program (like Class, and per
+    the M7 migration registry) is expected to carry real IDs imported from
+    Bubble, and even locally, whichever code happens to create "Foundation
+    Program" first gets whatever the sequence currently points at — nothing
+    guarantees that's 1 (see migration 0027's history for exactly this bug).
+    """
+    try:
+        return Program.objects.get(program_name="Foundation Program").program_id
+    except Program.DoesNotExist:
+        raise ValidationError(
+            "Configuration error: 'Foundation Program' row not found. "
+            "Seed or import the Program catalog before enrolling/reactivating children."
+        )
 
 
 def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
@@ -36,6 +55,10 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
             )
         except SchoolClass.DoesNotExist:
             raise NotFound(f"School class {payload.school_class_id} not found.")
+
+        assert_class_not_blocked_for_assignment(
+            school_class.class_id.class_code, school_class.class_id.class_name
+        )
 
         # 2. If a bucket is given, lock + validate + capacity check (R1). Bucket
         # assignment is optional at enrollment (M6 decision #9).
@@ -135,7 +158,7 @@ def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:
         )
         # 9. Auto-assign Foundation Program
         ChildProgram.objects.create(
-            program_id_id=FOUNDATION_PROGRAM_ID,
+            program_id_id=get_foundation_program_id(),
             child_id=child,
             created_by=user,
         )
