@@ -5,6 +5,18 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        # docker-compose.production.yml uses the Compose Specification's
+        # `!override` merge tag on its `ports:` keys (needed so they REPLACE
+        # rather than concatenate with docker-compose.yml's own ports: when
+        # merged — Compose's default list-merge behavior would otherwise
+        # carry staging's 8000/3000 through alongside production's 9000/5000
+        # and fail to bind). `!override` is a Compose-specific YAML extension,
+        # not valid generic YAML, so check-yaml's plain PyYAML loader can't
+        # parse it even though `docker compose config` parses and merges it
+        # correctly (verified locally 2026-09-04). Excluded here rather than
+        # dropping the tag — see docker-compose.production.yml's own header
+        # comment for the full reasoning.
+        exclude: ^docker-compose\.production\.yml$
       - id: check-added-large-files
       - id: check-json
       - id: check-toml
