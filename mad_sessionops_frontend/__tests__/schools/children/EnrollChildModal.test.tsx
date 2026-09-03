@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EnrollChildModal } from "@/components/schools/children/EnrollChildModal";
 import type { SchoolClassItem } from "@/lib/api/services/structure.service";
@@ -110,6 +110,51 @@ describe("EnrollChildModal — F-M6-7", () => {
 
     await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
     expect(screen.queryByText("Grade 8")).not.toBeInTheDocument();
+  });
+
+  it("test_birth_date_outside_bounded_range_shows_error_no_api_call", async () => {
+    render(<EnrollChildModal open={true} schoolId={580} onClose={noop} onSuccess={noop} />);
+
+    await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
+    await fillRequiredFields();
+    await userEvent.click(screen.getByText("Grade 5"));
+
+    // MUI's Dialog renders via a portal to document.body, not the render()
+    // container, so query from the document.
+    const dobInput = document.querySelector('input[name="date_of_birth"]');
+    expect(dobInput).not.toBeNull();
+    fireEvent.change(dobInput as HTMLInputElement, { target: { value: "0001-02-05" } });
+
+    await userEvent.click(screen.getByRole("button", { name: "Enroll" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/1 Jan 2006 and 1 Jan 2035/i)).toBeInTheDocument();
+    });
+    expect(enrollChild).not.toHaveBeenCalled();
+  });
+
+  it("test_birth_date_within_bounded_range_is_accepted", async () => {
+    vi.mocked(enrollChild).mockResolvedValue(MOCK_CHILD);
+    render(<EnrollChildModal open={true} schoolId={580} onClose={noop} onSuccess={noop} />);
+
+    await waitFor(() => expect(screen.getByText("Grade 5")).toBeInTheDocument());
+    await fillRequiredFields();
+    await userEvent.click(screen.getByText("Grade 5"));
+
+    const dobInput = document.querySelector('input[name="date_of_birth"]');
+    const tenYearsAgo = new Date();
+    tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+    const iso = tenYearsAgo.toISOString().slice(0, 10);
+    fireEvent.change(dobInput as HTMLInputElement, { target: { value: iso } });
+
+    await userEvent.click(screen.getByRole("button", { name: "Enroll" }));
+
+    await waitFor(() => {
+      expect(enrollChild).toHaveBeenCalledWith(
+        580,
+        expect.objectContaining({ date_of_birth: iso })
+      );
+    });
   });
 
   it("test_submit_without_bucket_omits_class_section_id", async () => {

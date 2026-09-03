@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passing Period · Session-Ops</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #EDE7D6;
+    --surface: #E1D9C2;
+    --surface-2: #D5CBAE;
+    --ink: #1E2C22;
+    --ink-dim: #5B6B5C;
+    --accent: #C62828;
+    --accent-ink: #FBEAEA;
+    --brass: #9C7530;
+    --brass-hi: #C79A47;
+    --line: rgba(30, 44, 34, 0.14);
+    --shadow: rgba(30, 44, 34, 0.22);
+    --dust: rgba(30, 44, 34, 0.55);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #16221C;
+      --surface: #1E2C24;
+      --surface-2: #24352B;
+      --ink: #F1EEE4;
+      --ink-dim: #9FB0A2;
+      --accent: #E14B3C;
+      --accent-ink: #2A0D0A;
+      --brass: #D6A75B;
+      --brass-hi: #EFC680;
+      --line: rgba(241, 238, 228, 0.14);
+      --shadow: rgba(0, 0, 0, 0.45);
+      --dust: rgba(241, 238, 228, 0.55);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #16221C;
+    --surface: #1E2C24;
+    --surface-2: #24352B;
+    --ink: #F1EEE4;
+    --ink-dim: #9FB0A2;
+    --accent: #E14B3C;
+    --accent-ink: #2A0D0A;
+    --brass: #D6A75B;
+    --brass-hi: #EFC680;
+    --line: rgba(241, 238, 228, 0.14);
+    --shadow: rgba(0, 0, 0, 0.45);
+    --dust: rgba(241, 238, 228, 0.55);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Archivo", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    position: relative;
+    overflow-x: hidden;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+
+  #dust {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 30%, transparent 0%, transparent 45%, var(--shadow) 130%);
+    opacity: 0.6;
+  }
+
+  .stage {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    width: 100%;
+    max-width: 620px;
+    animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .board {
+    position: relative;
+    width: 100%;
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 60px -20px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.04);
+    padding: 46px 42px 38px;
+  }
+
+  .peg {
+    position: absolute;
+    top: -9px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: linear-gradient(155deg, var(--brass-hi), var(--brass));
+    box-shadow: 0 3px 6px var(--shadow);
+  }
+  .peg.left { left: 34px; }
+  .peg.right { right: 34px; }
+
+  .clock-tab {
+    position: absolute;
+    top: -18px;
+    right: 26px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-dim);
+    box-shadow: 0 8px 18px -8px var(--shadow);
+    letter-spacing: 0.02em;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  h1.headline {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 560;
+    font-size: clamp(30px, 5.6vw, 44px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  h1.headline em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  p.sub {
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--ink-dim);
+    max-width: 60ch;
+    margin: 0 0 30px;
+  }
+
+  .bell-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 20px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 26px;
+  }
+
+  button.bell {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    border-radius: 50%;
+    transform-origin: 50% 6%;
+  }
+  button.bell:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  button.bell svg { display: block; width: 40px; height: 40px; }
+  button.bell.ringing { animation: swing 0.65s cubic-bezier(.36,.07,.19,.97) 2; }
+  @keyframes swing {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(14deg); }
+    40% { transform: rotate(-11deg); }
+    60% { transform: rotate(7deg); }
+    80% { transform: rotate(-4deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  .bell-copy { min-width: 0; }
+  .bell-caption {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .bell-hint {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+  }
+
+  .ticker {
+    border-top: 1px dashed var(--line);
+    padding-top: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .ticker-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    flex-shrink: 0;
+  }
+  .ticker-view {
+    position: relative;
+    flex: 1;
+    height: 20px;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .ticker-view li {
+    list-style: none;
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ticker-view li.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .ticker-dots {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .ticker-dots button {
+    appearance: none;
+    border: none;
+    padding: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--line);
+    cursor: pointer;
+  }
+  .ticker-dots button.active { background: var(--accent); }
+
+  .footer {
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    text-align: center;
+    max-width: 60ch;
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+  .footer .brand { font-weight: 600; color: var(--ink); }
+
+  .theme-toggle {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 3;
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-dim);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (max-width: 480px) {
+    .board { padding: 38px 22px 30px; }
+    .bell-row { flex-direction: row; padding: 14px; }
+    .clock-tab { right: 14px; font-size: 11px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stage { animation: none; }
+    button.bell.ringing { animation: none; }
+    .ticker-view li { transition: opacity 0.01ms; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="dust" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<button class="theme-toggle" id="themeToggle" type="button">Chalk / Daylight</button>
+
+<main class="stage">
+  <div class="board">
+    <span class="peg left" aria-hidden="true"></span>
+    <span class="peg right" aria-hidden="true"></span>
+    <div class="clock-tab" id="clock">--:--:--</div>
+
+    <p class="eyebrow">Session&#8209;Ops &middot; Make A Difference</p>
+
+    <h1 class="headline">A short recess<br>before the next <em>session</em>.</h1>
+
+    <p class="sub">
+      Something's happening behind the scenes right now. Thanks for your patience &mdash;
+      we'll be back in session shortly.
+    </p>
+
+    <div class="bell-row">
+      <button class="bell" id="bellBtn" type="button" aria-label="Ring the bell">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M24 6c-1.4 0-2.5 1.1-2.5 2.5v1.2C15.8 10.9 11.5 16 11.5 22v8.5L8 34.5v2h32v-2l-3.5-4V22c0-6-4.3-11.1-10-12.3V8.5C26.5 7.1 25.4 6 24 6z"
+                fill="var(--brass)" stroke="var(--brass-hi)" stroke-width="1.2" stroke-linejoin="round"/>
+          <path d="M19.5 38.5a4.5 4.5 0 0 0 9 0z" fill="var(--brass-hi)"/>
+        </svg>
+      </button>
+      <div class="bell-copy">
+        <p class="bell-caption" id="bellCaption">Ring the bell for the next period</p>
+        <p class="bell-hint">It won't speed up the deploy. It will make you feel better.</p>
+      </div>
+    </div>
+
+    <div class="ticker" aria-live="polite">
+      <span class="ticker-label">Staffroom&nbsp;log</span>
+      <ul class="ticker-view" id="tickerList">
+        <li class="active">Taking attendance on the last deploy</li>
+        <li>Restocking the chalk</li>
+        <li>Re-shelving the timetable</li>
+        <li>Tightening a few loose desks</li>
+        <li>Waking the volunteers&rsquo; roster</li>
+        <li>Wiping the board clean for the new term</li>
+      </ul>
+      <div class="ticker-dots" id="tickerDots"></div>
+    </div>
+  </div>
+
+  <p class="footer">
+    <span class="brand">Make A Difference (MAD)</span> &middot; Internal tool.
+    Questions? Ping the Session&#8209;Ops team &mdash; <a href="mailto:technology@makeadiff.in">technology@makeadiff.in</a>
+  </p>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---- Live hallway clock ----
+  var clockEl = document.getElementById("clock");
+  function tick() {
+    var d = new Date();
+    var pad = function (n) { return String(n).padStart(2, "0"); };
+    clockEl.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // ---- Theme toggle (cycles system -> light -> dark -> system) ----
+  var root = document.documentElement;
+  var toggle = document.getElementById("themeToggle");
+  var STORAGE_KEY = "sessionops-maintenance-theme";
+  function applyTheme(mode) {
+    if (mode === "light" || mode === "dark") {
+      root.setAttribute("data-theme", mode);
+    } else {
+      root.removeAttribute("data-theme");
+    }
+  }
+  var saved = null;
+  try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  applyTheme(saved);
+  toggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    var next = current === "dark" ? "light" : current === "light" ? null : "dark";
+    applyTheme(next);
+    try {
+      if (next) { localStorage.setItem(STORAGE_KEY, next); }
+      else { localStorage.removeItem(STORAGE_KEY); }
+    } catch (e) {}
+  });
+
+  // ---- Bell: ring animation + tiny synthesized chime ----
+  var bellBtn = document.getElementById("bellBtn");
+  var bellCaption = document.getElementById("bellCaption");
+  var captionDefault = bellCaption.textContent;
+  var audioCtx = null;
+
+  function chime() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      var now = audioCtx.currentTime;
+      [880, 1320, 1760].forEach(function (freq, i) {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.14 / (i + 1), now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1 - i * 0.15);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 1.2);
+      });
+    } catch (e) { /* audio unavailable — silent ring is fine */ }
+  }
+
+  var captionTimer = null;
+  bellBtn.addEventListener("click", function () {
+    bellBtn.classList.remove("ringing");
+    void bellBtn.offsetWidth;
+    bellBtn.classList.add("ringing");
+    chime();
+    bellCaption.textContent = "There's the bell — see you next period.";
+    clearTimeout(captionTimer);
+    captionTimer = setTimeout(function () {
+      bellCaption.textContent = captionDefault;
+    }, 3200);
+  });
+
+  // ---- Staffroom ticker ----
+  var items = Array.prototype.slice.call(document.querySelectorAll("#tickerList li"));
+  var dotsWrap = document.getElementById("tickerDots");
+  var idx = 0;
+  items.forEach(function (_, i) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", "Show note " + (i + 1));
+    if (i === 0) b.className = "active";
+    b.addEventListener("click", function () { show(i); restart(); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function show(i) {
+    items[idx].classList.remove("active");
+    dots[idx].classList.remove("active");
+    idx = (i + items.length) % items.length;
+    items[idx].classList.add("active");
+    dots[idx].classList.add("active");
+  }
+
+  var tickerTimer = null;
+  function restart() {
+    clearInterval(tickerTimer);
+    if (!reduceMotion) {
+      tickerTimer = setInterval(function () { show(idx + 1); }, 3600);
+    }
+  }
+  restart();
+
+  // ---- Chalk dust particles ----
+  var canvas = document.getElementById("dust");
+  var ctx = canvas.getContext("2d");
+  var particles = [];
+  var w, h, dpr;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = window.innerWidth;
+    h = window.innerHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function seed() {
+    var count = Math.round((w * h) / 26000);
+    particles = [];
+    for (var i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: 0.6 + Math.random() * 1.6,
+        vy: -(0.06 + Math.random() * 0.16),
+        vx: (Math.random() - 0.5) * 0.06,
+        sway: Math.random() * Math.PI * 2,
+        swaySpeed: 0.002 + Math.random() * 0.004,
+        alpha: 0.12 + Math.random() * 0.28
+      });
+    }
+  }
+
+  var dustColor = getComputedStyle(root).getPropertyValue("--dust").trim() || "rgba(240,240,240,0.5)";
+  var mo = new MutationObserver(function () {
+    dustColor = getComputedStyle(root).getPropertyValue("--dust").trim() || dustColor;
+  });
+  mo.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+
+  function frame() {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = dustColor;
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      p.sway += p.swaySpeed;
+      p.x += p.vx + Math.sin(p.sway) * 0.05;
+      p.y += p.vy;
+      if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+      if (p.x < -10) p.x = w + 10;
+      if (p.x > w + 10) p.x = -10;
+      ctx.globalAlpha = p.alpha;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (!reduceMotion) requestAnimationFrame(frame);
+  }
+
+  resize();
+  seed();
+  window.addEventListener("resize", function () { resize(); seed(); });
+  if (!reduceMotion) {
+    requestAnimationFrame(frame);
+  } else {
+    frame();
+  }
+})();
+</script>
+</body>
+</html>

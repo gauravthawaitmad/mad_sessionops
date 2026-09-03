@@ -115,38 +115,23 @@ export const SchoolTableRow = memo(function SchoolTableRow({ school }: { school:
         {school.partnerId}
       </Typography>
 
-      {/* Col 2: School name + Community Organizer */}
+      {/* Col 2: School name */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
         <SchoolAvatar initials={school.initials} name={school.name} />
-        <Box sx={{ minWidth: 0 }}>
-          <Typography
-            sx={{
-              fontSize: "14px",
-              fontWeight: 500,
-              color: colors.gray[900],
-              lineHeight: "20px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {school.name}
-          </Typography>
-          {school.coName && (
-            <Typography
-              sx={{
-                fontSize: "12px",
-                color: colors.gray[400],
-                lineHeight: "18px",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {school.coName}
-            </Typography>
-          )}
-        </Box>
+        <Typography
+          sx={{
+            fontSize: "14px",
+            fontWeight: 500,
+            color: colors.gray[900],
+            lineHeight: "20px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
+          }}
+        >
+          {school.name}
+        </Typography>
       </Box>
 
       {/* Col 3: City */}

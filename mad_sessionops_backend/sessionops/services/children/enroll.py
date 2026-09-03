@@ -26,20 +26,30 @@ MAX_CHILDREN_PER_SECTION = 5
 
 def get_foundation_program_id() -> int:
     """
-    Return the PK of the "Foundation Program" row by name, not a hardcoded
-    literal. A literal PK assumption isn't safe: Program (like Class, and per
-    the M7 migration registry) is expected to carry real IDs imported from
-    Bubble, and even locally, whichever code happens to create "Foundation
-    Program" first gets whatever the sequence currently points at — nothing
-    guarantees that's 1 (see migration 0027's history for exactly this bug).
+    Return the PK of MAD's one active Program.
+
+    Not looked up by a hardcoded name: "Foundation Program" was only ever the
+    local dev-seed script's arbitrary name for it (seed_m2_catalog.py), not a
+    real, stable identity — the actual imported catalog names it differently
+    ("Education Support"). MAD runs a single program system-wide today (there's
+    no UI for a CO to pick one at enrollment), so the correct program is simply
+    whichever one is active, not one matched by name. A literal PK is equally
+    unsafe here — see migration 0027's history, and Program is one of the
+    tables expected to carry real IDs imported from Bubble.
     """
-    try:
-        return Program.objects.get(program_name="Foundation Program").program_id
-    except Program.DoesNotExist:
+    programs = list(Program.objects.filter(is_active=True, removed=False))
+    if len(programs) == 1:
+        return programs[0].program_id
+    if not programs:
         raise ValidationError(
-            "Configuration error: 'Foundation Program' row not found. "
+            "Configuration error: no active Program row found. "
             "Seed or import the Program catalog before enrolling/reactivating children."
         )
+    raise ValidationError(
+        "Configuration error: multiple active Program rows found "
+        f"({', '.join(p.program_name for p in programs)}) — enrollment has no way to "
+        "know which one to use. This needs a real program-selection step, not a guess."
+    )
 
 
 def enroll_child(school_id: int, payload: ChildEnrollIn, user: User) -> Child:

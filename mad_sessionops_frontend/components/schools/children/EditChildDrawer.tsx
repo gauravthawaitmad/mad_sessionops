@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -33,16 +33,45 @@ import toast from "react-hot-toast";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
+const MIN_AGE = 3;
+const MAX_AGE = 25;
+
+// Applies to date_of_birth, date_of_enrollment, and mad_joining_date alike —
+// none of them make sense outside MAD's actual operating window.
+const MIN_DATE = "2006-01-01";
+const MAX_DATE = "2035-01-01";
+
+function isCompleteDateString(v: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(new Date(`${v}T00:00:00`).getTime());
+}
+
+// A native <input type="date"> reports its .value as "" until every
+// sub-field (day/month/year) is filled — a half-entered date is
+// indistinguishable from an empty one through this value alone. The visible
+// "Enter a complete date" error for that case comes from tracking the DOM's
+// own validity.badInput signal separately (see incompleteDateFields below);
+// this schema-level check only catches a value that *did* commit but isn't a
+// complete, real calendar date within the sane MIN_DATE–MAX_DATE window
+// (catches e.g. a birth year of 0001 that a bare format check lets through
+// — ISO date strings compare correctly as plain strings, so no Date math
+// needed for the bounds).
+const boundedDate = z
+  .string()
+  .optional()
+  .refine((v) => !v || (isCompleteDateString(v) && v >= MIN_DATE && v <= MAX_DATE), {
+    message: "Enter a date between 1 Jan 2006 and 1 Jan 2035",
+  });
+
 const schema = z.object({
   first_name: z.string().min(1, "Required"),
   last_name: z.string().min(1, "Required"),
   gender: z.enum(["male", "female", "other"]),
-  age: z.number().int().min(3, "Min 3").max(25, "Max 25").optional(),
+  age: z.number().int().min(MIN_AGE, `Min ${MIN_AGE}`).max(MAX_AGE, `Max ${MAX_AGE}`).optional(),
   school_class_id: z.number().min(1, "Select a class"),
   class_section_id: z.number().nullable().optional(),
-  date_of_birth: z.string().optional(),
-  date_of_enrollment: z.string().optional(),
-  mad_joining_date: z.string().optional(),
+  date_of_birth: boundedDate,
+  date_of_enrollment: boundedDate,
+  mad_joining_date: boundedDate,
   city: z.string().optional(),
   mother_tongue: z.string().optional(),
 });
@@ -394,6 +423,8 @@ function BucketPicker({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+type DateFieldName = "date_of_birth" | "date_of_enrollment" | "mad_joining_date";
+
 export function EditChildDrawer({
   open,
   schoolId,
@@ -406,6 +437,19 @@ export function EditChildDrawer({
   const [classesLoading, setClassesLoading] = useState(false);
   const [bucketsLoading, setBucketsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // A half-entered native date input reports value="" — the same as empty —
+  // so this tracks the DOM's own validity.badInput signal per field to catch
+  // "started typing a date but didn't finish it" separately from the schema.
+  const [incompleteDateFields, setIncompleteDateFields] = useState<Set<DateFieldName>>(new Set());
+
+  function handleDateInput(name: DateFieldName, e: ChangeEvent<HTMLInputElement>) {
+    setIncompleteDateFields((prev) => {
+      const next = new Set(prev);
+      if (e.target.validity.badInput) next.add(name);
+      else next.delete(name);
+      return next;
+    });
+  }
 
   const originalClassId = child.currentSchoolClass?.schoolClassId;
   const originalSectionId = child.currentSection?.classSectionId;
@@ -467,6 +511,12 @@ export function EditChildDrawer({
   }, [schoolId]);
 
   async function onSubmit(values: FormValues) {
+    if (incompleteDateFields.size > 0) {
+      // Zod never sees these — the browser reports a half-entered native date
+      // input's value as "", so this is the only signal that catches it.
+      // The inline field errors are already showing; just don't call the API.
+      return;
+    }
     setSubmitting(true);
     const payload: EditChildInput = {
       first_name: values.first_name.trim(),
@@ -648,6 +698,19 @@ export function EditChildDrawer({
                           fullWidth
                           type="date"
                           InputLabelProps={{ shrink: true }}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            handleDateInput("date_of_birth", e as ChangeEvent<HTMLInputElement>);
+                          }}
+                          error={
+                            !!errors.date_of_birth || incompleteDateFields.has("date_of_birth")
+                          }
+                          helperText={
+                            errors.date_of_birth?.message ||
+                            (incompleteDateFields.has("date_of_birth")
+                              ? "Enter a complete date"
+                              : undefined)
+                          }
                           sx={fieldSx}
                         />
                       )}
@@ -707,6 +770,23 @@ export function EditChildDrawer({
                           fullWidth
                           type="date"
                           InputLabelProps={{ shrink: true }}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            handleDateInput(
+                              "date_of_enrollment",
+                              e as ChangeEvent<HTMLInputElement>
+                            );
+                          }}
+                          error={
+                            !!errors.date_of_enrollment ||
+                            incompleteDateFields.has("date_of_enrollment")
+                          }
+                          helperText={
+                            errors.date_of_enrollment?.message ||
+                            (incompleteDateFields.has("date_of_enrollment")
+                              ? "Enter a complete date"
+                              : undefined)
+                          }
                           sx={fieldSx}
                         />
                       )}
@@ -724,6 +804,20 @@ export function EditChildDrawer({
                           fullWidth
                           type="date"
                           InputLabelProps={{ shrink: true }}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            handleDateInput("mad_joining_date", e as ChangeEvent<HTMLInputElement>);
+                          }}
+                          error={
+                            !!errors.mad_joining_date ||
+                            incompleteDateFields.has("mad_joining_date")
+                          }
+                          helperText={
+                            errors.mad_joining_date?.message ||
+                            (incompleteDateFields.has("mad_joining_date")
+                              ? "Enter a complete date"
+                              : undefined)
+                          }
                           sx={fieldSx}
                         />
                       )}
