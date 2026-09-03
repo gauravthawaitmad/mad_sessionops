@@ -453,7 +453,11 @@ function OverviewContent({ school }: { school: SchoolDetail }) {
         />
         <StatCard label="Classes" value={school.classesCount} accent="#0284C7" />
         <StatCard label="Volunteers" value={school.volunteersCount} accent="#059669" />
-        <StatCard label="Teaching sessions" value={school.assignmentsCount} accent="#d97706" />
+        <StatCard
+          label="Volunteers assigned to slot"
+          value={school.assignmentsCount}
+          accent="#d97706"
+        />
       </Box>
 
       <Section title="School Information" cols={3}>
