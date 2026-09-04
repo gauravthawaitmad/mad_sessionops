@@ -629,17 +629,28 @@ class AuthService:
 
         Looks up the user by email. If found, creates a PasswordResetToken and
         sends a Brevo email with the reset link. If the email does not exist,
-        returns silently (prevents email enumeration).
+        raises AuthenticationError(error_code=EMAIL_NOT_FOUND) — this platform
+        is internal (see auth_api.py's /password/forgot docstring), so
+        enumeration is an accepted tradeoff in exchange for telling users
+        clearly when they've mistyped an email or are using an old account
+        (e.g. Bubble-era credentials) rather than silently pretending to send.
 
         Args:
             email: The user's email address (case-insensitive).
+
+        Raises:
+            AuthenticationError: error_code=EMAIL_NOT_FOUND if no active
+                account exists for this email.
         """
         email = email.lower()
         try:
             user = User.objects.get(email=email, is_active=True)
         except User.DoesNotExist:
             logger.info(f"Password reset requested for unknown email: {email}")
-            return
+            raise AuthenticationError(
+                "No account found with this email address.",
+                error_code="EMAIL_NOT_FOUND",
+            )
 
         # Role gate — users without login access cannot reset their password.
         if not get_allowed_roles(user.user_role):

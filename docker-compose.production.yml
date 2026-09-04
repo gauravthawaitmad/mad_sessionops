@@ -78,5 +78,10 @@ services:
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
         SENTRY_ORG: ${SENTRY_ORG:-}
         SENTRY_PROJECT: ${SENTRY_PROJECT:-}
+        # Marker.io feedback widget — shown to all users starting at go-live,
+        # not gated behind the IP allowlist. Project key isn't a secret (it's
+        # baked into the public JS bundle either way), so it's fine hardcoded
+        # here rather than threaded through .env like the Sentry/Google vars.
+        NEXT_PUBLIC_MARKER_IO_PROJECT_ID: "68c93392832d66dd1cd32881"
       secrets:
         - sentry_auth_token
