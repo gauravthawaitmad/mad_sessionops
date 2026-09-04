@@ -265,15 +265,23 @@ class TestForgotPassword(TestCase):
 
 
 # ---------------------------------------------------------------------------
-# TC-M1-1-12: Forgot password — unknown email (silent)
+# TC-M1-1-12: Forgot password — unknown email
 # ---------------------------------------------------------------------------
 
 
 class TestForgotPasswordUnknownEmail(TestCase):
     @patch("sessionops.services.auth_service.send_password_reset_email")
-    def test_unknown_email_is_silent(self, mock_send):
-        """TC-M1-1-12: Unknown email → no token created, no email sent, no error raised."""
-        AuthService.request_password_reset("nobody@makeadiff.in")
+    def test_unknown_email_raises_email_not_found(self, mock_send):
+        """TC-M1-1-12: Unknown email → EMAIL_NOT_FOUND, no token created, no email sent.
+
+        This platform is internal (see auth_api.py's /password/forgot
+        docstring), so telling the user their email isn't registered is an
+        accepted tradeoff — it's far more useful than a fake "sent" message,
+        especially for users still holding pre-migration (Bubble-era) emails.
+        """
+        with pytest.raises(AuthenticationError) as exc:
+            AuthService.request_password_reset("nobody@makeadiff.in")
+        assert exc.value.error_code == "EMAIL_NOT_FOUND"
         mock_send.assert_not_called()
         assert not PasswordResetToken.objects.exists()
 

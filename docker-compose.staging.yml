@@ -25,3 +25,6 @@ services:
         NEXT_PUBLIC_LOG_LEVEL: info
         NEXT_PUBLIC_API_TIMEOUT: "30000"
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        # Separate Marker.io project from production so staging testing
+        # feedback doesn't mix into the real user feedback inbox.
+        NEXT_PUBLIC_MARKER_IO_PROJECT_ID: "6a9a74abfa7d11761ddd7b0e"
