@@ -59,15 +59,15 @@ services:
       - "5000:3000"
     build:
       args:
-        # Placeholder until the production domain is released (see
-        # ops/nginx/production.sessionops.conf) — update alongside it and
-        # the backend's ALLOWED_HOSTS/CORS_ALLOWED_ORIGINS/FRONTEND_URL* when
-        # the domain lands, then rebuild. Assumes testing hits the backend
-        # container directly on :9000 rather than through nginx for now —
-        # if you'd rather route /api through the nginx placeholder instead,
-        # say so and this (and the nginx config) need to change together.
-        NEXT_PUBLIC_API_URL: http://<EC2-PUBLIC-IP>:9000/api
-        NEXT_PUBLIC_APP_URL: http://<EC2-PUBLIC-IP>:5000
+        # Real domain (sessionops.makeadiff.in), routed through nginx on
+        # :443 — matches ALLOWED_HOSTS/CORS_ALLOWED_ORIGINS/FRONTEND_URL* in
+        # .env.production and ops/nginx/production.sessionops.conf. Do NOT
+        # rebuild with https:// URLs until Certbot has actually issued the
+        # cert and nginx is serving 443 (`sudo certbot --nginx -d
+        # sessionops.makeadiff.in`) — until then the frontend would be
+        # baked with an https origin nothing is listening on yet.
+        NEXT_PUBLIC_API_URL: https://sessionops.makeadiff.in/api
+        NEXT_PUBLIC_APP_URL: https://sessionops.makeadiff.in
         NEXT_PUBLIC_APP_ENV: production
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
         NEXT_PUBLIC_ENABLE_ANALYTICS: "true"
