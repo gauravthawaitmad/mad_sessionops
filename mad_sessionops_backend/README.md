@@ -238,7 +238,6 @@ Key environment variables (see `env.template` for full list):
 - `DJANGOSECRET` - Django secret key
 - `DEBUG` - Debug mode (True/False)
 - `DBNAME`, `DBHOST`, `DBPORT`, `DBUSER`, `DBPASSWORD` - Database credentials
-- `REDIS_HOST`, `REDIS_PORT` - Redis configuration
 - `JWT_SECRET_KEY` - JWT signing key
 - `SENTRY_DSN` - Sentry error tracking DSN
 - `FRONTEND_URL` - Frontend application URL for CORS
