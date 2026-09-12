@@ -18,6 +18,12 @@ import { showSuccess, showApiError } from "@/lib/toast/toast";
 import type { LoginFormData, RegisterFormData } from "@/components/auth/validation/authValidation";
 import { loginWithGoogleToken } from "@/lib/redux/features/auth/authSlice";
 
+// Auth thunks always reject with a string (see rejectWithValue calls in
+// authSlice.ts), but this checks defensively in case that ever changes.
+function hasErrorCode(err: unknown, code: string): boolean {
+  return typeof err === "object" && err !== null && (err as { code?: unknown }).code === code;
+}
+
 /**
  * ============================================
  * USE AUTH HOOK
@@ -68,10 +74,10 @@ export function useAuth() {
         router.push(destination);
 
         return { success: true };
-      } catch (err: any) {
+      } catch (err) {
         // Auth failures (wrong credentials) are shown inline by the form via
         // Redux state — no toast needed. Only surface unexpected errors.
-        const isAuthFailure = typeof err === "string" || err?.code === "AUTH_ERROR";
+        const isAuthFailure = typeof err === "string" || hasErrorCode(err, "AUTH_ERROR");
         if (!isAuthFailure) {
           showApiError(err);
         }
@@ -91,10 +97,14 @@ export function useAuth() {
 
         await dispatch(loginWithGoogleToken(googleToken)).unwrap();
         showSuccess("Welcome back!");
-        router.push("/home");
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next");
+        // Only follow relative paths to prevent open redirect.
+        const destination = next && next.startsWith("/") ? next : "/schools";
+        router.push(destination);
 
         return { success: true };
-      } catch (err: any) {
+      } catch (err) {
         showApiError(err);
         return { success: false, error: err };
       }
@@ -122,10 +132,14 @@ export function useAuth() {
         ).unwrap();
 
         showSuccess("Account created successfully!");
-        router.push("/home");
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next");
+        // Only follow relative paths to prevent open redirect.
+        const destination = next && next.startsWith("/") ? next : "/schools";
+        router.push(destination);
 
         return { success: true };
-      } catch (err: any) {
+      } catch (err) {
         showApiError(err);
         return { success: false, error: err };
       }
@@ -142,7 +156,7 @@ export function useAuth() {
       showSuccess("Logged out successfully");
       router.push("/login");
       return { success: true };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Logout error:", err);
       router.push("/login");
       return { success: false, error: err };

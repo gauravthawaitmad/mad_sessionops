@@ -1,15 +1,9 @@
-import { Metadata } from "next";
-import { Sidebar } from "@/components/layout";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Home | MAD Platform",
-  description: "Welcome to MAD Platform account",
-};
-
+// Leftover boilerplate route from the original scaffold — never had real
+// content, but was still a live post-login redirect target (see useAuth.ts),
+// so it stayed reachable. Redirect to the real dashboard instead of rendering
+// the old generic admin-template shell.
 export default function HomePage() {
-  return (
-    <div>
-      <Sidebar open={true} />
-    </div>
-  );
+  redirect("/schools");
 }

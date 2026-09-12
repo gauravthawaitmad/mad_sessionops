@@ -19,9 +19,10 @@ function renderWithProvider(ui: React.ReactElement, preloadedState?: object) {
 
 const mockRouterPush = vi.fn();
 
-vi.mock("@/lib/api/services/schools.service", () => ({
-  fetchSchools: vi.fn(),
-}));
+vi.mock("@/lib/api/services/schools.service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/api/services/schools.service")>();
+  return { ...actual, fetchSchools: vi.fn() };
+});
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -275,6 +276,53 @@ describe("SchoolListPage — F-M1-4", () => {
 
     const rows = screen.getAllByRole("row").filter((r) => r.getAttribute("tabindex") === "0");
     // Shaikpet has 25 children vs Jubilee Hills' 20 — should sort first
+    expect(rows[0]?.textContent).toContain("Govt. High School Shaikpet");
+  });
+
+  it("test_schools_page_sort_by_clicking_children_column_header", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    // Numeric columns default to descending on first click — Shaikpet (25
+    // children) should sort above Jubilee Hills (20).
+    await userEvent.click(screen.getByText("Children"));
+
+    const rows = screen.getAllByRole("row").filter((r) => r.getAttribute("tabindex") === "0");
+    expect(rows[0]?.textContent).toContain("Govt. High School Shaikpet");
+
+    // Clicking the same header again reverses the direction.
+    await userEvent.click(screen.getByText("Children"));
+
+    const rowsAfterToggle = screen
+      .getAllByRole("row")
+      .filter((r) => r.getAttribute("tabindex") === "0");
+    expect(rowsAfterToggle[0]?.textContent).toContain("Municipal School Jubilee Hills");
+  });
+
+  it("test_schools_page_sort_by_clicking_school_column_header", async () => {
+    vi.mocked(fetchSchools).mockResolvedValue({
+      schools: MOCK_SCHOOLS,
+      summary: MOCK_SUMMARY,
+      scopeWarning: null,
+    });
+
+    renderWithProvider(<SchoolListPage userName="Ipshita Das" />);
+    await waitFor(() => {
+      expect(screen.getByText("Govt. High School Shaikpet")).toBeInTheDocument();
+    });
+
+    // Text columns default to ascending (A–Z) on first click.
+    await userEvent.click(screen.getByText("School"));
+
+    const rows = screen.getAllByRole("row").filter((r) => r.getAttribute("tabindex") === "0");
     expect(rows[0]?.textContent).toContain("Govt. High School Shaikpet");
   });
 

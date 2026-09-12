@@ -10,7 +10,7 @@ import { colors } from "@/config/design-tokens";
 import { SchoolToolbar } from "./SchoolToolbar";
 import { SchoolTable } from "./SchoolTable";
 import { SchoolEmptyState } from "./SchoolEmptyState";
-import { fetchSchools } from "@/lib/api/services/schools.service";
+import { fetchSchools, parseSortOption } from "@/lib/api/services/schools.service";
 import type {
   SchoolListItem,
   SchoolScopeWarning,
@@ -94,24 +94,36 @@ function MetricCard({ icon: Icon, label, value, accent, loading }: MetricCardPro
 
 // ── Sort helpers ──────────────────────────────────────────────────────────────
 
+const COLUMN_COMPARATORS: Record<
+  NonNullable<ReturnType<typeof parseSortOption>["column"]>,
+  (a: SchoolListItem, b: SchoolListItem) => number
+> = {
+  id: (a, b) => a.partnerId - b.partnerId,
+  name: (a, b) => a.name.localeCompare(b.name),
+  city: (a, b) => (a.city ?? "").localeCompare(b.city ?? ""),
+  academicYear: (a, b) => (a.academicYearLabel ?? "").localeCompare(b.academicYearLabel ?? ""),
+  classes: (a, b) => a.classesCount - b.classesCount,
+  children: (a, b) => a.childrenCount - b.childrenCount,
+  volunteers: (a, b) => a.volunteersCount - b.volunteersCount,
+  assignments: (a, b) => a.assignmentsCount - b.assignmentsCount,
+};
+
 function sortSchools(schools: SchoolListItem[], sort: SortOption): SchoolListItem[] {
   const copy = [...schools];
-  switch (sort) {
-    case "name_asc":
-      return copy.sort((a, b) => a.name.localeCompare(b.name));
-    case "city_asc":
-      return copy.sort((a, b) => (a.city ?? "").localeCompare(b.city ?? ""));
-    case "children_desc":
-      return copy.sort((a, b) => b.childrenCount - a.childrenCount);
-    case "updated_desc":
-    default:
-      return copy.sort((a, b) => {
-        if (!a.updatedAt && !b.updatedAt) return 0;
-        if (!a.updatedAt) return 1;
-        if (!b.updatedAt) return -1;
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-      });
+  const { column, direction } = parseSortOption(sort);
+
+  if (!column) {
+    // "updated_desc" — no visible column, always most-recent first.
+    return copy.sort((a, b) => {
+      if (!a.updatedAt && !b.updatedAt) return 0;
+      if (!a.updatedAt) return 1;
+      if (!b.updatedAt) return -1;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
   }
+
+  const compare = COLUMN_COMPARATORS[column];
+  return copy.sort((a, b) => (direction === "asc" ? compare(a, b) : -compare(a, b)));
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -286,6 +298,8 @@ export function SchoolListPage({ userName }: SchoolListPageProps) {
             loading={loading}
             searchQuery={debouncedSearch}
             onClearFilters={handleClearSearch}
+            sort={sort}
+            onSortChange={setSort}
           />
         </Box>
       )}
