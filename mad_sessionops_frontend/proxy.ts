@@ -17,6 +17,24 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
+// Decode-only expiry check — NOT signature verification. This is a UX gate to
+// stop an obviously-expired token from rendering an authenticated shell; the
+// backend remains the source of truth and rejects invalid/forged tokens on
+// every real API call regardless of what this check decides.
+function isTokenExpired(token: string): boolean {
+  try {
+    const payloadSegment = token.split(".")[1];
+    if (!payloadSegment) return true;
+    const base64 = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    const payload = JSON.parse(atob(padded));
+    if (typeof payload.exp !== "number") return true;
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -26,15 +44,18 @@ export function proxy(request: NextRequest) {
 
   const token = request.cookies.get("access_token")?.value;
 
-  if (!token) {
+  if (!token || isTokenExpired(token)) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.delete("access_token");
+    return response;
   }
 
-  // Token is present — let the request through.
-  // Do NOT attempt to verify or refresh here; the Axios interceptor handles
-  // refresh on the first 401 from the API. Middleware only acts as a gate.
+  // Token is present and not expired — let the request through. This is
+  // still just a gate: the Axios interceptor handles real 401s (bad
+  // signature, revoked token, etc.) via refresh-then-logout on the first
+  // failed API call.
   return NextResponse.next();
 }
 

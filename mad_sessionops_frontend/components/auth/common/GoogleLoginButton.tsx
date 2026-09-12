@@ -24,7 +24,7 @@ import { useState } from "react";
 interface GoogleLoginButtonProps {
   /**
    * Optional redirect URL after successful login
-   * Defaults to /dashboard
+   * Defaults to /schools
    */
   redirectAfterLogin?: string;
 
@@ -45,7 +45,7 @@ interface GoogleLoginButtonProps {
 }
 
 export function GoogleLoginButton({
-  redirectAfterLogin = "/home",
+  redirectAfterLogin = "/schools",
   variant = "outlined",
   size = "large",
   fullWidth = true,

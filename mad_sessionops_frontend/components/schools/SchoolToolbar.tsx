@@ -11,14 +11,22 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import { Search, X, ArrowUpDown, Check } from "lucide-react";
 import { colors } from "@/config/design-tokens";
-import type { SortOption } from "@/lib/api/services/schools.service";
+import { describeSortOption, type SortOption } from "@/lib/api/services/schools.service";
 
-const SORT_LABELS: Record<SortOption, string> = {
+// Curated quick presets for the dropdown, with their original labels
+// preserved. Any other column/direction is reachable by clicking a table
+// header instead, and falls back to a generic description (see below).
+const SORT_PRESETS: Partial<Record<SortOption, string>> = {
   updated_desc: "Recently updated",
   name_asc: "Name (A–Z)",
   city_asc: "City (A–Z)",
   children_desc: "Most children",
 };
+const PRESET_ORDER: SortOption[] = ["updated_desc", "name_asc", "city_asc", "children_desc"];
+
+function labelFor(sort: SortOption): string {
+  return SORT_PRESETS[sort] ?? describeSortOption(sort);
+}
 
 interface SchoolToolbarProps {
   search: string;
@@ -80,7 +88,7 @@ export function SchoolToolbar({ search, onSearchChange, sort, onSortChange }: Sc
           "&:hover": { borderColor: colors.gray[400], bgcolor: colors.gray[50] },
         }}
       >
-        Sort: {SORT_LABELS[sort]}
+        Sort: {labelFor(sort)}
       </Button>
 
       <Popover
@@ -99,7 +107,7 @@ export function SchoolToolbar({ search, onSearchChange, sort, onSortChange }: Sc
           },
         }}
       >
-        {(Object.entries(SORT_LABELS) as [SortOption, string][]).map(([value, label]) => (
+        {PRESET_ORDER.map((value) => (
           <MenuItem
             key={value}
             selected={sort === value}
@@ -116,7 +124,7 @@ export function SchoolToolbar({ search, onSearchChange, sort, onSortChange }: Sc
               py: 1,
             }}
           >
-            <Typography sx={{ fontSize: "14px" }}>{label}</Typography>
+            <Typography sx={{ fontSize: "14px" }}>{labelFor(value)}</Typography>
             {sort === value && <Check size={14} color={colors.gray[700]} />}
           </MenuItem>
         ))}

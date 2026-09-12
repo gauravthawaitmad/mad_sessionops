@@ -7,8 +7,5 @@
 // Forms
 export { LoginForm } from "./LoginForm";
 
-// Layouts
-export { AuthLayout } from "./common";
-
 // Validation (centralized)
 export * from "./validation/authValidation";

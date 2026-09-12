@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, CircularProgress, Typography, Paper, Alert } from "@mui/material";
 import { CheckCircle, Error as ErrorIcon } from "@mui/icons-material";
@@ -21,6 +21,12 @@ import { setAuthCookie } from "@/lib/auth/cookieUtils";
 
 type CallbackState = "processing" | "success" | "error";
 
+function getStringField(value: unknown, key: string): string | undefined {
+  if (typeof value !== "object" || value === null || !(key in value)) return undefined;
+  const field = (value as Record<string, unknown>)[key];
+  return typeof field === "string" ? field : undefined;
+}
+
 export default function GoogleOAuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,73 +36,74 @@ export default function GoogleOAuthCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [redirecting, setRedirecting] = useState(false);
-  const [hasRun, setHasRun] = useState(false);
-
-  useEffect(() => {
-    // Prevent double execution in React StrictMode (development)
-    if (hasRun) return;
-    setHasRun(true);
-
-    handleOAuthCallback();
-  }, [hasRun]);
+  // A ref, not state — this only guards against React StrictMode's dev-mode
+  // double-invoke; it isn't UI state, so it shouldn't trigger a re-render.
+  const hasRunRef = useRef(false);
 
   /**
    * Parse and format error for user-friendly display
    */
-  const handleError = (error: any) => {
-    let message = "Failed to complete Google login. Please try again.";
-    let details = "";
+  const handleError = useCallback(
+    (error: unknown) => {
+      let message = "Failed to complete Google login. Please try again.";
+      let details = "";
+      const code = getStringField(error, "code");
 
-    // Check for specific error types from API client
-    if (error?.code) {
-      switch (error.code) {
-        case "NETWORK_ERROR":
-          message = "Network Error";
-          details =
-            "Unable to connect to the server. Please check your internet connection and try again.";
-          break;
+      // Check for specific error types from API client
+      if (code) {
+        switch (code) {
+          case "NETWORK_ERROR":
+            message = "Network Error";
+            details =
+              "Unable to connect to the server. Please check your internet connection and try again.";
+            break;
 
-        case "SERVER_ERROR":
-          message = "Server Error";
-          details = "Our servers are experiencing issues. Please try again in a few moments.";
-          break;
+          case "SERVER_ERROR":
+            message = "Server Error";
+            details = "Our servers are experiencing issues. Please try again in a few moments.";
+            break;
 
-        case "VALIDATION_ERROR":
-          message = "Invalid Request";
-          details =
-            error.message || "The authentication data is invalid. Please try logging in again.";
-          break;
+          case "VALIDATION_ERROR":
+            message = "Invalid Request";
+            details =
+              getStringField(error, "message") ||
+              "The authentication data is invalid. Please try logging in again.";
+            break;
 
-        case "NOT_FOUND":
-          message = "Endpoint Not Found";
-          details =
-            "The authentication endpoint is not available. The backend may not be running or configured correctly.";
-          break;
+          case "NOT_FOUND":
+            message = "Endpoint Not Found";
+            details =
+              "The authentication endpoint is not available. The backend may not be running or configured correctly.";
+            break;
 
-        case "FORBIDDEN":
-          message = "Access Denied";
-          details = error.message || "You do not have permission to access this resource.";
-          break;
+          case "FORBIDDEN":
+            message = "Access Denied";
+            details =
+              getStringField(error, "message") ||
+              "You do not have permission to access this resource.";
+            break;
 
-        default:
-          message = error.message || message;
-          details = error.description || "";
+          default:
+            message = getStringField(error, "message") || message;
+            details = getStringField(error, "description") || "";
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
       }
-    } else if (error instanceof Error) {
-      message = error.message;
-    }
 
-    setState("error");
-    setErrorMessage(message);
-    setErrorDetails(details);
+      setState("error");
+      setErrorMessage(message);
+      setErrorDetails(details);
 
-    // Redirect to login page after error
-    setTimeout(() => {
-      router.push("/login");
-    }, 5000);
-  };
+      // Redirect to login page after error
+      setTimeout(() => {
+        router.push("/login");
+      }, 5000);
+    },
+    [router]
+  );
 
-  const handleOAuthCallback = async () => {
+  const handleOAuthCallback = useCallback(async () => {
     try {
       // Get parameters from URL
       const code = searchParams.get("code");
@@ -152,13 +159,25 @@ export default function GoogleOAuthCallbackPage() {
       // Redirect to dashboard or specified URL after short delay
       setTimeout(() => {
         setRedirecting(true);
-        router.push(redirectUrl || "/dashboard");
+        router.push(redirectUrl || "/schools");
       }, 1500);
     } catch (error) {
       console.error("OAuth callback error:", error);
       handleError(error);
     }
-  };
+  }, [searchParams, dispatch, handleError, router]);
+
+  useEffect(() => {
+    // Prevent double execution in React StrictMode (development)
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+
+    // handleOAuthCallback is async — its setState calls happen after network
+    // round-trips, not synchronously within this effect's call stack, so the
+    // cascading-render concern this rule guards against doesn't apply here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    handleOAuthCallback();
+  }, [handleOAuthCallback]);
 
   return (
     <Box

@@ -4,7 +4,88 @@ import { api } from "../client";
 
 export type SetupStatus = "configured" | "partial" | "not_configured";
 export type FilterChip = "all" | "configured" | "partial" | "not_configured";
-export type SortOption = "updated_desc" | "name_asc" | "city_asc" | "children_desc";
+export type SortOption =
+  | "updated_desc"
+  | "id_asc"
+  | "id_desc"
+  | "name_asc"
+  | "name_desc"
+  | "city_asc"
+  | "city_desc"
+  | "academic_year_asc"
+  | "academic_year_desc"
+  | "classes_asc"
+  | "classes_desc"
+  | "children_asc"
+  | "children_desc"
+  | "volunteers_asc"
+  | "volunteers_desc"
+  | "assignments_asc"
+  | "assignments_desc";
+
+// Column a SortOption sorts by, for the table headers to know which one is active.
+// "updated_desc" has no visible column (updatedAt isn't displayed) so it has none.
+export type SortColumn =
+  | "id"
+  | "name"
+  | "city"
+  | "academicYear"
+  | "classes"
+  | "children"
+  | "volunteers"
+  | "assignments";
+
+const SORT_COLUMNS: Record<SortColumn, { asc: SortOption; desc: SortOption }> = {
+  id: { asc: "id_asc", desc: "id_desc" },
+  name: { asc: "name_asc", desc: "name_desc" },
+  city: { asc: "city_asc", desc: "city_desc" },
+  academicYear: { asc: "academic_year_asc", desc: "academic_year_desc" },
+  classes: { asc: "classes_asc", desc: "classes_desc" },
+  children: { asc: "children_asc", desc: "children_desc" },
+  volunteers: { asc: "volunteers_asc", desc: "volunteers_desc" },
+  assignments: { asc: "assignments_asc", desc: "assignments_desc" },
+};
+
+export function sortOptionFor(column: SortColumn, direction: "asc" | "desc"): SortOption {
+  return SORT_COLUMNS[column][direction];
+}
+
+// Which column + direction a SortOption represents, so the table header can
+// show the right arrow. Returns null column for "updated_desc".
+export function parseSortOption(sort: SortOption): {
+  column: SortColumn | null;
+  direction: "asc" | "desc";
+} {
+  for (const column of Object.keys(SORT_COLUMNS) as SortColumn[]) {
+    if (SORT_COLUMNS[column].asc === sort) return { column, direction: "asc" };
+    if (SORT_COLUMNS[column].desc === sort) return { column, direction: "desc" };
+  }
+  return { column: null, direction: "desc" };
+}
+
+const SORT_COLUMN_LABELS: Record<SortColumn, string> = {
+  id: "ID",
+  name: "Name",
+  city: "City",
+  academicYear: "Academic year",
+  classes: "Classes",
+  children: "Children",
+  volunteers: "Volunteers",
+  assignments: "Assignments",
+};
+
+// Human-readable label for any SortOption, including ones only reachable by
+// clicking a column header (so the toolbar's sort button always has text).
+export function describeSortOption(sort: SortOption): string {
+  if (sort === "updated_desc") return "Recently updated";
+  const { column, direction } = parseSortOption(sort);
+  if (!column) return "Recently updated";
+  const label = SORT_COLUMN_LABELS[column];
+  const isText = column === "name" || column === "city" || column === "academicYear";
+  return isText
+    ? `${label} (${direction === "asc" ? "A–Z" : "Z–A"})`
+    : `${label} (${direction === "desc" ? "high–low" : "low–high"})`;
+}
 
 export interface SchoolListItem {
   partnerId: number;

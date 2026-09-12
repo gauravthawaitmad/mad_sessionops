@@ -4,31 +4,42 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Skeleton from "@mui/material/Skeleton";
 import Button from "@mui/material/Button";
-import { Search as SearchIcon } from "lucide-react";
+import ButtonBase from "@mui/material/ButtonBase";
+import { Search as SearchIcon, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { colors } from "@/config/design-tokens";
 import { SchoolTableRow } from "./SchoolTableRow";
-import type { SchoolListItem } from "@/lib/api/services/schools.service";
+import { parseSortOption, sortOptionFor } from "@/lib/api/services/schools.service";
+import type { SchoolListItem, SortColumn, SortOption } from "@/lib/api/services/schools.service";
 
 // ID · School · City · Academic Year · Classes · Children · Volunteers · Assignments
 const GRID = "0.5fr minmax(0, 2.4fr) 1fr 0.8fr 0.7fr 0.7fr 0.7fr 0.7fr";
 export const ROW_H = 64;
 
-const HEADERS = [
-  { label: "ID", align: "left" },
-  { label: "School", align: "left" },
-  { label: "City", align: "left" },
-  { label: "Academic Year", align: "left" },
-  { label: "Classes", align: "right" },
-  { label: "Children", align: "right" },
-  { label: "Volunteers", align: "right" },
-  { label: "Assignments", align: "right" },
-] as const;
+// Numeric columns default to descending on first click (most useful first —
+// e.g. "most children"); text columns default to ascending (A–Z).
+const HEADERS: {
+  label: string;
+  align: "left" | "right";
+  column: SortColumn;
+  defaultDirection: "asc" | "desc";
+}[] = [
+  { label: "ID", align: "left", column: "id", defaultDirection: "asc" },
+  { label: "School", align: "left", column: "name", defaultDirection: "asc" },
+  { label: "City", align: "left", column: "city", defaultDirection: "asc" },
+  { label: "Academic Year", align: "left", column: "academicYear", defaultDirection: "asc" },
+  { label: "Classes", align: "right", column: "classes", defaultDirection: "desc" },
+  { label: "Children", align: "right", column: "children", defaultDirection: "desc" },
+  { label: "Volunteers", align: "right", column: "volunteers", defaultDirection: "desc" },
+  { label: "Assignments", align: "right", column: "assignments", defaultDirection: "desc" },
+];
 
 interface SchoolTableProps {
   schools: SchoolListItem[];
   loading: boolean;
   searchQuery: string;
   onClearFilters: () => void;
+  sort: SortOption;
+  onSortChange: (sort: SortOption) => void;
 }
 
 function SkeletonRow() {
@@ -65,7 +76,26 @@ function SkeletonRow() {
   );
 }
 
-export function SchoolTable({ schools, loading, searchQuery, onClearFilters }: SchoolTableProps) {
+export function SchoolTable({
+  schools,
+  loading,
+  searchQuery,
+  onClearFilters,
+  sort,
+  onSortChange,
+}: SchoolTableProps) {
+  const { column: activeColumn, direction: activeDirection } = parseSortOption(sort);
+
+  function handleHeaderClick(header: (typeof HEADERS)[number]) {
+    const direction =
+      activeColumn === header.column
+        ? activeDirection === "asc"
+          ? "desc"
+          : "asc"
+        : header.defaultDirection;
+    onSortChange(sortOptionFor(header.column, direction));
+  }
+
   return (
     <Box
       sx={{
@@ -92,22 +122,52 @@ export function SchoolTable({ schools, loading, searchQuery, onClearFilters }: S
           flexShrink: 0,
         }}
       >
-        {HEADERS.map(({ label, align }) => (
-          <Typography
-            key={label}
-            sx={{
-              fontSize: "11px",
-              fontWeight: 600,
-              lineHeight: "16px",
-              color: colors.gray[500],
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              textAlign: align,
-            }}
-          >
-            {label}
-          </Typography>
-        ))}
+        {HEADERS.map((header) => {
+          const isActive = activeColumn === header.column;
+          const Icon = isActive ? (activeDirection === "asc" ? ArrowUp : ArrowDown) : ArrowUpDown;
+          return (
+            <ButtonBase
+              key={header.label}
+              onClick={() => handleHeaderClick(header)}
+              disableRipple
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                justifyContent: header.align === "right" ? "flex-end" : "flex-start",
+                borderRadius: "4px",
+                px: 0.5,
+                mx: -0.5,
+                "&:hover": { bgcolor: colors.gray[100] },
+                "&:hover .sort-icon": { opacity: 1 },
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  lineHeight: "16px",
+                  color: isActive ? colors.gray[900] : colors.gray[500],
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                {header.label}
+              </Typography>
+              <Icon
+                size={12}
+                strokeWidth={2}
+                color={isActive ? colors.gray[700] : colors.gray[400]}
+                className="sort-icon"
+                style={{
+                  opacity: isActive ? 1 : 0,
+                  flexShrink: 0,
+                  transition: "opacity 0.1s ease",
+                }}
+              />
+            </ButtonBase>
+          );
+        })}
       </Box>
 
       {/* Scrollable body — flex: 1 fills remaining height, minHeight: 0 allows shrink */}
